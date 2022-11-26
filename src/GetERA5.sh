@@ -19,8 +19,8 @@ DD2=`echo $DATE2 | cut -c7-8`
 # Grib data
 Nort=5
 West=-80
-Sout=-85
-East=5
+Sout=-80
+East=10
 
 sed -e "s/DATE1/${DATE1}/g;s/DATE2/${DATE2}/g;s/Nort/${Nort}/g;s/West/${West}/g;s/Sout/${Sout}/g;s/East/${East}/g;" GetERA5-pl.py > GetERA5-${DATE1}-${DATE2}-pl.py
 
@@ -28,11 +28,11 @@ python GetERA5-${DATE1}-${DATE2}-pl.py
 
 mkdir -p ${DATADIR}/$YY1
 
-mv ERA5-${DATE1}-${DATE2}-sl.grib ERA5-${DATE1}-${DATE2}-pl.grib ${DATADIR}/$YY1/
+mv ERA5-${DATE1}-${DATE2}-pl.grib ${DATADIR}/$YY1/
 
 # move the generated files
 mkdir -p ${CODEDIR}/APIs
 
-mv GetERA5-${DATE1}-${DATE2}-sl.py GetERA5-${DATE1}-${DATE2}-pl.py ${CODEDIR}/APIs/
+mv GetERA5-${DATE1}-${DATE2}-pl.py ${CODEDIR}/APIs/
 
 exit 0

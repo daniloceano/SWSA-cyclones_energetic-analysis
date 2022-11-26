@@ -23,10 +23,10 @@ c.retrieve(
             '1000'
         ],
         'date':'19811011/19811021',
-        'area':'5/-80/-85/5',
+        'area':'5/-80/-80/10',
         'time':'00/to/23/by/1',
         'variable':[
-            'geopotential','relative_humidity','specific_humidity',
+            'geopotential','vertical_velocity',
             'temperature','u_component_of_wind','v_component_of_wind'
         ]
     },
