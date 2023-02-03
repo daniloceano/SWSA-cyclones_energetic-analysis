@@ -26,7 +26,7 @@ c.retrieve(
         'area':'Nort/West/Sout/East',
         'time':'00/to/23/by/1',
         'variable':[
-            'geopotential','relative_humidity','specific_humidity',
+            'geopotential','vertical_velocity',
             'temperature','u_component_of_wind','v_component_of_wind'
         ]
     },
