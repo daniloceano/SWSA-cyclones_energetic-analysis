@@ -5,7 +5,10 @@
 CODEDIR=../met_data/ERA5/scripts
 DATADIR=../met_data/ERA5/DATA
 
-# cd $CODEDIR
+mkdir ../met_data/
+mkdir ../met_data/ERA5/
+mkdir $CODEDIR
+mkdir $DATADIR
 
 DATE1=19811011
 DATE2=19811021

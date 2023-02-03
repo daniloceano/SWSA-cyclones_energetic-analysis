@@ -6,7 +6,7 @@ c.retrieve(
     'reanalysis-era5-pressure-levels',
     {
         'product_type':'reanalysis',
-        'format':'grib',
+        'format':'netcdf',
         'pressure_level':[
             '1','2','3',
             '5','7','10',
@@ -30,4 +30,4 @@ c.retrieve(
             'temperature','u_component_of_wind','v_component_of_wind'
         ]
     },
-    'ERA5-DATE1-DATE2-pl.grib')
+    'ERA5-DATE1-DATE2-pl.nc')
