@@ -30,4 +30,4 @@ c.retrieve(
             'temperature','u_component_of_wind','v_component_of_wind'
         ]
     },
-    'ERA5-DATE1-DATE2-pl.nc')
+    'NAME_ERA5.nc')

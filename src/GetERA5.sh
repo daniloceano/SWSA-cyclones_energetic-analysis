@@ -10,32 +10,52 @@ mkdir ../met_data/ERA5/
 mkdir $CODEDIR
 mkdir $DATADIR
 
-DATE1=19811011
-DATE2=19811021
-YY1=`echo $DATE1 | cut -c1-4`
-MM1=`echo $DATE1 | cut -c5-6`
-DD1=`echo $DATE1 | cut -c7-8`
-YY2=`echo $DATE2 | cut -c1-4`
-MM2=`echo $DATE2 | cut -c5-6`
-DD2=`echo $DATE2 | cut -c7-8`
+while IFS=, read -r name start end min_lat max_lat min_lon max_lon f; do
 
-# Grib data
-Nort=5
-West=-80
-Sout=-80
-East=10
+	NAME=$name
+	
+	YY1=`echo $start | cut -c1-4`
+	MM1=`echo $start | cut -c6-7`
+	DD1=`echo $start | cut -c9-10`
+	
+	YY2=`echo $end | cut -c1-4`
+	MM2=`echo $end | cut -c6-7`
+	DD2=`echo $end | cut -c9-10`
 
-sed -e "s/DATE1/${DATE1}/g;s/DATE2/${DATE2}/g;s/Nort/${Nort}/g;s/West/${West}/g;s/Sout/${Sout}/g;s/East/${East}/g;" GetERA5-pl.py > GetERA5-${DATE1}-${DATE2}-pl.py
+	DATE1=$YY1$MM1$DD1
+	DATE2=$YY2$MM2$DD2
+	
+	# Limts taken from track files
+	#Nort=$max_lat
+	#West=$(echo "$min_lon - 180" | bc -l)
+	#Sout=$min_lat
+	#East=$(echo "$max_lon - 180" | bc -l)
+	
+	# Limts taken from track files
+	Nort=$max_lat
+	West=$min_lon
+	Sout=$min_lat
+	East=$max_lon
+	
+	echo 'Downloading data for system:' $NAME' dates from '$DATE1' to '$DATE2
+	echo 'North '$Nort
+	echo 'West '$West
+	echo 'South '$Sout
+	echo 'East '$East 
 
-python GetERA5-${DATE1}-${DATE2}-pl.py
+	sed -e "s/DATE1/${DATE1}/g;s/NAME/${NAME}/g;s/DATE2/${DATE2}/g;s/Nort/${Nort}/g;s/West/${West}/g;s/Sout/${Sout}/g;s/East/${East}/g;" GetERA5-pl.py > GetERA5-${NAME}-pl.py
 
-mkdir -p ${DATADIR}/$YY1
+	python GetERA5-${NAME}-pl.py
 
-mv ERA5-${DATE1}-${DATE2}-pl.grib ${DATADIR}/$YY1/
+	mkdir -p ${DATADIR}/
 
-# move the generated files
-mkdir -p ${CODEDIR}/APIs
+	mv ERA5-${NAME}-pl.nc ${DATADIR}/
 
-mv GetERA5-${DATE1}-${DATE2}-pl.py ${CODEDIR}/APIs/
+	# move the generated files
+	mkdir -p ${CODEDIR}/APIs
+
+	mv GetERA5-${NAME}-pl.py ${CODEDIR}/APIs/
+
+done < ../dates_limits/intense
 
 exit 0
