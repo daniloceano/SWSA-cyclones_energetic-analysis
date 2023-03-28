@@ -164,7 +164,7 @@ def get_periods(min_zeta):
         zeta_fill_first_half.time < intensification_start).dropna(dim='time')
     incipient_start = zeta_fil.time[0].values
     incipient_end = incipient[-1].values
-    incipient
+    incipient = zeta_fil.time.sel(time=slice(incipient_start,incipient_end))
     
     # For decaying phase, it will be followed the same procedure as for the
     # intensification, but inverted: the local minima starts the intensfication
@@ -172,12 +172,14 @@ def get_periods(min_zeta):
     dzfil_dt3_sh = dzfil_dt3.sel(time=zeta_fill_second_half.time)
     decay_start = dzfil_dt3_sh.idxmin().values
     decay_end = zeta_fil.time[-1].values
+    decay = zeta_fil.time.sel(time=slice(decay_start,decay_end))
     
     # Mature stage is everything between end of intensification and start of
     # the decaying stage
     dt = zeta_fil.time[1] - zeta_fil.time[0]
     mature_start = zeta_fil.sel(time=intensification_end+dt).time.values
     mature_end = zeta_fil.sel(time=decay_start-dt).time.values
+    mature = zeta_fil.time.sel(time=slice(mature_start,mature_end))
     
     # Plot results
     plt.close('all')
@@ -221,7 +223,7 @@ def get_periods(min_zeta):
     
     plt.savefig('../periods/'+fname+'_preiods.png',dpi=500)
     
-    return
+    return incipient, intensification, mature, decay
     
 # def get_periods(min_zeta):
     
@@ -351,8 +353,8 @@ for t in zeta850[TimeIndexer]:
     
 
 min_zeta = pd.DataFrame(min_zeta, index=times)
-# plot_track(lons, lats, min_zeta, fname)
-# plot_vorticity(min_zeta, dzdt, fname)
-# intensification, mature, decay  = get_periods(min_zeta)
+plot_track(lons, lats, min_zeta, fname)
+plot_vorticity(min_zeta, dzdt, fname)
+incipient, intensification, mature, decay  = get_periods(min_zeta)
 
     
