@@ -28,80 +28,6 @@ from sklearn import preprocessing
 import cartopy.crs as ccrs
 import cartopy
 
-# def get_periods(min_zeta):
-    
-#     # min_zeta = min_zeta.resample('3H').mean() 
-#     times = min_zeta.index
-    
-#     window_lenght = round(len(min_zeta)/2)
-#     if (window_lenght % 2) == 0:
-#         window_lenght += 1
-    
-#     zeta_fil = savgol_filter(min_zeta[0], window_lenght, 3, mode="nearest")
-#     zeta_fil = xr.DataArray(np.array(zeta_fil),coords={'time':times})
-#     # dzfil_dt = zeta_fil.differentiate('time',datetime_unit='h') 
-#     ds_min_zeta = xr.DataArray(np.array(min_zeta[0]),coords={'time':times})
-#     dz_dt = ds_min_zeta.differentiate('time',datetime_unit='h') 
-    
-#     # dzfil_dt2 = dzfil_dt.differentiate('time',datetime_unit='h') 
-#     # dzfil_dt3 = dzfil_dt2.differentiate('time',datetime_unit='h')
-#     dz_dt2 = dz_dt.differentiate('time',datetime_unit='h') 
-#     dz_dt3 = dz_dt2.differentiate('time',datetime_unit='h') 
-    
-#     # intensification = dzfil_dt.time.where(dzfil_dt < 0, drop=True).values
-#     # intensification = pd.to_datetime(intensification)
-#     # decay = dzfil_dt.time.where(dzfil_dt > 0, drop=True).values
-#     # decay = pd.to_datetime(decay)
-    
-#     intensification = dz_dt.time.where(dz_dt < 0, drop=True).values
-#     intensification = pd.to_datetime(intensification)
-#     decay = dz_dt.time.where(dz_dt > 0, drop=True).values
-#     decay = pd.to_datetime(decay)
-    
-#     # dzdt3_abs = np.abs(dzfil_dt3)
-#     # dzdt3_norm = (dzdt3_abs-dzdt3_abs.min())/(dzdt3_abs.max()-dzdt3_abs.min())
-#     # da_dzdt3_norm = xr.DataArray(np.array(dzdt3_norm),coords={'time':times})
-    
-#     # # For the third derivative, get the 10% smaller values
-#     # dz10th =  da_dzdt3_norm[da_dzdt3_norm < da_dzdt3_norm.quantile(.2)][TimeIndexer].values
-#     # # Remove not continuous values
-#     # dt_original = dzfil_dt3[TimeIndexer][1] - dzfil_dt3[TimeIndexer][0]
-#     # mature = []
-#     # for i in range(len(dz10th)-1):
-#     #     dt = dz10th[i+1] - dz10th[i]
-#     #     if dt != dt_original:
-#     #         pass
-#     #     else:
-#     #         mature.append(dz10th[i])
-#     #         mature.append(dz10th[i+1])
-#     # mature = pd.to_datetime(mature)
-    
-#     # Now, remove mature periods from intensification and decay
-#     intensification = pd.to_datetime(
-#         [x for x in intensification if(x <= mature.min())])
-#     decay = pd.to_datetime([x for x in decay if (x >= mature.max())])
-    
-#     # plot periods
-#     plt.close('all')
-#     fig = plt.figure(figsize=(10, 10))
-#     gs = gridspec.GridSpec(1, 1)
-#     ax = fig.add_subplot(gs[0, 0],frameon=True)
-#     kwargs={'title':'min_Zeta', 'labels':['ζ', r'$ζ_f$']}
-#     plot_timeseries(ax, times, *[min_zeta, zeta_fil], **kwargs)
-    
-#     for period,str in zip([intensification, mature, decay],
-#                           ['int.', 'mature', 'decay']):
-#         try:
-#             ax.axvline(period[0], c='gray', linestyle='dashed')
-#             ax.axvline(period[-1], c='gray', linestyle='dashed')
-#             pos = round(len(period)/2)
-#             ax.text(period[pos], max(min_zeta)*1.3, str, weight='bold',
-#                     horizontalalignment='right')
-#             plt.savefig('../periods/'+fname+'_periods.png',dpi=500)
-#         except:
-#             print('could not determine periods.')
-#     return intensification, mature, decay
-
 def convert_lon(xr,LonIndexer):
     xr.coords[LonIndexer] = (xr.coords[LonIndexer] + 180) % 360 - 180
     xr = xr.sortby(xr[LonIndexer])
@@ -319,7 +245,10 @@ def get_periods(da, MegaFilter=False):
     incipient = zeta_fill_first_half.time.where(
         zeta_fill_first_half.time < intensification_start).dropna(dim=TimeIndexer)
     incipient_start = zeta_fil.time[0].values
-    incipient_end = incipient[-1].values
+    if len(incipient) != 0:
+        incipient_end = incipient[-1].values
+    else:
+        incipient_end = incipient_start
     incipient = zeta_fil.time.sel(time=slice(incipient_start,incipient_end))
     
     # For decaying phase, it will be followed the same procedure as for the
@@ -343,17 +272,6 @@ def get_periods(da, MegaFilter=False):
     ax = fig.add_subplot(111,frameon=True)
     colors = ['k', '#134074', '#d62828', '#f7b538', '#5b8e7d',]
     
-    # Plot filtered vorticity and vorticity on background
-    ax.plot(da.time, da.zeta, c='gray', linewidth=1,label=r'$ζ$',
-            zorder=98)
-    
-    ax2 = ax.twinx()
-    ax2.plot(da.time, da.dz_dt3_fil, c='#283618', linewidth=2, alpha=0.8,
-             label=r'$\frac{∂^{3}ζ_f}{∂t^{3}}$')
-    
-    ax.plot(zeta_fil.time, zeta_fil,c=colors[0], linewidth=4,label=r'$ζ_f$',
-            zorder=101)    
-    
     # Plot periods
     y = np.arange(da.zeta.min(),da.zeta.max()+1e-5,1e-5)
     ax.fill_betweenx(y, incipient_start, intensification_start, 
@@ -367,6 +285,18 @@ def get_periods(da, MegaFilter=False):
     
     ax.fill_betweenx(y, decay_start, decay_end,
                      facecolor=colors[4], alpha=0.2, label='decay')
+    
+    
+    # Plot third derivative
+    ax2 = ax.twinx()
+    ax2.plot(da.time, da.dz_dt3_fil, c='#283618', linewidth=1, alpha=0.8,
+             label=r'$\frac{∂^{3}ζ_f}{∂t^{3}}$', linestyle='dashed')
+    
+    # Plot filtered vorticity and vorticity on background
+    ax.plot(da.time, da.zeta, c='gray', linewidth=0.5,label=r'$ζ$')
+    ax.plot(zeta_fil.time, zeta_fil,c=colors[0], linewidth=4,label=r'$ζ_f$')   
+     
+
     
     plt.xlim(zeta_fil.time[0].values, zeta_fil.time[-1].values)
     ax.set_ylim(y[0],y[-1])
