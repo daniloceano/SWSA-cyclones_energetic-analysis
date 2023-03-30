@@ -239,6 +239,10 @@ def get_periods(da, MegaFilter=False):
     dzfil_dt3_fh = da.dz_dt3_fil.sel(time=zeta_fill_first_half.time)
     intensification_start = dzfil_dt3_fh.idxmin().values
     intensification_end = dzfil_dt3_fh.idxmax().values
+    if intensification_start > intensification_end:
+        tmp = intensification_start
+        intensification_start = intensification_end
+        intensification_end = tmp
     intensification = pd.date_range(intensification_start,intensification_end,
                                     freq=dt)
     
@@ -257,7 +261,8 @@ def get_periods(da, MegaFilter=False):
     for period in df_int:
         df_incip.drop(period, inplace=True)
     incipient = xr.DataArray(df_incip[0], coords={'time':df_incip[0]})
-    incipient_start, incipient_end = incipient[0].values, incipient[-1].values
+    if len(incipient) != 0:
+        incipient_start, incipient_end = incipient[0].values, incipient[-1].values
     
     # For decaying phase, it will be followed the same procedure as for the
     # intensification, but inverted: the local minima starts the intensfication
@@ -282,7 +287,8 @@ def get_periods(da, MegaFilter=False):
     
     # Plot periods
     y = np.arange(da.zeta.min(),da.zeta.max()+1e-5,1e-5)
-    ax.fill_betweenx(y, incipient_start, intensification_start, 
+    if len(incipient) != 0:
+        ax.fill_betweenx(y, incipient_start, intensification_start, 
                      facecolor=colors[1], alpha=0.2, label='incipient')
                 
     ax.fill_betweenx(y, intensification_start, mature_start,
