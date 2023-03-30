@@ -220,6 +220,7 @@ def plot_vorticity(da, fname, norm=False, MegaFilter=False):
 def get_periods(da, MegaFilter=False):
     
     zeta_fil = da.zeta_fil
+    dt = pd.Timedelta((zeta_fil.time[1] - zeta_fil.time[0]).values)
     
     # Get the peiod of minimum vorticity. For splititng data in half.
     # The timesteps before it cannot be decaying stages. 
@@ -236,10 +237,10 @@ def get_periods(da, MegaFilter=False):
     # of the vorticity third derivative, but for the first half of the
     # vorticity time series
     dzfil_dt3_fh = da.dz_dt3_fil.sel(time=zeta_fill_first_half.time)
-    intensification_end = dzfil_dt3_fh.idxmin().values
-    intensification_start = dzfil_dt3_fh.idxmax().values
-    intensification = zeta_fil.time.sel(
-        time=slice(intensification_start,intensification_end))
+    intensification_start = dzfil_dt3_fh.idxmin().values
+    intensification_end = dzfil_dt3_fh.idxmax().values
+    intensification = pd.date_range(intensification_start,intensification_end,
+                                    freq=dt)
     
     # Everything before the intensification start is incipient phase
     incipient = zeta_fill_first_half.time.where(
