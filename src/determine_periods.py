@@ -261,8 +261,7 @@ def get_periods(da, MegaFilter=False):
     for period in df_int:
         df_incip.drop(period, inplace=True)
     incipient = xr.DataArray(df_incip[0], coords={'time':df_incip[0]})
-    if len(incipient) != 0:
-        incipient_start, incipient_end = incipient[0].values, incipient[-1].values
+    
     
     # For decaying phase, it will be followed the same procedure as for the
     # intensification, but inverted: the local minima starts the intensfication
@@ -279,47 +278,80 @@ def get_periods(da, MegaFilter=False):
     mature_end = zeta_fil.sel(time=decay_start-dt).time.values
     mature = zeta_fil.time.sel(time=slice(mature_start,mature_end))
     
-    # Plot results
+    periods = {'incipient': incipient,
+               'intensification': intensification,
+               'mature': mature,
+               'decay': decay}
+    
+    return periods
+    
+def plot_periods(da, periods, fname, MegaFilter=False):
+    
+    incipient = periods['incipient']
+    intensification = periods['intensification']
+    mature = periods['mature']
+    decay = periods['decay']
+    
     plt.close('all')
     fig = plt.figure(figsize=(15, 10))
     ax = fig.add_subplot(111,frameon=True)
     colors = ['k', '#134074', '#d62828', '#f7b538', '#5b8e7d',]
     
     # Plot periods
-    y = np.arange(da.zeta.min(),da.zeta.max()+1e-5,1e-5)
+    # y = np.arange(da.zeta.min(),da.zeta.max()+1e-5,1e-5)
+    ax2 = ax.twinx()
     if len(incipient) != 0:
-        ax.fill_betweenx(y, incipient_start, intensification_start, 
+        ax2.fill_betweenx((0,1), incipient[0], intensification[0], 
                      facecolor=colors[1], alpha=0.2, label='incipient')
                 
-    ax.fill_betweenx(y, intensification_start, mature_start,
+    ax2.fill_betweenx((0,1), intensification[0], mature[0],
                      facecolor=colors[2], alpha=0.2, label='intensification')
 
-    ax.fill_betweenx(y, mature_start, decay_start,
+    ax2.fill_betweenx((0,1), mature[0], decay[0],
                      facecolor=colors[3], alpha=0.2, label='mature')
     
-    ax.fill_betweenx(y, decay_start, decay_end,
+    ax2.fill_betweenx((0,1), decay[0], decay[-1],
                      facecolor=colors[4], alpha=0.2, label='decay')
     
-    
     # Plot third derivative
-    ax2 = ax.twinx()
-    ax2.plot(da.time, da.dz_dt3_fil, c='#283618', linewidth=1, alpha=0.8,
-             label=r'$\frac{∂^{3}ζ_f}{∂t^{3}}$', linestyle='dashed')
+    # ax2 = ax.twinx()
+    ax.plot(da.time, da.dz_dt3_fil_norm, c='#fca311', linewidth=2,
+             label=r'$\frac{∂^{3}ζ_f}{∂t^{3}}_f$', linestyle='-')
+    ax.plot(da.time, da.dz_dt3_norm, c='#fca311', linewidth=1,
+             label=r'$\frac{∂^{3}ζ}{∂t^{3}}$', alpha=0.8)
+    
+    # Plot second derivative
+    # ax3 = ax.twinx()
+    ax.plot(da.time, da.dz_dt2_fil_norm, c='#e76f51', linewidth=2,
+             label=r'$\frac{∂^{2}ζ_f}{∂t^{2}}_f$', linestyle='-')
+    ax.plot(da.time, da.dz_dt2_norm, c='#e76f51', linewidth=1,
+             label=r'$\frac{∂^{2}ζ_f}{∂t^{3}}$', alpha=0.8)
+    
+    # Plot derivative
+    # ax4 = ax2.twinx()
+    ax.plot(da.time, da.dz_dt_fil_norm, c='#219ebc', linewidth=2,
+             label=r'$\frac{∂ζ_f}{∂t}_f$', linestyle='-')
+    ax.plot(da.time, da.dz_dt_norm, c='#219ebc', linewidth=1,
+             label=r'$\frac{∂ζ_f}{∂t}$', alpha=0.8)
     
     # Plot filtered vorticity and vorticity on background
-    ax.plot(da.time, da.zeta, c='gray', linewidth=0.5,label=r'$ζ$')
-    ax.plot(zeta_fil.time, zeta_fil,c=colors[0], linewidth=4,label=r'$ζ_f$')   
-     
-
+    ax.plot(da.zeta_fil.time, da.zeta_fil_norm,c=colors[0],
+            linewidth=4,label=r'$ζ_f$')
+    ax.plot(da.time, da.zeta_norm, c='gray', linewidth=1,
+            label=r'$ζ$', alpha=0.8)
+       
     
-    plt.xlim(zeta_fil.time[0].values, zeta_fil.time[-1].values)
-    ax.set_ylim(y[0],y[-1])
-    ax.legend()
-    ax2.legend()
+    plt.xlim(da.zeta_fil.time[0].values, da.zeta_fil.time[-1].values)
+    # ax.set_ylim(y[0],y[-1])
+    ax.set_ylim(0,1), ax2.set_ylim(0,1)
+    ax.legend(loc='center left', bbox_to_anchor=(1.05, 0.5))
+    ax2.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1),ncol=4)
     plt.grid(linewidth=0.5, alpha=0.5)
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b-%d'))
     plt.gca().xaxis.set_major_locator(mdates.DayLocator())
     plt.gcf().autofmt_xdate()
+    
+    plt.tight_layout()
     
     if MegaFilter == False:
         outname = '../vorticity_analysis/periods/'+fname+'_preiods.png'
@@ -328,9 +360,6 @@ def get_periods(da, MegaFilter=False):
     plt.savefig(outname,dpi=500)
     print(outname,'saved')
     
-    return incipient, intensification, mature, decay
-    
-
 
 data_dir = '../met_data/ERA5/DATA/'
 track_dir = '../tracks_LEC-format/intense/'
@@ -374,8 +403,10 @@ for testfile in glob.glob(data_dir+'/*'):
     plot_vorticity(da_filter, fname, MegaFilter=True)
     plot_vorticity(da_filter, fname, norm=True, MegaFilter=True)
     
-    incipient, intensification, mature, decay  = get_periods(da)
-    incipient, intensification, mature, decay  = get_periods(da_filter,
-                                                             MegaFilter=True)
+    periods  = get_periods(da)
+    plot_periods(da, periods, fname, MegaFilter=False)
+    
+    periods_filter  = get_periods(da_filter, MegaFilter=True)
+    plot_periods(da_filter, periods_filter, fname, MegaFilter=True)
     
         
