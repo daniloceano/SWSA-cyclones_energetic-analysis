@@ -250,6 +250,13 @@ def get_periods(da, MegaFilter=False):
     else:
         incipient_end = incipient_start
     incipient = zeta_fil.time.sel(time=slice(incipient_start,incipient_end))
+    # Remove form incipient series, periods defined as intensification
+    df_incip = pd.DataFrame(incipient)
+    df_int = pd.DataFrame(intensification)
+    for period in df_int:
+        df_incip.drop(period, inplace=True)
+    incipient = xr.DataArray(df_incip[0], coords={'time':df_incip[0]})
+    incipient_start, incipient_end = incipient[0].values, incipient[-1].values
     
     # For decaying phase, it will be followed the same procedure as for the
     # intensification, but inverted: the local minima starts the intensfication
