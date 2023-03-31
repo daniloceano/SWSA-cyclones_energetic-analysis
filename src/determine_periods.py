@@ -73,16 +73,23 @@ def array_vorticity(df):
     da = da.assign(variables={'dz_dt3':
                     da.dz_dt2.differentiate(TimeIndexer,datetime_unit='h')})
     
+    # Filter all variables
     for var in da.variables:
         if var in ['lat', 'lon', 'time']:
             pass
         else:
             filtered_var = xr.DataArray(filter_var(da[var]), 
                                     coords={'time':df.index})
-            
             da = da.assign(variables={var+'_fil':filtered_var})
+    
+    # Pass a second filter on variables
+    for var in da.variables:
+        if 'fil' in var:
+            filtered_var = xr.DataArray(filter_var(da[var]), 
+                                    coords={'time':df.index})
+            da = da.assign(variables={var+'2':filtered_var})
             
-            
+    # Normalise all variables
     for var in da.variables:
         if var in ['lat', 'lon', 'time']:
             pass
@@ -90,6 +97,7 @@ def array_vorticity(df):
             normalised_var =  xr.DataArray(normalise_var(da[var]), 
                                     coords={'time':df.index})
             da = da.assign(variables={var+'_norm':normalised_var})
+            
             
     return da
 
@@ -116,7 +124,7 @@ def array_vorticity_MegaFilter(df):
     da = da.assign(variables={'dz_dt3':
                     da.dz_dt2_fil.differentiate(TimeIndexer,datetime_unit='h')})
     da = da.assign(variables={'dz_dt3_fil':xr.DataArray(filter_var(da.dz_dt3), 
-                            coords={'time':df.index})})    
+                            coords={'time':df.index})})  
             
     for var in da.variables:
         if var in ['lat', 'lon', 'time']:
@@ -313,33 +321,25 @@ def plot_periods(da, periods, fname, MegaFilter=False):
     ax2.fill_betweenx((0,1), decay[0], decay[-1],
                      facecolor=colors[4], alpha=0.2, label='decay')
     
-    # Plot third derivative
-    # ax2 = ax.twinx()
-    ax.plot(da.time, da.dz_dt3_fil_norm, c='#fca311', linewidth=2,
-             label=r'$\frac{∂^{3}ζ_f}{∂t^{3}}_f$', linestyle='-')
-    ax.plot(da.time, da.dz_dt3_norm, c='#fca311', linewidth=1,
-             label=r'$\frac{∂^{3}ζ}{∂t^{3}}$', alpha=0.8)
-    
-    # Plot second derivative
-    # ax3 = ax.twinx()
-    ax.plot(da.time, da.dz_dt2_fil_norm, c='#e76f51', linewidth=2,
-             label=r'$\frac{∂^{2}ζ_f}{∂t^{2}}_f$', linestyle='-')
-    ax.plot(da.time, da.dz_dt2_norm, c='#e76f51', linewidth=1,
-             label=r'$\frac{∂^{2}ζ_f}{∂t^{3}}$', alpha=0.8)
-    
-    # Plot derivative
-    # ax4 = ax2.twinx()
-    ax.plot(da.time, da.dz_dt_fil_norm, c='#219ebc', linewidth=2,
-             label=r'$\frac{∂ζ_f}{∂t}_f$', linestyle='-')
-    ax.plot(da.time, da.dz_dt_norm, c='#219ebc', linewidth=1,
-             label=r'$\frac{∂ζ_f}{∂t}$', alpha=0.8)
-    
-    # Plot filtered vorticity and vorticity on background
-    ax.plot(da.zeta_fil.time, da.zeta_fil_norm,c=colors[0],
+    # Plot vorticity and its derivatives 
+    if MegaFilter==True:
+        ax.plot(da.time, da.dz_dt3_fil_norm, c='#fca311', linewidth=1,
+                 label=r'$\frac{∂^{3}ζ_f}{∂t^{3}}_f$', linestyle='-')
+        ax.plot(da.time, da.dz_dt2_fil_norm, c='#e76f51', linewidth=1,
+                 label=r'$\frac{∂^{2}ζ_f}{∂t^{2}}_f$', linestyle='-')
+        ax.plot(da.time, da.dz_dt_fil_norm, c='#219ebc', linewidth=1,
+                 label=r'$\frac{∂ζ_f}{∂t}_f$', linestyle='-') 
+        ax.plot(da.zeta_fil.time, da.zeta_fil_norm,c=colors[0],
             linewidth=4,label=r'$ζ_f$')
-    ax.plot(da.time, da.zeta_norm, c='gray', linewidth=1,
-            label=r'$ζ$', alpha=0.8)
-       
+    else:
+        ax.plot(da.time, da.dz_dt3_fil2_norm, c='#fca311', linewidth=2,
+                 label=r'$\frac{∂^{3}ζ}{∂t^{3}}$', alpha=0.8)  
+        ax.plot(da.time, da.dz_dt2_fil2_norm, c='#e76f51', linewidth=2,
+                 label=r'$\frac{∂^{2}ζ_f}{∂t^{3}}$', alpha=0.8)
+        ax.plot(da.time, da.dz_dt_fil2_norm, c='#219ebc', linewidth=2,
+                 label=r'$\frac{∂ζ_f}{∂t}$', alpha=0.8)
+        ax.plot(da.zeta_fil.time, da.zeta_fil2_norm,c=colors[0],
+            linewidth=4,label=r'$ζ_f$')
     
     plt.xlim(da.zeta_fil.time[0].values, da.zeta_fil.time[-1].values)
     # ax.set_ylim(y[0],y[-1])
