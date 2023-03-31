@@ -88,7 +88,7 @@ def array_vorticity(df):
             filtered_var = xr.DataArray(filter_var(da[var]), 
                                     coords={'time':df.index})
             da = da.assign(variables={var+'2':filtered_var})
-            
+    
     # Normalise all variables
     for var in da.variables:
         if var in ['lat', 'lon', 'time']:
@@ -97,6 +97,7 @@ def array_vorticity(df):
             normalised_var =  xr.DataArray(normalise_var(da[var]), 
                                     coords={'time':df.index})
             da = da.assign(variables={var+'_norm':normalised_var})
+        
             
             
     return da
