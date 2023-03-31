@@ -66,75 +66,32 @@ def normalise_var(variable):
 def array_vorticity(df):
     
     da = df.to_xarray()
-    da = da.assign(variables={'dz_dt':
-                    da.zeta.differentiate(TimeIndexer,datetime_unit='h')})
-    da = da.assign(variables={'dz_dt2':
-                    da.dz_dt.differentiate(TimeIndexer,datetime_unit='h')})
-    da = da.assign(variables={'dz_dt3':
-                    da.dz_dt2.differentiate(TimeIndexer,datetime_unit='h')})
     
-    # Filter all variables
-    for var in da.variables:
-        if var in ['lat', 'lon', 'time']:
-            pass
-        else:
-            filtered_var = xr.DataArray(filter_var(da[var]), 
-                                    coords={'time':df.index})
-            da = da.assign(variables={var+'_fil':filtered_var})
-    
-    # Pass a second filter on variables
-    for var in da.variables:
-        if 'fil' in var:
-            filtered_var = xr.DataArray(filter_var(da[var]), 
-                                    coords={'time':df.index})
-            da = da.assign(variables={var+'2':filtered_var})
-    
-    # Normalise all variables
-    for var in da.variables:
-        if var in ['lat', 'lon', 'time']:
-            pass
-        else:
-            normalised_var =  xr.DataArray(normalise_var(da[var]), 
-                                    coords={'time':df.index})
-            da = da.assign(variables={var+'_norm':normalised_var})
-        
-            
-            
-    return da
-
-def array_vorticity_MegaFilter(df):
-    
-    da = df.to_xarray()
-    
+    # Filter vorticity twice
     zeta_fil = xr.DataArray(filter_var(da.zeta), coords={'time':df.index})
     da = da.assign(variables={'zeta_fil':zeta_fil})
+    zeta_fil2 = xr.DataArray(filter_var(zeta_fil),
+                                 coords={'time':df.index})
+    da = da.assign(variables={'zeta_fil2':zeta_fil2})
     
-    # First derivative
-    da = da.assign(variables={'dz_dt':
-                    zeta_fil.differentiate(TimeIndexer,datetime_unit='h')})
-    da = da.assign(variables={'dz_dt_fil':xr.DataArray(filter_var(da.dz_dt), 
-                            coords={'time':df.index})})
-    
-    # Second derivative
-    da = da.assign(variables={'dz_dt2':
-                    da.dz_dt_fil.differentiate(TimeIndexer,datetime_unit='h')})
-    da = da.assign(variables={'dz_dt2_fil':xr.DataArray(filter_var(da.dz_dt2), 
-                            coords={'time':df.index})})
-    
-    # Third derivative
-    da = da.assign(variables={'dz_dt3':
-                    da.dz_dt2_fil.differentiate(TimeIndexer,datetime_unit='h')})
-    da = da.assign(variables={'dz_dt3_fil':xr.DataArray(filter_var(da.dz_dt3), 
-                            coords={'time':df.index})})  
-            
-    for var in da.variables:
-        if var in ['lat', 'lon', 'time']:
-            pass
-        else:
-            normalised_var =  xr.DataArray(normalise_var(da[var]), 
-                                    coords={'time':df.index})
-            da = da.assign(variables={var+'_norm':normalised_var})
-            
+    # derivatives of the double-filtered vorticity
+    da = da.assign(variables={'dzfil2_dt':
+                da.zeta_fil2.differentiate(TimeIndexer,datetime_unit='h')})
+        
+    da = da.assign(variables={'dzfil2_dt2':
+                da.dzfil2_dt.differentiate(TimeIndexer,datetime_unit='h')})
+        
+    da = da.assign(variables={'dzfil2_dt3':
+                da.dzfil2_dt2.differentiate(TimeIndexer,datetime_unit='h')})
+        
+    # filter derivatives
+    da = da.assign(variables={'dz_dt_fil2':
+        xr.DataArray(filter_var(da.dzfil2_dt), coords={'time':df.index})})
+    da = da.assign(variables={'dz_dt2_fil2':
+        xr.DataArray(filter_var(da.dzfil2_dt2), coords={'time':df.index})})
+    da = da.assign(variables={'dz_dt3_fil2':
+        xr.DataArray(filter_var(da.dzfil2_dt3), coords={'time':df.index})})
+
     return da
 
 def plot_track(da, fname):
@@ -245,7 +202,7 @@ def get_periods(da, MegaFilter=False):
     # Intensification is given by the period between local minima and maxima
     # of the vorticity third derivative, but for the first half of the
     # vorticity time series
-    dzfil_dt3_fh = da.dz_dt3_fil.sel(time=zeta_fill_first_half.time)
+    dzfil_dt3_fh = da.dz_dt3_fil2.sel(time=zeta_fill_first_half.time)
     intensification_start = dzfil_dt3_fh.idxmin().values
     intensification_end = dzfil_dt3_fh.idxmax().values
     if intensification_start > intensification_end:
@@ -265,7 +222,7 @@ def get_periods(da, MegaFilter=False):
         incipient_end = incipient_start
     incipient = zeta_fil.time.sel(time=slice(incipient_start,incipient_end))
     # Remove form incipient series, periods defined as intensification
-    df_incip = pd.DataFrame(incipient)
+    df_incip = pd.DataFrame(incipient.values)
     df_int = pd.DataFrame(intensification)
     for period in df_int:
         df_incip.drop(period, inplace=True)
@@ -275,7 +232,7 @@ def get_periods(da, MegaFilter=False):
     # For decaying phase, it will be followed the same procedure as for the
     # intensification, but inverted: the local minima starts the intensfication
     # period, which will follow until the end of data
-    dzfil_dt3_sh = da.dz_dt3_fil.sel(time=zeta_fill_second_half.time)
+    dzfil_dt3_sh = da.dz_dt3_fil2.sel(time=zeta_fill_second_half.time)
     decay_start = dzfil_dt3_sh.idxmin().values
     decay_end = zeta_fil.time[-1].values
     decay = zeta_fil.time.sel(time=slice(decay_start,decay_end))
@@ -294,7 +251,7 @@ def get_periods(da, MegaFilter=False):
     
     return periods
     
-def plot_periods(da, periods, fname, MegaFilter=False):
+def plot_periods(da, periods, fname, derivatives=False, filters=False):
     
     incipient = periods['incipient']
     intensification = periods['intensification']
@@ -307,7 +264,7 @@ def plot_periods(da, periods, fname, MegaFilter=False):
     colors = ['k', '#134074', '#d62828', '#f7b538', '#5b8e7d',]
     
     # Plot periods
-    # y = np.arange(da.zeta.min(),da.zeta.max()+1e-5,1e-5)
+    
     ax2 = ax.twinx()
     if len(incipient) != 0:
         ax2.fill_betweenx((0,1), incipient[0], intensification[0], 
@@ -322,29 +279,23 @@ def plot_periods(da, periods, fname, MegaFilter=False):
     ax2.fill_betweenx((0,1), decay[0], decay[-1],
                      facecolor=colors[4], alpha=0.2, label='decay')
     
-    # Plot vorticity and its derivatives 
-    if MegaFilter==True:
-        ax.plot(da.time, da.dz_dt3_fil_norm, c='#fca311', linewidth=1,
-                 label=r'$\frac{∂^{3}ζ_f}{∂t^{3}}_f$', linestyle='-')
-        ax.plot(da.time, da.dz_dt2_fil_norm, c='#e76f51', linewidth=1,
-                 label=r'$\frac{∂^{2}ζ_f}{∂t^{2}}_f$', linestyle='-')
-        ax.plot(da.time, da.dz_dt_fil_norm, c='#219ebc', linewidth=1,
-                 label=r'$\frac{∂ζ_f}{∂t}_f$', linestyle='-') 
-        ax.plot(da.zeta_fil.time, da.zeta_fil_norm,c=colors[0],
-            linewidth=4,label=r'$ζ_f$')
-    else:
-        ax.plot(da.time, da.dz_dt3_fil2_norm, c='#fca311', linewidth=2,
+    if derivatives==True:
+        ax.plot(da.time, da.dz_dt3_fil2*10000, c='#fca311', linewidth=2,
                  label=r'$\frac{∂^{3}ζ}{∂t^{3}}$', alpha=0.8)  
-        ax.plot(da.time, da.dz_dt2_fil2_norm, c='#e76f51', linewidth=2,
-                 label=r'$\frac{∂^{2}ζ_f}{∂t^{3}}$', alpha=0.8)
-        ax.plot(da.time, da.dz_dt_fil2_norm, c='#219ebc', linewidth=2,
-                 label=r'$\frac{∂ζ_f}{∂t}$', alpha=0.8)
-        ax.plot(da.zeta_fil.time, da.zeta_fil2_norm,c=colors[0],
-            linewidth=4,label=r'$ζ_f$')
+        ax.plot(da.time, da.dz_dt2_fil2*1000, c='#e76f51', linewidth=2,
+                 label=r'$\frac{∂^{2}ζ}{∂t^{3}}$', alpha=0.8)
+        ax.plot(da.time, da.dz_dt_fil2*100, c='#219ebc', linewidth=2,
+                 label=r'$\frac{∂ζ}{∂t}$', alpha=0.8)
+    if filters==True:
+        ax.plot(da.zeta_fil2.time, da.zeta_fil2,c=colors[0],
+        linewidth=4,label=r'$ζ$')
+    else:
+        ax.plot(da.zeta.time, da.zeta,c=colors[0],
+        linewidth=4,label=r'$ζ$')
+    # y = np.arange(da.zeta_fil2.min(),da.zeta_fil2.max()+1e-5,1e-5)
+    # ax.set_ylim(y[0],y[-1])
     
     plt.xlim(da.zeta_fil.time[0].values, da.zeta_fil.time[-1].values)
-    # ax.set_ylim(y[0],y[-1])
-    ax.set_ylim(0,1), ax2.set_ylim(0,1)
     ax.legend(loc='center left', bbox_to_anchor=(1.05, 0.5))
     ax2.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1),ncol=4)
     plt.grid(linewidth=0.5, alpha=0.5)
@@ -354,10 +305,12 @@ def plot_periods(da, periods, fname, MegaFilter=False):
     
     plt.tight_layout()
     
-    if MegaFilter == False:
-        outname = '../vorticity_analysis/periods/'+fname+'_preiods.png'
-    else:
-        outname = '../vorticity_analysis/periods/'+fname+'_preiods'+'_filter'+'.png'
+    outname = '../vorticity_analysis/periods/'+fname
+    if derivatives==True:
+        outname+='-filter'
+    if derivatives==True:
+        outname+='-derivaitves'
+    outname+='.png'
     plt.savefig(outname,dpi=500)
     print(outname,'saved')
     
@@ -392,22 +345,9 @@ for testfile in glob.glob(data_dir+'/*'):
     df = get_min_zeta(track, zeta850) 
     
     da = array_vorticity(df)
-    da_filter = array_vorticity_MegaFilter(df)
     
-    plot_track(da, fname)
-    
-    # plot derivatives with filter passed only 1x
-    plot_vorticity(da, fname)
-    plot_vorticity(da, fname, norm=True)
-    
-    # plot derivatives with lots of filter
-    plot_vorticity(da_filter, fname, MegaFilter=True)
-    plot_vorticity(da_filter, fname, norm=True, MegaFilter=True)
-    
+    # plot_track(da, fname)
+    # plot_vorticity(da, fname)    
     periods  = get_periods(da)
-    plot_periods(da, periods, fname, MegaFilter=False)
-    
-    periods_filter  = get_periods(da_filter, MegaFilter=True)
-    plot_periods(da_filter, periods_filter, fname, MegaFilter=True)
-    
-        
+    plot_periods(da, periods, fname, derivatives=False, filters=False)
+    plot_periods(da, periods, fname, derivatives=True, filters=True)
