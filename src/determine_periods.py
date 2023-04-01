@@ -230,7 +230,7 @@ def get_periods(da, MegaFilter=False):
     
     
     # For decaying phase, it will be followed the same procedure as for the
-    # intensification, but inverted: the local minima starts the intensfication
+    # intensification, but inverted: the local minima starts the decaying
     # period, which will follow until the end of data
     dzfil_dt3_sh = da.dz_dt3_fil2.sel(time=zeta_fill_second_half.time)
     decay_start = dzfil_dt3_sh.idxmin().values
@@ -328,7 +328,7 @@ LevelIndexer = dfVars.loc['Vertical Level']['Variable']
 
 for testfile in glob.glob(data_dir+'/*'):   
         
-    fname = testfile.split('/')[-1].split('.nc')[0]   
+    fname = testfile.split('/')[-1].split('.nc')[0] 
     id_cyclone = fname.split('_')[0]
     track_file = track_dir+'track_'+id_cyclone
     print('Cyclone ID:',id_cyclone)
