@@ -22,6 +22,8 @@ from metpy.calc import vorticity
 from metpy.units import units
 
 from scipy.signal import savgol_filter 
+from scipy.ndimage.measurements import label, find_objects
+
 from sklearn.preprocessing import normalize   
 from sklearn import preprocessing
 
@@ -130,60 +132,194 @@ def plot_timeseries(ax, x, *args, **kwargs):
     plt.gca().xaxis.set_major_locator(mdates.DayLocator())
     plt.gcf().autofmt_xdate()
     
-def plot_vorticity(da, fname, norm=False, MegaFilter=False):
-    font = { 'weight' : 'normal', 'size'   : 16}
     
-    if norm  == True:
-        flag = '_norm'
-    else:
-        flag = ''
-
-    matplotlib.rc('font', **font)
-
-    # min_zeta = min_zeta.resample('3H').mean()    
-    times = da.time
-
+def plot_didatic(da, fname):
+    
+    colors = ['k', '#134074', '#d62828', '#f7b538', '#5b8e7d',]
+    
+    z = da.zeta_fil2
+    dz = da.dz_dt_fil2*50
+    dz2 = da.dz_dt2_fil2*500
+    dz3 = da.dz_dt3_fil2*5000
+    
     plt.close('all')
-    fig = plt.figure(figsize=(5, 15))
-    gs = gridspec.GridSpec(4, 1)
+    fig = plt.figure(figsize=(15, 12))
     
-    # Zeta 850
-    ax = fig.add_subplot(gs[0, 0],frameon=True)
-    kwargs={'title':'min_Zeta', 'labels':['ζ', r'$ζ_f$']}
-    plot_timeseries(ax, times,
-                    *[da['zeta'+flag], da['zeta_fil'+flag]], **kwargs)
+# =============================================================================
+#   First figure: all series
+# =============================================================================
+    ax = fig.add_subplot(221,frameon=True)
+    ax.plot(da.time,dz3,c=colors[3], linewidth=0.75,
+              label=r'$\frac{∂^{3}ζ}{∂t^{3}}$')
+    ax.plot(da.time,dz2,c=colors[2], linewidth=0.75,
+              label=r'$\frac{∂^{2}ζ}{∂t^{2}}$')
+    ax.plot(da.time,dz,c=colors[1], linewidth=0.75,
+             label=r'$\frac{∂ζ}{∂t}$')
+    ax.plot(da.time,z,c=colors[0], linewidth=2, label='ζ')
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15),ncol=4)
     
-    # dZdt
-    ax = fig.add_subplot(gs[1, 0],frameon=True)
-    kwargs={'title':'dzdt','labels':[r'$\frac{∂ζ}{∂t}$',r'$\frac{∂ζ}{∂t}_f$']}
-    plot_timeseries(ax, times,
-                    *[da['dz_dt'+flag], da['dz_dt_fil'+flag]], **kwargs)
-    
-    # dZdt2
-    ax = fig.add_subplot(gs[2, 0],frameon=True)
-    kwargs={'title':'dzdt','labels':[r'$\frac{∂^{2}ζ}{∂t^{2}}$',
-                                      r'$\frac{∂^{3}ζ}{∂t^{3}}_f$']}
-    plot_timeseries(ax, times,
-                    *[da['dz_dt2'+flag], da['dz_dt2_fil'+flag]], **kwargs)
-    
-    # dZdt3
-    ax = fig.add_subplot(gs[3, 0],frameon=True)
-    kwargs={'title':'dzdt','labels':[r'$\frac{∂^{3}ζ}{∂t^{3}}$',
-                                      r'$\frac{∂^{3}ζ}{∂t^{3}}_f$']}
-    plot_timeseries(ax, times,
-                    *[da['dz_dt3'+flag], da['dz_dt3_fil'+flag]], **kwargs)
+# =============================================================================
+#   Get peaks and vallys of the derivatives
+# =============================================================================
+    ax2 = fig.add_subplot(222,frameon=True)
 
-    plt.tight_layout()
-    fig.align_labels()
+    c = 1
+    for derivative in [dz, dz2, dz3]: 
+        maxs_dz = derivative.where(derivative > derivative.quantile(0.75))
+        mins_dz = derivative.where(derivative < derivative.quantile(0.25))
+        # get indices of continuous data
+        labels_peak, num_features_peak = label(~np.isnan(maxs_dz))
+        labels_valley, num_features_valley = label(~np.isnan(mins_dz))
+        slices_peak = find_objects(labels_peak)
+        slices_valley = find_objects(labels_valley)
+        # Get continuous series for derivatives values higher than the 0.75
+        # quantile and lower than the 0.15 quantile
+        continuous_max_dz = [maxs_dz[sl] for sl in slices_peak if sl is not None]
+        continuous_min_dz = [mins_dz[sl] for sl in slices_valley if sl is not None]
+        # Now, get maximum and mininum values (peaks and valleys)
+        peaks, valleys = [], []
+        times_peaks, times_valleys = [], []
+        for data_peak in continuous_max_dz:
+            peaks.append(data_peak.max())
+            times_peaks.append(data_peak.idxmax())
+        for data_valley in continuous_min_dz:
+            valleys.append(data_valley.min())
+            times_valleys.append(data_valley.idxmin())
+        for i in range(len(peaks)):
+            ax2.scatter(times_peaks[i],peaks[i],facecolor='#ab791b',
+                        edgecolor='k', linewidth=2)
+        for i in range(len(valleys)):
+            ax2.scatter(times_valleys[i],valleys[i],facecolor='#ab791b',
+                        linewidth=2)
     
-    if MegaFilter == False:
-        outname = '../vorticity_analysis/derivatives/'+fname+'_zeta'+flag+'.png'
-    else:
-        outname = '../vorticity_analysis/derivatives/'+fname+'_zeta_filter'+flag+'.png'
+        negative_dz = derivative.where(derivative < 0)
+        positive_dz = derivative.where(derivative > 0)
+        ax2.plot(negative_dz.time,negative_dz,c=colors[c], linewidth=1,
+                  linestyle='dashed')
+        ax2.plot(positive_dz.time,positive_dz,c=colors[c], linewidth=1,
+                  linestyle='-')
+        c+=1
+    
+    ax2.plot(da.time,z,c=colors[0], linewidth=2)
+    ax2.legend(loc='center right', bbox_to_anchor=(1.35, 0.5),ncol=1)
+    
+# =============================================================================
+#   Separete data between peaks and valleys of the third derivative
+# =============================================================================
+    ax3 = fig.add_subplot(223,frameon=True)
+    
+    maxs_dz3 = dz3.where(dz3 > dz3.quantile(0.75))
+    mins_dz3 = dz3.where(dz3 < dz3.quantile(0.25))
+    # get indices of continuous data
+    labels_peak, num_features_peak = label(~np.isnan(maxs_dz3))
+    labels_valley, num_features_valley = label(~np.isnan(mins_dz3))
+    slices_peak = find_objects(labels_peak)
+    slices_valley = find_objects(labels_valley)
+    # Get continuous series for dz_dt3 values higher than the 0.85 quantile
+    # and lower than the 0.15 quantile
+    continuous_max_dz = [maxs_dz3[sl] for sl in slices_peak if sl is not None]
+    continuous_min_dz = [mins_dz3[sl] for sl in slices_valley if sl is not None]
+    # Now, get maximum and mininum values (peaks and valleys)
+    peaks, valleys = [], []
+    times_peaks, times_valleys = [], []
+    for data_peak in continuous_max_dz:
+        peaks.append(data_peak.max())
+        times_peaks.append(data_peak.idxmax())
+    for data_valley in continuous_min_dz:
+        valleys.append(data_valley.min())
+        times_valleys.append(data_valley.idxmin())
+    
+    # Remove peaks and valleys that occured very close to each other
+    times_peaks_fil, times_valleys_fil = [], []
+    for i in range(len(times_peaks)):
+        tpeak = times_peaks[i]
+        if i == 0:
+            times_peaks_fil.append(tpeak)
+        else:
+            if times_peaks[i]-times_peaks[i-1] < pd.Timedelta('1 day'):
+                pass
+            else:
+                times_peaks_fil.append(tpeak)
+    
+    for i in range(len(times_valleys)):
+        tvalley = times_valleys[i]
+        if i == 0:
+            times_valleys_fil.append(tvalley)
+        else:
+            if times_valleys[i]-times_valleys[i-1] < pd.Timedelta('1 day'):
+                pass
+            else:
+                times_valleys_fil.append(tvalley)
+    
+    ax3.plot(da.time,z,c=colors[0], linewidth=2, label='ζ')
+    for tpeak in times_peaks_fil:
+        ax3.scatter(tpeak, z.where(z.time==tpeak).dropna(dim='time'),
+                    c=colors[3], edgecolor='k')
+    for tvalley in times_valleys_fil:
+        ax3.scatter(tvalley, z.where(z.time==tvalley).dropna(dim='time'),
+                    c=colors[3],)
+    
+    c = 1
+    for derivative in [dz, dz2, dz3]:
+        negative_dz = derivative.where(derivative < 0)
+        positive_dz = derivative.where(derivative > 0)
+        
+        negative_z = z.where(z.time == negative_dz.dropna(dim='time').time)
+        positive_z = z.where(z.time == positive_dz.dropna(dim='time').time)
+        
+        ax3.scatter(negative_z[::4].time,negative_z[::4] + (np.abs(z.min()/8)*c),
+                    c='None', edgecolor=colors[c])
+        ax3.scatter(positive_z[::4].time,positive_z[::4] + (np.abs(z.min()/8)*c),
+                    c=colors[c])
+        c+=1
+    
+    
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b-%d'))
+    plt.gca().xaxis.set_major_locator(mdates.DayLocator())
+    plt.gcf().autofmt_xdate()
+    plt.subplots_adjust(right=0.85)
+    
+    outname = '../vorticity_analysis/analysis/'+fname
+    outname+='.png'
     plt.savefig(outname,dpi=500)
-    print(outname, 'saved')
+    print(outname,'saved')
+
+def mature_phase(da):
     
-def get_periods(da, MegaFilter=False):
+    z = da.zeta_fil2
+    dz = da.dz_dt_fil2
+    dz2 = da.dz_dt2_fil2
+    dz3 = da.dz_dt3_fil2
+    
+    # timestep
+    dt = pd.Timedelta((z.time[1] - z.time[0]).values)
+    
+    # mature phase will be defined where the filtered vorticity is bellow the
+    # 0.25 standard deviations threshold
+    throughs = z.where(z < z.mean()-z.std()/4)
+    
+    ## Determine the first mature phase (maybe the only one)
+    # Get the peiod of minimum vorticity. For splititng data in half.
+    # The timesteps before it cannot be decaying stages. 
+    minimum = z.min()
+    tmin_zeta = z[z==minimum].time.values
+    z_first_half = z.where(z.time < tmin_zeta).dropna(dim=TimeIndexer)
+    # Intensification is given by the period between local minima and maxima
+    # of the vorticity third derivative, but for the first half of the
+    # vorticity time series
+    dz3_fh = dz3.sel(time=z_first_half.time)
+    intensification_start = dz3_fh.idxmin().values
+    intensification_end = dz3_fh.idxmax().values
+    if intensification_start > intensification_end:
+        tmp = intensification_start
+        intensification_start = intensification_end
+        intensification_end = tmp
+    intensification = pd.date_range(intensification_start,intensification_end,
+                                    freq=dt)
+    
+
+    
+def get_periods(da):
     
     zeta_fil = da.zeta_fil
     dt = pd.Timedelta((zeta_fil.time[1] - zeta_fil.time[0]).values)
@@ -305,9 +441,12 @@ def plot_periods(da, periods, fname, derivatives=False, filters=False):
     
     plt.tight_layout()
     
-    outname = '../vorticity_analysis/periods/'+fname
-    if derivatives==True:
-        outname+='-filter'
+    outname = '../vorticity_analysis/periods/'
+    if filters==True:
+        outname+='filter/'
+    else:
+        outname+='non-filterfilter/'
+    outname+=fname
     if derivatives==True:
         outname+='-derivaitves'
     outname+='.png'
@@ -347,7 +486,9 @@ for testfile in glob.glob(data_dir+'/*'):
     da = array_vorticity(df)
     
     # plot_track(da, fname)
-    # plot_vorticity(da, fname)    
-    periods  = get_periods(da)
-    plot_periods(da, periods, fname, derivatives=False, filters=False)
-    plot_periods(da, periods, fname, derivatives=True, filters=True)
+    # periods  = get_periods(da)
+    
+    # plot_periods(da, periods, fname, derivatives=False, filters=False)
+    # plot_periods(da, periods, fname, derivatives=True, filters=True)
+    
+    plot_didatic(da, fname)
