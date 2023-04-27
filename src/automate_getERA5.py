@@ -52,7 +52,7 @@ with open('../dates_limits/intense', 'r') as f:
                     print(line, end='')
                     
             # Replace the 'ID' field in the file with the ID
-            output_file = f"{data_dir}{id}_{day_start_fmt}_{day_end_fmt}_ERA5.nc"
+            output_file = f"{data_dir}{id}_ERA5.nc"
             for line in fileinput.input(f'GetERA5-pl_{id}.py', inplace=True):
                 if "'ID_ERA5.nc'" in line:
                     print(f"     '{output_file}')")
