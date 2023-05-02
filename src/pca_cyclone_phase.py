@@ -7,85 +7,95 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 
-
+# Directory where the files are saved
 path = '../periods-energetics/intense/'
 
+# Getting all files in the directory
 files_output = os.listdir(path)
 
-
+# Selecting only the files with cyclone phases
 files_use = [file for file in files_output if "_" in file]
 
-
+# Creating a list to save all dataframes
 cyclist= []
 
-# aqui le cada arquivo e salva o dataframe numa lista de dataframes
-for caso in files_use:
+# Reading all files and saving in a list of dataframes
+for case in files_use:
   
-  dfcyc = pd.read_csv(path+caso,header=0,index_col=0)
+  dfcyc = pd.read_csv(path+case,header=0,index_col=0)
   cyclist.append(dfcyc)
 
-# criei pra auxiliar
-id_novo = ['incipient','intensification','mature','decay','intensification 2', 'mature 2', 'decay 2']
+# List of cyclone phases
+new_id = ['incipient','intensification','mature','decay','intensification 2', 'mature 2', 'decay 2']
 
-# reindexando, pra todo mundo ter todas fases
+# Reindexing all dataframes to the same cyclone phases
 for i, df in enumerate(cyclist):
-    cyclist[i] = df.reindex(id_novo)
+    cyclist[i] = df.reindex(new_id)
 
 
-# pegando os termos (as colunas)
-termos = cyclist[0].keys()
 
-# criando um dicionario onde as chaves sao os termos (pra poder salvar todos Az, Ae... ao mesmo tempo)
-variaveis = {termo: [] for termo in termos}
+# Getting all cyclone parameters (columns names)
+parameters = cyclist[0].keys()
 
-# iterando na lista de dataframe, pegando termo a termo de cada caso e salvando no dicionario
+# Creating a dictionary where the keys are the cyclone parameters (to save all Az, Ae... at the same time)
+variaveis = {param: [] for param in parameters}
+
+
+# Iterating in the list of dataframes, getting term by term of each case and saving in the dictionary
 for i in range(len(cyclist)):
-    for termo in termos:
+    for param in parameters:
 
-        # valor de cada termo em cada df 
-        value = cyclist[i][termo]
+        # getting the value of the term 'termo' in the dataframe 'cyclist[i]'
+        value = cyclist[i][param]
         
-        variaveis[termo].append(value)
+        # saving the value in the dictionary
+        variaveis[param].append(value)
 
 
 
-# criando dataframes auxiliares 
-df_novo1 = cyclist[0].copy()
-df_novo1[:] = np.nan
-df_novo2 = df_novo1.copy()
+# Creating two dataframes to save the PCs
+df_PC1 = cyclist[0].copy()
+df_PC1[:] = np.nan
+df_PC2 = df_PC1.copy()
 
 for tr in variaveis.keys():
 
-  # colando todos dataframes mantendo as 7 fases (no caso vira um df com 7 linhas e 240 colunas [24termos*10casos])
+  
+  # Concatening all dataframes keeping the 7 phases (in this case it becomes a df with 7 lines and 240 columns [24 parameters * 10 cases])
   combined_df = pd.concat(variaveis[tr], axis=1)
 
-  # p normalizar
+  # Normalizing the data
   scaler = StandardScaler()
   normalized_data = scaler.fit_transform(combined_df)
 
-  # nunca tinha visto assim, mas chatgpt falou que é o imputer do sklearn entao bora
+  # Imputer (NaN = 0)
   imputer = SimpleImputer(missing_values=np.nan, strategy='constant', fill_value=0)
 
-  # aq o dado normalizado é atualizado pelo imputer (NaN = 0)
-  dado_final = imputer.fit_transform(normalized_data)
+  # The normalized data is updated by the imputer (NaN = 0)
+  final_data = imputer.fit_transform(normalized_data)
 
-  print(dado_final.shape) # 7 fases, 10 casos -> Para cada termo
+  # print(final_data.shape) # 7 phases, 10 cases -> for each parameter
   
-  # PCA (a cada iteracao o 'dado_final' é um termo)
+  
+  # PCA (each iteration the 'final_data' is a parameter)
   pca = PCA(n_components=2)
-  pca_final = pca.fit_transform(dado_final)
+  pca_final = pca.fit_transform(final_data)
 
-  # separando as pcs 
+  # Getting the first and second principal components
   pc1 = pca_final[:,0]
   pc2 = pca_final[:,1]
 
 
-  # atualizando os termos dos dataframes auxiliares
-  df_novo1[tr] = pc1
-  df_novo2[tr] = pc2
+  # Saving the PCs in the dataframes
+  df_PC1[tr] = pc1
+  df_PC2[tr] = pc2
 
 
+PCA_DIR = os.path.join(path, 'PCA')
 
+if not os.path.exists(PCA_DIR):
+    os.makedirs(PCA_DIR)
 
-df_novo1.to_csv(path+'Pca1.csv')
-df_novo2.to_csv(path+'Pca2.csv')
+# Saving the dataframes in csv files
+df_PC1.to_csv(os.path.join(PCA_DIR, 'Pc1.csv'))
+df_PC2.to_csv(os.path.join(PCA_DIR, 'Pc2.csv'))
