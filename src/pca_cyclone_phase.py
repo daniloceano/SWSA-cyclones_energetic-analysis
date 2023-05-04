@@ -17,36 +17,38 @@ files_output = os.listdir(path)
 files_use = [file for file in files_output if "_ERA5.csv" in file]
 
 # Creating a list to save all dataframes
-cyclist= []
+cyclist1= []
 
 # Reading all files and saving in a list of dataframes
 for case in files_use:
   
   dfcyc = pd.read_csv(path+case,header=0,index_col=0)
-  cyclist.append(dfcyc)
+  cyclist1.append(dfcyc)
 
 # List of cyclone phases
 new_id = ['incipient','intensification','mature','decay','intensification 2', 'mature 2', 'decay 2']
 
+cyclist2 = cyclist1.copy() 
+
 # Reindexing all dataframes to the same cyclone phases
-for i, df in enumerate(cyclist):
-    cyclist[i] = df.reindex(new_id)
+for i, df in enumerate(cyclist2):
+    cyclist2[i] = df.reindex(new_id)
 
 
 
 # Getting all cyclone parameters (columns names)
-parameters = cyclist[0].keys()
+parameters = cyclist2[0].keys()
 
 # Creating a dictionary where the keys are the cyclone parameters (to save all Az, Ae... at the same time)
 variaveis = {param: [] for param in parameters}
 
 
 # Iterating in the list of dataframes, getting term by term of each case and saving in the dictionary
-for i in range(len(cyclist)):
+for i in range(len(cyclist2)):
     for param in parameters:
 
         # getting the value of the term 'termo' in the dataframe 'cyclist[i]'
-        value = cyclist[i][param]
+        value = cyclist2[i][param]
         
         # saving the value in the dictionary
         variaveis[param].append(value)
@@ -54,10 +56,12 @@ for i in range(len(cyclist)):
 
 
 # Creating two dataframes to save the PCs
-df_PC1 = cyclist[0].copy()
+df_PC1 = cyclist2[0].copy()
 df_PC1[:] = np.nan
 df_PC2 = df_PC1.copy()
 
+
+## PCA
 for tr in variaveis.keys():
 
   
@@ -65,15 +69,16 @@ for tr in variaveis.keys():
   combined_df = pd.concat(variaveis[tr], axis=1)
 
   # Normalizing the data
-  scaler = StandardScaler()
-  normalized_data = scaler.fit_transform(combined_df)
-
+  #scaler = StandardScaler()
+  #normalized_data = scaler.fit_transform(combined_df)
+  normalized_data = combined_df
   # Imputer (NaN = 0)
   imputer = SimpleImputer(missing_values=np.nan, strategy='constant', fill_value=0)
 
   # The normalized data is updated by the imputer (NaN = 0)
   final_data = imputer.fit_transform(normalized_data)
-
+  
+  #final_data = normalized_data
   # print(final_data.shape) # 7 phases, 10 cases -> for each parameter
   
   
