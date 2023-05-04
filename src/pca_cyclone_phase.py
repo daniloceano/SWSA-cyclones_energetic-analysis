@@ -14,7 +14,7 @@ path = '../periods-energetics/intense/'
 files_output = os.listdir(path)
 
 # Selecting only the files with cyclone phases
-files_use = [file for file in files_output if "_" in file]
+files_use = [file for file in files_output if "_ERA5.csv" in file]
 
 # Creating a list to save all dataframes
 cyclist= []
