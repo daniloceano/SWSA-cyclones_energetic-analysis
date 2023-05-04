@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Sep 14 17:05:29 2022
+Created on Thu May  4 00:46:26 2023
 
 @author: danilocoutodsouza
 """
-
-
 import pandas as pd
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
@@ -63,7 +61,7 @@ def MarkerSizeKe(df):
     
     return df
 
-def LorenzPhaseSpace(outname,method):
+def LorenzPhaseSpace(intensity, PC):
 
     
     plt.close('all')
@@ -71,67 +69,46 @@ def LorenzPhaseSpace(outname,method):
     plt.gcf().subplots_adjust(right=0.85)
     ax = plt.gca()
     
-    for i in ids:
-        
-        print(i)
-        outfile = glob.glob('../LEC_results/'+str(i)+'*/'+str(i)+'*.csv')[0]
-        
-        
-        # Open data
-        df = pd.read_csv(outfile)
-        df['Datetime'] = pd.to_datetime(df.Date) + pd.to_timedelta(df.Hour, unit='h')
-        
-        # Get 12H means
-        smoothed = df.groupby(pd.Grouper(key="Datetime", freq=method)).mean()
-        # Set datetime to the date range
-        starts = pd.Series(smoothed.index).dt.strftime('%Y-%m-%d %H:%M')
-        ends = pd.Series(pd.DatetimeIndex(starts) + \
-                         pd.Timedelta(hours=12)).dt.strftime('%Y-%m-%d %H:%M')
-        smoothed['Datetime'] = pd.DataFrame(starts.astype(str)+' - '+\
-                                            ends.astype(str)).values
-            
-        df = smoothed
-        
-        Ca = df['Ca']
-        Ck = df['Ck']
-        Ge = df['Ge']
-        RAe = df['Ge']+df['BAe']
-        Re = df['RKe']+df['BKe']
-        df['Rae'], df['Re'] = RAe, Re
-        
-        # Line plot
-        ax.plot(Ck,Ca,'-',c='gray',zorder=2,linewidth=3)
-        
-        # Scatter plot
-        s = MarkerSizeKe(df)['sizes']
-        # Plot limits
-        ax.set_xlim(-30,30)
-        ax.set_ylim(-3,12)
-        
-        # arrows connecting dots
-        ax.quiver(Ck[:-1], Ca[:-1],
-                  (Ck[1:].values-Ck[:-1].values),
-                  (Ca[1:].values-Ca[:-1].values),
-                  angles='xy', scale_units='xy', scale=1)
-        
-        # plot the moment of maximum intensity
-        norm = colors.TwoSlopeNorm(vmin=-7, vcenter=0, vmax=15)
-        ax.scatter(Ck.loc[s.idxmax()],Ca.loc[s.idxmax()],
-                   c='None',s=s.loc[s.idxmax()]*1.1,
-                   zorder=100,edgecolors='k', norm=norm, linewidth=3)
-        
-        # dots
-        dots = ax.scatter(Ck,Ca,c=Ge,cmap=cmocean.cm.curl,s=s,zorder=100,
-                        edgecolors='grey', norm=norm)
-        
-        
-        # Marking start and end of the system
-        ax.text(Ck[0], Ca[0],'A',
-                zorder=101,fontsize=22,horizontalalignment='center',
-                verticalalignment='center')
-        ax.text(Ck.iloc[-1], Ca.iloc[-1], 'Z',
-                zorder=101,fontsize=22,horizontalalignment='center',
-                verticalalignment='center')
+    Ca = df['Ca']
+    Ck = df['Ck']
+    Ge = df['Ge']
+    RAe = df['Ge']+df['BAe']
+    Re = df['RKe']+df['BKe']
+    df['Rae'], df['Re'] = RAe, Re
+    
+    # Line plot
+    ax.plot(Ck,Ca,'-',c='gray',zorder=2,linewidth=3)
+    
+    # Scatter plot
+    s = MarkerSizeKe(df)['sizes']
+    # Plot limits
+    ax.set_xlim(-30,30)
+    ax.set_ylim(-3,12)
+    
+    # arrows connecting dots
+    ax.quiver(Ck[:-1], Ca[:-1],
+              (Ck[1:].values-Ck[:-1].values),
+              (Ca[1:].values-Ca[:-1].values),
+              angles='xy', scale_units='xy', scale=1)
+    
+    # plot the moment of maximum intensity
+    norm = colors.TwoSlopeNorm(vmin=-7, vcenter=0, vmax=15)
+    ax.scatter(Ck.loc[s.idxmax()],Ca.loc[s.idxmax()],
+               c='None',s=s.loc[s.idxmax()]*1.1,
+               zorder=100,edgecolors='k', norm=norm, linewidth=3)
+    
+    # dots
+    dots = ax.scatter(Ck,Ca,c=Ge,cmap=cmocean.cm.curl,s=s,zorder=100,
+                    edgecolors='grey', norm=norm)
+    
+    
+    # Marking start and end of the system
+    ax.text(Ck[0], Ca[0],'A',
+            zorder=101,fontsize=22,horizontalalignment='center',
+            verticalalignment='center')
+    ax.text(Ck.iloc[-1], Ca.iloc[-1], 'Z',
+            zorder=101,fontsize=22,horizontalalignment='center',
+            verticalalignment='center')
         
     # Labels
     ax.set_xlabel('Conversion from zonal to eddy Kinetic Energy (Ck - '+r' $W\,m^{-2})$',
@@ -174,9 +151,8 @@ def LorenzPhaseSpace(outname,method):
 
     # Annotate plot
     plt.tick_params(labelsize=10)
-    system = '10 most '+outname
-    datasource = outfile.split('/')[-1].split('_')[1]
-    start, end = str(df['Datetime'][0]),str(df['Datetime'].iloc[-1]) 
+    system = '10 most '+intensity
+    datasource = 'ERA5'
     ax.text(0,1.1,'System: '+system+' - Data from: '+datasource,
             fontsize=16,c='#242424',horizontalalignment='left',
             transform=ax.transAxes)
@@ -233,25 +209,18 @@ def LorenzPhaseSpace(outname,method):
             fontsize=annotate_fs,horizontalalignment='center',c='#660066',
             verticalalignment='center', transform=ax.transAxes)
         
-    fname = '../Figures/LPS/LPS_'+outname+'_'+method+'.png'
+    fname = '../Figures/LPS/LPS-PCA_'+PC+'_'+intensity+'.png'
     plt.savefig(fname,dpi=500)
     print(fname+' created!')
 
 
 if __name__ == "__main__":
     
-    # lists = glob.glob('../raw_data/CycloneList*')
-    lists = glob.glob('../raw_data/CycloneList*Intense*')
+    lists = glob.glob('/Users/danilocoutodsouza/Documents/USP/Programs_and_scripts/SWSA-cyclones_energetic-analysis/periods-energetics/intense/PCA/*')
     for l in lists:
-        df =  pd.read_csv(l, names = ['track_id', 'dt',
-                                             'date', 'lon vor',
-                                             'lat vor', 'vor42',
-                                             'lon mslp', 'lat mslp',
-                                             'mslp', 'lon 10spd',
-                                             'lat 10spd', '10spd']) 
         
-        intensity = l.split('.')[-2].split('_')[2]
-        ids = df['track_id'].values
+        df =  pd.read_csv(l, header=[0], index_col=[0]) 
+        PC = l.split('/')[-1].split('.csv')[-0]
+        intensity = l.split('/')[-3]
     
-        for method in ['6H','12H','24H','48H']:
-            LorenzPhaseSpace(intensity, method)
+        LorenzPhaseSpace(intensity, PC)
