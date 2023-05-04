@@ -209,14 +209,14 @@ def LorenzPhaseSpace(intensity, PC):
             fontsize=annotate_fs,horizontalalignment='center',c='#660066',
             verticalalignment='center', transform=ax.transAxes)
         
-    fname = '../Figures/LPS/LPS-PCA_'+PC+'_'+intensity+'.png'
+    fname = '../figures/LPS/LPS-PCA_'+PC+'_'+intensity+'.png'
     plt.savefig(fname,dpi=500)
     print(fname+' created!')
 
 
 if __name__ == "__main__":
     
-    lists = glob.glob('/Users/danilocoutodsouza/Documents/USP/Programs_and_scripts/SWSA-cyclones_energetic-analysis/periods-energetics/intense/PCA/*')
+    lists = glob.glob('..//periods-energetics/intense/PCA/*')
     for l in lists:
         
         df =  pd.read_csv(l, header=[0], index_col=[0]) 
