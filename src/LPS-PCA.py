@@ -72,9 +72,6 @@ def LorenzPhaseSpace(intensity, PC):
     Ca = df['Ca']
     Ck = df['Ck']
     Ge = df['Ge']
-    RAe = df['Ge']+df['BAe']
-    Re = df['RKe']+df['BKe']
-    df['Rae'], df['Re'] = RAe, Re
     
     # Line plot
     ax.plot(Ck,Ca,'-',c='gray',zorder=2,linewidth=3)
@@ -216,7 +213,7 @@ def LorenzPhaseSpace(intensity, PC):
 
 if __name__ == "__main__":
     
-    lists = glob.glob('..//periods-energetics/intense/PCA/*')
+    lists = glob.glob('..//periods-energetics/intense/PCA/*dn.csv')
     for l in lists:
         
         df =  pd.read_csv(l, header=[0], index_col=[0]) 
