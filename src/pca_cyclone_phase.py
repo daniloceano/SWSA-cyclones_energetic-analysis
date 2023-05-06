@@ -7,7 +7,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.decomposition import NMF
-
+import sys
 
 # Directory where the files are saved
 path = '../periods-energetics/intense/'
@@ -40,88 +40,40 @@ for i, df in enumerate(cyclist2):
     cyclist2[i] = cyclist2[i].stack()
     cyclist2[i] = pd.DataFrame(cyclist2[i], columns=['Valor'])
     cyclist2[i].index.names = ['Fase', 'Parametro']
-    cyclist2[i] = cyclist2[i].reset_index()
+    cyclist2[i] = cyclist2[i].sort_values(by=['Parametro'])
     
+combined_df = pd.concat(cyclist2, axis=1)
+
+df_PCm1 = combined_df.copy() # Copiando o DataFrame para não alterar o original
+df_PCm1 = df_PCm1.iloc[:, :1] # Selecionando apenas a primeira coluna (Ck) para fazer DataFrame na mesma estrutura 
+df_PCm2 = df_PCm1.copy() 
 
 
+scaler = StandardScaler() # Instanciando o objeto StandardScaler
+normalized_data = scaler.fit_transform(combined_df) # Normalizando os dados
+pca = PCA(n_components=2) # Instanciando o objeto PCA com 2 componentes principais 
+pca_final = pca.fit_transform(normalized_data) # Aplicando o PCA nos dados normalizados
+# Invertendo a transformação do PCA
+pca_inv = pca.inverse_transform(pca_final) #  Desnormalizando os dados 
 
+# Desnormalizando os dados
+denormalized_data = scaler.inverse_transform(pca_inv)  # Desnormalizando os dados 
 
-# Getting all cyclone parameters (columns names)
-parameters = cyclist2[0].keys()
+# Getting the first and second principal components
+pc1 = denormalized_data[:,0]
+pc2 = denormalized_data[:,1]
 
+# Saving the PCs in the dataframes
+df_PCm1['Valor'] = pc1
+df_PCm2['Valor'] = pc2
 
-# Creating a dictionary where the keys are the cyclone parameters (to save all Az, Ae... at the same time)
-variaveis = {param: [] for param in parameters}
+df_PC1 = df_PCm1['Valor'].unstack()
+df_PC2 = df_PCm2['Valor'].unstack()
 
-
-# Iterating in the list of dataframes, getting term by term of each case and saving in the dictionary
-for i in range(len(cyclist2)):
-    for param in parameters:
-
-        # getting the value of the term 'termo' in the dataframe 'cyclist[i]'
-        value = cyclist2[i][param]
-        
-        # saving the value in the dictionary
-        variaveis[param].append(value)
-
-
-
-# Creating two dataframes to save the PCs
-df_PC1 = cyclist2[0].copy()
-df_PC1[:] = np.nan
-df_PC2 = df_PC1.copy()
-
-
-## PCA
-
-
-
-
-
-
-for tr in variaveis.keys():
-
-  
-  # Concatening all dataframes keeping the 7 phases (in this case it becomes a df with 7 lines and 240 columns [24 parameters * 10 cases])
-  combined_df = pd.concat(variaveis[tr], axis=1)
-
-  # Normalizing the data
-  scaler = StandardScaler()
-  normalized_data = scaler.fit_transform(combined_df)
-  #normalized_data = combined_df
-  # Imputer (NaN = 0)
-  imputer = SimpleImputer(missing_values=np.nan, strategy='constant', fill_value=0)
-
-  # The normalized data is updated by the imputer (NaN = 0)
-  final_data = imputer.fit_transform(normalized_data)
-  
-  #final_data = normalized_data
-  # print(final_data.shape) # 7 phases, 10 cases -> for each parameter
-
-
-  # PCA (each iteration the 'final_data' is a parameter)
-  pca = PCA(n_components=2)
-  pca_final = pca.fit_transform(final_data)
-  # Invertendo a transformação do PCA
-  pca_inv = pca.inverse_transform(pca_final)
-
-  # Desnormalizando os dados
-  denormalized_data = scaler.inverse_transform(pca_inv) 
-
-
-  # NMF 
-  #nmf = NMF(n_components=2)
-  #nmf_final = nmf.fit_transform(final_data)
-
-  # Getting the first and second principal components
-  pc1 = denormalized_data[:,0]
-  pc2 = denormalized_data[:,1]
-
-
-  # Saving the PCs in the dataframes
-  df_PC1[tr] = pc1
-  df_PC2[tr] = pc2
-
+df_PC1.index.name = None
+df_PC1.columns.name = None
+df_PC2.index.name = None
+df_PC2.columns.name = None
 
 PCA_DIR = os.path.join(path, 'PCA')
 
@@ -129,5 +81,5 @@ if not os.path.exists(PCA_DIR):
     os.makedirs(PCA_DIR)
 
 # Saving the dataframes in csv files
-df_PC1.to_csv(os.path.join(PCA_DIR, 'Pc1_3p_dn.csv'))
-df_PC2.to_csv(os.path.join(PCA_DIR, 'Pc2_3p_dn.csv'))
+df_PC1.to_csv(os.path.join(PCA_DIR, 'Pc1_m3p.csv')) # m de multivariated and 3p de 3 phases 
+df_PC2.to_csv(os.path.join(PCA_DIR, 'Pc2_m3p.csv'))  # m de multivariated and 3p de 3 phases 
