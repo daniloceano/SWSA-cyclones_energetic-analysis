@@ -38,6 +38,22 @@ for i, df in enumerate(cyclist2):
     cyclist2[i] = df.reindex(new_id)
     cyclist2[i] = cyclist2[i].loc[id_sel]
 
+################################   
+save_3phases = True
+
+if save_3phases == True:
+  PCA_DIR = os.path.join(path, 'PCA')
+
+  df_save = cyclist2[0].copy()
+  
+  for i in range(len(cyclist2)):
+    df_save = cyclist2[i].copy()
+    df_save.to_csv(os.path.join(PCA_DIR, 'ERA5_{}.csv'.format(i)))
+
+
+     
+
+sys.exit()
 
 # Getting all cyclone parameters (columns names)
 parameters = cyclist2[0].keys()
@@ -65,11 +81,13 @@ df_PC1[:] = np.nan
 df_PC2 = df_PC1.copy()
 
 
+#######################
 ## PCA
 for tr in variaveis.keys():
 
   
   # Concatening all dataframes keeping the 7 phases (in this case it becomes a df with 7 lines and 240 columns [24 parameters * 10 cases])
+  
   combined_df = pd.concat(variaveis[tr], axis=1)
 
   # Normalizing the data
@@ -109,7 +127,7 @@ for tr in variaveis.keys():
   df_PC1[tr] = pc1
   df_PC2[tr] = pc2
 
-
+sys.exit()
 PCA_DIR = os.path.join(path, 'PCA')
 
 if not os.path.exists(PCA_DIR):

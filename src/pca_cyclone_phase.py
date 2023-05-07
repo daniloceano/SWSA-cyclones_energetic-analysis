@@ -8,6 +8,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.decomposition import NMF
 import sys
+import pathlib
 
 # Directory where the files are saved
 path = '../periods-energetics/intense/'
@@ -75,11 +76,13 @@ df_PC1.columns.name = None
 df_PC2.index.name = None
 df_PC2.columns.name = None
 
-PCA_DIR = os.path.join(path, 'PCA')
+# Define o caminho do diretório
+PCA_DIR = pathlib.Path(path, 'PCA')
 
-if not os.path.exists(PCA_DIR):
-    os.makedirs(PCA_DIR)
+# Verifica se o diretório existe, caso não exista cria o diretório
+if not PCA_DIR.is_dir():
+    PCA_DIR.mkdir(parents=True, exist_ok=True)
 
-# Saving the dataframes in csv files
-df_PC1.to_csv(os.path.join(PCA_DIR, 'Pc1_m3p.csv')) # m de multivariated and 3p de 3 phases 
-df_PC2.to_csv(os.path.join(PCA_DIR, 'Pc2_m3p.csv'))  # m de multivariated and 3p de 3 phases 
+# Salvando os dataframes em arquivos CSV
+df_PC1.to_csv(PCA_DIR / 'Pc1_m3p.csv') # m de multivariated and 3p de 3 phases 
+df_PC2.to_csv(PCA_DIR / 'Pc2_m3p.csv') # m de multivariated and 3p de 3 phases 

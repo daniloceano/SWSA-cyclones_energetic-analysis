@@ -213,11 +213,17 @@ def LorenzPhaseSpace(intensity, PC):
 
 if __name__ == "__main__":
     
-    lists = glob.glob('..//periods-energetics/intense/PCA/*dn.csv')
+    lists = glob.glob('..//periods-energetics/intense/PCA/*kmeans.csv')
     for l in lists:
         
         df =  pd.read_csv(l, header=[0], index_col=[0]) 
-        PC = l.split('/')[-1].split('.csv')[-0]
+
+        #PC = l.split('/')[-1].split('.csv')[-0]  ## ORIGINAL 
+
+        # No windows precisei usar assim... 
+        PC = l.split('\\')[-1].split('.csv')[-0]
         intensity = l.split('/')[-3]
     
         LorenzPhaseSpace(intensity, PC)
+
+
