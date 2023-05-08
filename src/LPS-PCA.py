@@ -13,16 +13,14 @@ import glob
 import numpy as np
 
 
-def MarkerSizeKe(df):
+def MarkerSizeKe(Ke, ke_label):
     
     msizes = [200,400,600,800,1000]
     
     intervals = [3e5,4e5,5e5,6e5]
-    data = df['Ke']
-    title = 'Eddy Kinect\n    Energy\n(Ke - '+r' $J\,m^{-2})$'
 
     sizes = []
-    for val in data:
+    for val in Ke:
         if val <= intervals[0]:
             sizes.append(msizes[0])
         elif val > intervals[0] and val <= intervals[1]:
@@ -49,115 +47,29 @@ def MarkerSizeKe(df):
     leg = plt.legend([l1, l2, l3, l4, l5], labels, ncol=1, frameon=False,
                      fontsize=10, handlelength = 0.3, handleheight = 4,
                      borderpad = 1.5, scatteryoffsets = [0.1], framealpha = 1,
-                handletextpad=1.5, title=title,
+                handletextpad=1.5, title=ke_label,
                 scatterpoints = 1, loc = 1,
                 bbox_to_anchor=(0.73, -0.57, 0.5, 1),labelcolor = '#383838')
     leg._legend_box.align = "center"
     plt.setp(leg.get_title(), color='#383838')
     plt.setp(leg.get_title(),fontsize=12)
-    for i in range(len(leg.legendHandles)):
-        leg.legendHandles[i].set_color('#383838')
-        leg.legendHandles[i].set_edgecolor('gray')
+    for i in range(len(leg.legend_handles)):
+        leg.legend_handles[i].set_color('#383838')
+        leg.legend_handles[i].set_edgecolor('gray')
     
     return df
 
-def LorenzPhaseSpace(intensity, PC):
-
-    
-    plt.close('all')
-    fig = plt.figure(figsize=(10,10))
-    plt.gcf().subplots_adjust(right=0.85)
-    ax = plt.gca()
-    
-    Ca = df['Ca']
-    Ck = df['Ck']
-    Ge = df['Ge']
-    
-    # Line plot
-    ax.plot(Ck,Ca,'-',c='gray',zorder=2,linewidth=3)
-    
-    # Scatter plot
-    s = MarkerSizeKe(df)['sizes']
-    # Plot limits
-    ax.set_xlim(-30,30)
-    ax.set_ylim(-3,12)
-    
-    # arrows connecting dots
-    ax.quiver(Ck[:-1], Ca[:-1],
-              (Ck[1:].values-Ck[:-1].values),
-              (Ca[1:].values-Ca[:-1].values),
-              angles='xy', scale_units='xy', scale=1)
-    
-    # plot the moment of maximum intensity
-    norm = colors.TwoSlopeNorm(vmin=-7, vcenter=0, vmax=15)
-    ax.scatter(Ck.loc[s.idxmax()],Ca.loc[s.idxmax()],
-               c='None',s=s.loc[s.idxmax()]*1.1,
-               zorder=100,edgecolors='k', norm=norm, linewidth=3)
-    
-    # dots
-    dots = ax.scatter(Ck,Ca,c=Ge,cmap=cmocean.cm.curl,s=s,zorder=100,
-                    edgecolors='grey', norm=norm)
-    
-    
-    # Marking start and end of the system
-    ax.text(Ck[0], Ca[0],'A',
-            zorder=101,fontsize=22,horizontalalignment='center',
-            verticalalignment='center')
-    ax.text(Ck.iloc[-1], Ca.iloc[-1], 'Z',
-            zorder=101,fontsize=22,horizontalalignment='center',
-            verticalalignment='center')
-        
-    # Labels
-    ax.set_xlabel('Conversion from zonal to eddy Kinetic Energy (Ck - '+r' $W\,m^{-2})$',
-                  fontsize=12,labelpad=40,c='#383838')
-    ax.set_ylabel('Conversion from zonal to eddy Potential Energy (Ca - '+r' $W\,m^{-2})$',
-                  fontsize=12,labelpad=40,c='#383838')
-            
-    # Gradient lines in the center of the plot
-    alpha, offsetalpha = 0.3, 20
-    lw, c = 2.5, '#383838'
-    offsetx, offsety = 16, 4.3
-    for i in range(7):
-        ax.axhline(y=0+(i/offsetx),zorder=0+(i/5),linewidth=lw,
-                   alpha=alpha-(i/offsetalpha),c=c)
-        ax.axhline(y=0-(i/offsetx),zorder=0+(i/5),linewidth=lw,
-                   alpha=alpha-(i/offsetalpha),c=c)
-        ax.axvline(x=0+(i/offsety),zorder=0+(i/5),linewidth=lw,
-               alpha=alpha-(i/offsetalpha),c=c)
-        ax.axvline(x=0-(i/offsety),zorder=0+(i/5),linewidth=lw,
-               alpha=alpha-(i/offsetalpha),c=c)
-        # Vertical line showing when Ca is more important than Ck
-        plt.plot(np.arange(0-(i/offsety),-40-(i/offsety),-1),
-                 np.arange(0,40), c=c,zorder=1, 
-                 alpha=0.2-(i/offsetalpha*.5))
-        plt.plot(np.arange(0+(i/offsety),-40+(i/offsety),-1),
-                 np.arange(0,40), c=c,zorder=1, linewidth=lw,
-                 alpha=0.2-(i/offsetalpha*.5))
-   
-
-    # Colorbar
-    cax = fig.add_axes([ax.get_position().x1+0.01,
-                    ax.get_position().y0+0.32,0.02,ax.get_position().height/1.74])
-    cbar = plt.colorbar(dots, extend='both',cax=cax)
-    cbar.ax.set_ylabel('Generation of eddy Potential Energy (Ge - '+r' $W\,m^{-2})$',
-                   rotation=270,fontsize=12,verticalalignment='bottom',
-                   c='#383838',labelpad=40)
-    for t in cbar.ax.get_yticklabels():
-         t.set_fontsize(10) 
-        
-
-    # Annotate plot
-    plt.tick_params(labelsize=10)
+def annotate_plot(ax):
     system = '10 most '+intensity
     datasource = 'ERA5'
-    ax.text(0,1.1,'System: '+system+' - Data from: '+datasource,
+    ax.text(0,1.12,'System: '+system+' - Data from: '+datasource,
             fontsize=16,c='#242424',horizontalalignment='left',
             transform=ax.transAxes)
-    ax.text(0,1.06,'Start (A):',fontsize=14,c='#242424',
+    ax.text(0,1.07,'Start (A):',fontsize=14,c='#242424',
             horizontalalignment='left',transform=ax.transAxes)
     ax.text(0,1.025,'End (Z):',fontsize=14,c='#242424',
             horizontalalignment='left',transform=ax.transAxes)
-    ax.text(0.14,1.06,str(1979),fontsize=14,c='#242424',
+    ax.text(0.14,1.07,str(1979),fontsize=14,c='#242424',
             horizontalalignment='left',transform=ax.transAxes)
     ax.text(0.14,1.025,str(2020),fontsize=14,c='#242424',
             horizontalalignment='left',transform=ax.transAxes)
@@ -166,7 +78,7 @@ def LorenzPhaseSpace(intensity, PC):
     y_lower = 'Eddy is providing potential energy \n to the mean flow'
     x_left = 'Eddy is gaining kinetic energy \n from the mean flow'
     x_right = 'Eddy is providing kinetic energy \n to the mean flow'
-    col_lower = 'Subisidence decreases \n eddy potential energy'
+    col_lower = 'Subsidence decreases \n eddy potential energy'
     col_upper = 'Latent heat release feeds \n eddy potential energy'
     lower_left = 'Barotropic instability'
     # upper_left = 'Eddy growth by barotropic and\n baroclinic processes'
@@ -175,22 +87,22 @@ def LorenzPhaseSpace(intensity, PC):
     # upper_right = 'Gain of eddy potential energy\n via baroclinic processes'
     upper_right = 'Baroclinic instability'
         
-    ax.text(-0.08,0.12,y_lower,
+    ax.text(-0.08,-0.05,y_lower,
             rotation=90,fontsize=annotate_fs,horizontalalignment='center',c='#19616C',
             transform=ax.transAxes)
-    ax.text(-0.08,0.65,y_upper,
+    ax.text(-0.08,0.5,y_upper,
             rotation=90,fontsize=annotate_fs,horizontalalignment='center',c='#CF6D66',
             transform=ax.transAxes)
-    ax.text(0.22,-0.08,x_left,
+    ax.text(0.22,-0.12,x_left,
             fontsize=annotate_fs,horizontalalignment='center',c='#CF6D66',
             transform=ax.transAxes)
-    ax.text(0.75,-0.08,x_right,
+    ax.text(0.75,-0.12,x_right,
             fontsize=annotate_fs,horizontalalignment='center',c='#19616C',
             transform=ax.transAxes)
-    ax.text(1.13,0.51,col_lower,
+    ax.text(1.13,0.42,col_lower,
             rotation=270,fontsize=annotate_fs,horizontalalignment='center',c='#19616C'
             ,transform=ax.transAxes)
-    ax.text(1.13,0.75,col_upper,
+    ax.text(1.13,0.76,col_upper,
             rotation=270,fontsize=annotate_fs,horizontalalignment='center',c='#CF6D66',
             transform=ax.transAxes)
     ax.text(0.22,0.03,lower_left,
@@ -205,11 +117,173 @@ def LorenzPhaseSpace(intensity, PC):
     ax.text(0.75,0.97,upper_right,
             fontsize=annotate_fs,horizontalalignment='center',c='#660066',
             verticalalignment='center', transform=ax.transAxes)
+    
+def gradient_lines(ax):
+    alpha, offsetalpha = 0.3, 20
+    lw, c = 2.5, '#383838'
+    offsetx, offsety = 18, 6
+    for i in range(7):
+        ax.axhline(y=0+(i/offsetx),zorder=0+(i/5),linewidth=lw,
+                   alpha=alpha-(i/offsetalpha),c=c)
+        ax.axhline(y=0-(i/offsetx),zorder=0+(i/5),linewidth=lw,
+                   alpha=alpha-(i/offsetalpha),c=c)
+        ax.axvline(x=0+(i/offsety),zorder=0+(i/5),linewidth=lw,
+               alpha=alpha-(i/offsetalpha),c=c)
+        ax.axvline(x=0-(i/offsety),zorder=0+(i/5),linewidth=lw,
+               alpha=alpha-(i/offsetalpha),c=c)
+        # Vertical line showing when Ca is more important than Ck
+        n = 15
+        plt.plot(np.arange(0-(i/offsety),-n-(i/offsety),-1),
+                 np.arange(0,n), c=c,zorder=1, 
+                 alpha=0.2-(i/offsetalpha*.5))
+        plt.plot(np.arange(0+(i/offsety),-n+(i/offsety),-1),
+                 np.arange(0,n), c=c,zorder=1, linewidth=lw,
+                 alpha=0.2-(i/offsetalpha*.5))
         
+def limits_zoomed(ax, Ck, Ca):
+    # Get limits
+    minCk, maxCk =  min(Ck), max(Ck)
+    minCa, maxCa = min(Ca), max(Ca)
+    # Plot limits for Ck
+    if minCk < -1:
+        minLimitCk = min(Ck)+(min(Ck)*0.3)
+    else:
+        minLimitCk = -1
+    if maxCk > 3:
+        maxLimitCk = max(Ck)+(max(Ck)*0.2)
+    else:
+        maxLimitCk = 3
+    ax.set_xlim(minLimitCk,maxLimitCk)
+    # Plot limits for Ca
+    if minCa < -0.5:
+        minLimitCa = min(Ca)+(min(Ca)*0.3)
+    else:
+        minLimitCa = -0.5
+    if maxCa > 1:
+        maxLimitCa = max(Ca)+(max(Ca)*0.2)
+    else:
+        maxLimitCa = 1
+    ax.set_ylim(minLimitCa,maxLimitCa)
+
+def LorenzPhaseSpace(ax, zoom=False, **terms, ):
+    
+    Ca = terms['Ca']
+    Ck = terms['Ck']
+    Ge = terms['Ge']
+    Ke = terms['Ke']
+    
+    if zoom == False:
+        # Labels
+        ck_label = 'Conversion from zonal to eddy Kinetic Energy (Ck - '+r' $W\,m^{-2})$'
+        ca_label = 'Conversion from zonal to eddy Potential Energy (Ca - '+r' $W\,m^{-2})$'
+        ge_label = 'Generation of eddy Potential Energy (Ge - '+r' $W\,m^{-2})$'
+        ke_label = 'Eddy Kinect\n    Energy\n(Ke - '+r' $J\,m^{-2})$'
+        ax.set_xlim(-30,30)
+        ax.set_ylim(-6,12)
+        # Write physical meaning of each quadrant
+        plt.tick_params(labelsize=10)
+        annotate_plot(ax)
+        # Gradient lines in the center of the plot
+        gradient_lines(ax)
+        # limits for Ge
+        norm = colors.TwoSlopeNorm(vmin=-7, vcenter=0, vmax=15)
+        # pad for labels
+        labelpad = 40
+        
+    else:
+        # Labels
+        ck_label = 'Ck - '+r' $W\,m^{-2}$'
+        ca_label = 'Ca - '+r' $W\,m^{-2}$'
+        ge_label = 'Ge - '+r' $W\,m^{-2}$'
+        ke_label = 'Ke - '+r' $J\,m^{-2}$'
+        limits_zoomed(ax, Ck, Ca)
+        if Ge.min() < 0 and Ge.max() > 0:
+            norm = colors.TwoSlopeNorm(vmin=Ge.min(), vcenter=0, vmax=Ge.max())
+        elif Ge.max() < 0:
+            norm = colors.TwoSlopeNorm(vmin=Ge.min(), vcenter=0, vmax=1)
+        else:
+            norm =  colors.TwoSlopeNorm(vmin=-1, vcenter=0, vmax=Ge.max())
+        # pad for labels
+        labelpad = 5
+        # Lines in the center of the plot
+        c,lw,alpha = '#383838',20,0.2
+        ax.axhline(y=0,linewidth=lw,c=c,alpha=alpha,zorder=1)
+        ax.axvline(x=0,linewidth=lw,c=c,alpha=alpha,zorder=1)
+        ax.plot(range(0,-40,-1),range(0,40,1),
+                linewidth=lw/3,c=c,alpha=alpha,zorder=1)
+        
+        
+    
+    # Line plot
+    ax.plot(Ck,Ca,'-',c='gray',linewidth=3)
+    
+    # Label for eddy kinectinc energy (Ke)
+    s = MarkerSizeKe(Ke, ke_label)['sizes']
+   
+    # arrows connecting dots
+    ax.quiver(Ck[:-1], Ca[:-1],
+              (Ck[1:].values-Ck[:-1].values)*.97,
+              (Ca[1:].values-Ca[:-1].values)*.97,
+              angles='xy', scale_units='xy',
+              scale=1, color='k')
+    
+    # plot the moment of maximum intensity
+    ax.scatter(Ck.loc[s.idxmax()],Ca.loc[s.idxmax()],
+               c='None',s=s.loc[s.idxmax()]*1.1,
+               zorder=100,edgecolors='k', linewidth=3)
+    
+    # Circles representing Ck on x-axis and Ca on y-axis, while the
+    # colors represent Ge and the circle sizes, Ke.
+    dots = ax.scatter(Ck,Ca,c=Ge,cmap=cmocean.cm.curl,s=s,zorder=100,
+                    edgecolors='grey', norm=norm)
+    
+    # Marking start and end of the system
+    ax.text(Ck[0], Ca[0],'A',
+            zorder=101,fontsize=22,horizontalalignment='center',
+            verticalalignment='center')
+    ax.text(Ck.iloc[-1], Ca.iloc[-1], 'Z',
+            zorder=101,fontsize=22,horizontalalignment='center',
+            verticalalignment='center')
+
+    # Colorbar
+    cax = ax.inset_axes([ax.get_position().x1+0.18,
+                    ax.get_position().y0+0.35,0.02,ax.get_position().height/1.5])
+    cbar = plt.colorbar(dots, extend='both',cax=cax)
+    
+    # Write labels
+    ax.set_xlabel(ck_label, fontsize=10,labelpad=labelpad,c='#383838')
+    ax.set_ylabel(ca_label, fontsize=12,labelpad=labelpad,c='#383838')
+    cbar.ax.set_ylabel(ge_label, rotation=270,fontsize=11,
+                       verticalalignment='bottom', c='#383838',
+                       labelpad=labelpad, y=0.59)
+    for t in cbar.ax.get_yticklabels():
+         t.set_fontsize(10) 
+    
+    plt.subplots_adjust(right=0.85, bottom=0.15)
+        
+
+def make_figure(df, intensity, PC):
+    
+
+    terms = {'Ca': df['Ca'], 'Ck': df['Ck'], 'Ge': df['Ge'], 'Ke': df['Ke']}
+    
+    plt.close('all')
+    plt.figure(figsize=(10,15))
+    plt.gcf().subplots_adjust(right=0.85)
+    ax = plt.gca()
+    LorenzPhaseSpace(ax, **terms)
     fname = '../figures/LPS/LPS-PCA_'+PC+'_'+intensity+'.png'
     plt.savefig(fname,dpi=500)
     print(fname+' created!')
-
+    
+    plt.close('all')
+    plt.figure(figsize=(10,15))
+    plt.gcf().subplots_adjust(right=0.85)
+    ax = plt.gca()
+    LorenzPhaseSpace(ax, zoom=True, **terms)
+    fname = '../figures/LPS/LPS-PCA_'+PC+'_zoom_'+intensity+'.png'
+    plt.savefig(fname,dpi=500)
+    print(fname+' created!')
 
 if __name__ == "__main__":
     
@@ -220,4 +294,5 @@ if __name__ == "__main__":
         PC = l.split('/')[-1].split('.csv')[-0]
         intensity = l.split('/')[-3]
     
-        LorenzPhaseSpace(intensity, PC)
+        make_figure(df, intensity, PC)
+        
