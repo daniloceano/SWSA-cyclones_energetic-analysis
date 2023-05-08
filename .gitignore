@@ -5,8 +5,6 @@ met_data/
 met_data_old/
 periods-energetics/intense/PCA/Pc2_3p.csv
 periods-energetics/intense/PCA/Pc1_3p.csv
-periods-energetics/intense/PCA/Pc2_3p_dn.csv
-periods-energetics/intense/PCA/Pc1_3p_dn.csv
 LEC_results/19820684_ERA5_track-15x15/Figures/LEC/LEC_Decay.png
 LEC_results/19820684_ERA5_track-15x15/Figures/LEC/LEC_Mature.png
 periods-energetics/intense/PCA/ERA5_0.csv
@@ -35,5 +33,5 @@ figures/LPS/LPS-PCA_ERA5_7_periods-energetics.png
 figures/LPS/LPS-PCA_ERA5_8_periods-energetics.png
 figures/LPS/LPS-PCA_ERA5_9_periods-energetics.png
 src/pca_cyclone_phase.py
-src/LPS-PCA.py
 src/pca_mle.py
+

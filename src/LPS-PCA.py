@@ -218,10 +218,10 @@ if __name__ == "__main__":
         
         df =  pd.read_csv(l, header=[0], index_col=[0]) 
 
-        #PC = l.split('/')[-1].split('.csv')[-0]  ## ORIGINAL 
+        PC = l.split('/')[-1].split('.csv')[-0]  ## ORIGINAL 
 
         # No windows precisei usar assim... 
-        PC = l.split('\\')[-1].split('.csv')[-0]
+        #PC = l.split('\\')[-1].split('.csv')[-0]
         intensity = l.split('/')[-3]
     
         LorenzPhaseSpace(intensity, PC)
