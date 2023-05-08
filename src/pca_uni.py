@@ -53,7 +53,7 @@ if save_3phases == True:
 
      
 
-sys.exit()
+
 
 # Getting all cyclone parameters (columns names)
 parameters = cyclist2[0].keys()
@@ -79,6 +79,7 @@ for i in range(len(cyclist2)):
 df_PC1 = cyclist2[0].copy()
 df_PC1[:] = np.nan
 df_PC2 = df_PC1.copy()
+df_PC3 = df_PC1.copy()
 
 
 #######################
@@ -105,7 +106,7 @@ for tr in variaveis.keys():
 
 
   # PCA (each iteration the 'final_data' is a parameter)
-  pca = PCA(n_components=2)
+  pca = PCA(n_components=3)
   pca_final = pca.fit_transform(final_data)
   # Invertendo a transformação do PCA
   pca_inv = pca.inverse_transform(pca_final)
@@ -121,18 +122,20 @@ for tr in variaveis.keys():
   # Getting the first and second principal components
   pc1 = denormalized_data[:,0]
   pc2 = denormalized_data[:,1]
-
+  pc3 = denormalized_data[:,2]
 
   # Saving the PCs in the dataframes
   df_PC1[tr] = pc1
   df_PC2[tr] = pc2
+  df_PC3[tr] = pc3
 
-sys.exit()
+
 PCA_DIR = os.path.join(path, 'PCA')
 
 if not os.path.exists(PCA_DIR):
     os.makedirs(PCA_DIR)
 
 # Saving the dataframes in csv files
-df_PC1.to_csv(os.path.join(PCA_DIR, 'Pc1_3p_dn.csv'))
-df_PC2.to_csv(os.path.join(PCA_DIR, 'Pc2_3p_dn.csv'))
+df_PC1.to_csv(os.path.join(PCA_DIR, 'Pc1_3pcs.csv'))
+df_PC2.to_csv(os.path.join(PCA_DIR, 'Pc2_3pcs.csv'))
+df_PC3.to_csv(os.path.join(PCA_DIR, 'Pc3_3pcs.csv'))

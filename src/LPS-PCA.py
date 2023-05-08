@@ -213,7 +213,7 @@ def LorenzPhaseSpace(intensity, PC):
 
 if __name__ == "__main__":
     
-    lists = glob.glob('..//periods-energetics/intense/PCA/*kmeans.csv')
+    lists = glob.glob('..//periods-energetics/intense/PCA/*newtests.csv')
     for l in lists:
         
         df =  pd.read_csv(l, header=[0], index_col=[0]) 
