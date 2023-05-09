@@ -14,10 +14,20 @@ import numpy as np
 
 from LPS import LorenzPhaseSpace
 
+def create_LPS_plots(fig_title, zoom=False, **kwargs):
+        plt.close('all')
+        plt.figure(figsize=(10,10))
+        ax = plt.gca()
+        LorenzPhaseSpace(ax, zoom=zoom, **kwargs)
+        zoom_suffix = "_zoom" if zoom else ""
+        fname = f"../Figures/LPS/LPS_{fig_title}{zoom_suffix}.png"
+        with plt.rc_context({'savefig.dpi': 500}):
+                plt.savefig(fname)
+        print(f"{fname} created!")
 
 if __name__ == "__main__":
     
-    files = glob.glob('..//periods-energetics/intense/PCA/*dn.csv')
+    files = glob.glob('..//periods-energetics/intense/PCA/*3pcs.csv')
 
     for file in files:
         
@@ -29,18 +39,5 @@ if __name__ == "__main__":
                     'Ge': df['Ge'], 'Ke': df['Ke']}],
                       'title':PC,'datasource': 'ERA5'}
     
-        plt.close('all')
-        plt.figure(figsize=(10,10))
-        ax = plt.gca()
-        LorenzPhaseSpace(ax, **kwargs)
-        fname = '../figures/LPS/LPS-PCA_'+PC+'_'+intensity+'.png'
-        plt.savefig(fname,dpi=500)
-        print(fname+' created!')
-        
-        plt.close('all')
-        plt.figure(figsize=(10,10))
-        ax = plt.gca()
-        LorenzPhaseSpace(ax, zoom=True, **kwargs)
-        fname = '../figures/LPS/LPS-PCA_'+PC+'_zoom_'+intensity+'.png'
-        plt.savefig(fname,dpi=500)
-        print(fname+' created!')
+        create_LPS_plots(f"{intensity}_{PC}", zoom=False, **kwargs)
+        create_LPS_plots(f"{intensity}_{PC}", zoom=True, **kwargs)

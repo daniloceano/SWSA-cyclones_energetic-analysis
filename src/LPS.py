@@ -166,7 +166,7 @@ def limits_zoomed(ax, **kwargs):
     else:
         minLimitCk = -1
     if maxCk > 3:
-        maxLimitCk = maxCk*.8
+        maxLimitCk = maxCk*1.3
     else:
         maxLimitCk = 3
     ax.set_xlim(minLimitCk,maxLimitCk)
@@ -175,10 +175,10 @@ def limits_zoomed(ax, **kwargs):
         minLimitCa =minCa*1.3
     else:
         minLimitCa = -0.5
-    if maxCa > 1:
-        maxLimitCa = maxCa*.8
+    if maxCa > 2:
+        maxLimitCa = maxCa*1.3
     else:
-        maxLimitCa = 1
+        maxLimitCa = 2.5
     ax.set_ylim(minLimitCa,maxLimitCa)
 
 def LorenzPhaseSpace(ax, zoom=False, **kwargs):
@@ -209,12 +209,11 @@ def LorenzPhaseSpace(ax, zoom=False, **kwargs):
         ke_label = 'Ke - '+r' $J\,m^{-2}$'
         limits_zoomed(ax, **kwargs)
         minGe, maxGe =  get_min_vals('Ge', **kwargs), get_max_vals('Ge', **kwargs)
-        if minGe < 0 and maxGe > 0:
-            norm = colors.TwoSlopeNorm(vmin=minGe, vcenter=0, vmax=maxGe)
+        if minGe > 0:
+            minGe = -1
         elif maxGe < 0:
-            norm = colors.TwoSlopeNorm(vmin=minGe, vcenter=0, vmax=1)
-        else:
-            norm =  colors.TwoSlopeNorm(vmin=-1, vcenter=0, vmax=maxGe)
+            maxGe = 1
+        norm =  colors.TwoSlopeNorm(vmin=minGe, vcenter=0, vmax=maxGe)
         # pad for labels
         labelpad = 5
         # Lines in the center of the plot
