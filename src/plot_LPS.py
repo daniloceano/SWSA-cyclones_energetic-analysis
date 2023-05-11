@@ -73,7 +73,7 @@ def create_LPS_plots(fig_title, zoom=False, **kwargs):
         ax = plt.gca()
         LorenzPhaseSpace(ax, zoom=zoom, **kwargs)
         zoom_suffix = "_zoom" if zoom else ""
-        fname = f"../Figures/LPS/LPS_{fig_title}{zoom_suffix}.png"
+        fname = f"../figures/LPS/LPS_{fig_title}{zoom_suffix}.png"
         with plt.rc_context({'savefig.dpi': 500}):
                 plt.savefig(fname)
         print(f"{fname} created!")

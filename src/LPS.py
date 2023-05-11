@@ -55,9 +55,9 @@ def MarkerSizeKe(Ke, ke_label, labelsize):
     leg._legend_box.align = "center"
     plt.setp(leg.get_title(), color = '#383838')
     plt.setp(leg.get_title(),fontsize = labelsize)
-    for i in range(len(leg.legend_handles)):
-        leg.legend_handles[i].set_color('#383838')
-        leg.legend_handles[i].set_edgecolor('gray')
+    for i in range(len(leg.legendHandles)):
+        leg.legendHandles[i].set_color('#383838')
+        leg.legendHandles[i].set_edgecolor('gray')
     
     return Ke
 
