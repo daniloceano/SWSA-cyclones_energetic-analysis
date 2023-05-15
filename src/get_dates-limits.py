@@ -4,6 +4,10 @@
 Created on Mon Feb  6 15:10:42 2023
 
 @author: daniloceano
+
+Get start and end date of all systems and their corresponding maximum and minimum latitude and longitude.
+Store the results as csv files in the directory 'dates_limits'.
+
 """
 
 import pandas as pd
@@ -45,5 +49,9 @@ for csv_name in files:
     df_se = pd.DataFrame([ids, starts, ends,
                           min_lats, max_lats,
                           min_lons, max_lons]).transpose()
-    df_se.to_csv('../dates_limits/'+intensity,
-                 sep=',',index=False, header=False)
+    df_se.columns = ['track_id','start', 'end',
+                    'min_lat','max_lat',
+                    'min_lon','max_lon']
+    outfile_name = f'../dates_limits/{intensity}'
+    df_se.to_csv(outfile_name, sep=',',index=False, header=True)
+    print(f"{outfile_name} created successfully.")

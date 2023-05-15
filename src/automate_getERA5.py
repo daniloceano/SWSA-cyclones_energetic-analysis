@@ -8,6 +8,7 @@ Created on Wed Apr 26 19:40:27 2023
 
 import subprocess
 import fileinput
+import shutil
 import pandas as pd
 
 
@@ -15,17 +16,18 @@ data_dir = '../met_data/ERA5/DATA/'
 scripts_dir = '../met_data/ERA5/scripts/APIs/'
 
 with open('../dates_limits/intense', 'r') as f:
+    next(f)  # Skip the first line
     for line in f:
         
-        id, date_start, date_end, south, north, west, east = line.strip().split(',')
+        file_id, date_start, date_end, south, north, west, east = line.strip().split(',')
         
-        subprocess.call(['cp', 'GetERA5-pl.py', f'GetERA5-pl_{id}.py'])
+        shutil.copy('GetERA5-pl.py', f'GetERA5-pl_{file_id}.py')
         
         # Increase area size a little bit for avoinding data too close to boundaries
-        north = round(float(north)+10)
-        south = round(float(north)-10)
-        east = round(float(east)+10)
-        west = round(float(west)-10)
+        north = round(float(north)+30)
+        south = round(float(south)-30)
+        east = round(float(east)+30)
+        west = round(float(west)-30)
         
         # Get dates and hours as distinct variables
         day_start, hour_start = date_start.split()[0], date_start.split()[1][:2]
@@ -33,34 +35,21 @@ with open('../dates_limits/intense', 'r') as f:
         day_end, hour_end = date_end.split()[0], date_end.split()[1][:2]
         day_end_fmt = pd.to_datetime(day_end).strftime('%Y%m%d')
         
-        # Replace the 'date' field in the file with the correct date range
-        date_range = f"        'date': '{day_start_fmt}/{day_end_fmt}',"
-        for line in fileinput.input(f'GetERA5-pl_{id}.py', inplace=True):
+        # Perform replacements in the script file
+        script_file = f'GetERA5-pl_{file_id}.py'
+        outfile = f'{file_id}_ERA5.nc'
+        for line in fileinput.input(script_file, inplace=True):
             if "'date':" in line:
-                print(date_range)
-            else:
-                print(line, end='')
-         
-        # Replace the 'area' field in the file with the actual area
-        area = f"        'area': '{north}/{west}/{south}/{east}',"
-        for line in fileinput.input(f'GetERA5-pl_{id}.py', inplace=True):
-            if "'area':" in line:
-                print(area)
+                print(f"        'date': '{day_start_fmt}/{day_end_fmt}',")
+            elif "'area':" in line:
+                print(f"        'area': '{north}/{west}/{south}/{east}',")
+            elif "'ID_ERA5.nc'" in line:
+                print(f"     '{outfile}')")
             else:
                 print(line, end='')
                 
-        # Replace the 'ID' field in the file with the ID
-        output_file = f"{id}_ERA5.nc"
-        for line in fileinput.input(f'GetERA5-pl_{id}.py', inplace=True):
-            if "'ID_ERA5.nc'" in line:
-                print(f"     '{output_file}')")
-            else:
-                print(line, end='')
-                
-        cmd = [
-            'python', f'GetERA5-pl_{id}.py',
-            id, area
-        ]
+        cmd = ['python', script_file, file_id]
         subprocess.call(cmd)
         
-        subprocess.call(['mv', f'GetERA5-pl_{id}.py', scripts_dir])
+        shutil.move(script_file, scripts_dir)
+        # shutil.move(outfile, data_dir)
