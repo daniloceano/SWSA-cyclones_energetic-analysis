@@ -22,12 +22,12 @@ c.retrieve(
             '925','950','975',
             '1000'
         ],
-        'date': '19821011/19821021',
-        'area': '-6/-96/-90/68',
+        'date': '1982-10-11/1982-10-21',
+        'area': '-16/-86/-80/58',
         'time':'00/to/23/by/1',
         'variable':[
             'geopotential','vertical_velocity',
             'temperature','u_component_of_wind','v_component_of_wind'
         ]
     },
-     '19820684_ERA5.nc')
+    '19820684_ERA5.nc')

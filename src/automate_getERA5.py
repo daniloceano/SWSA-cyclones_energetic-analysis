@@ -24,16 +24,16 @@ with open('../dates_limits/intense', 'r') as f:
         shutil.copy('GetERA5-pl.py', f'GetERA5-pl_{file_id}.py')
         
         # Increase area size a little bit for avoinding data too close to boundaries
-        north = round(float(north)+30)
-        south = round(float(south)-30)
-        east = round(float(east)+30)
-        west = round(float(west)-30)
+        north = round(float(north)+20)
+        south = round(float(south)-20)
+        east = round(float(east)+20)
+        west = round(float(west)-20)
         
         # Get dates and hours as distinct variables
         day_start, hour_start = date_start.split()[0], date_start.split()[1][:2]
-        day_start_fmt = pd.to_datetime(day_start).strftime('%Y%m%d')
+        day_start_fmt = pd.to_datetime(day_start).strftime('%Y-%m-%d')
         day_end, hour_end = date_end.split()[0], date_end.split()[1][:2]
-        day_end_fmt = pd.to_datetime(day_end).strftime('%Y%m%d')
+        day_end_fmt = pd.to_datetime(day_end).strftime('%Y-%m-%d')
         
         # Perform replacements in the script file
         script_file = f'GetERA5-pl_{file_id}.py'
@@ -44,12 +44,14 @@ with open('../dates_limits/intense', 'r') as f:
             elif "'area':" in line:
                 print(f"        'area': '{north}/{west}/{south}/{east}',")
             elif "'ID_ERA5.nc'" in line:
-                print(f"     '{outfile}')")
+                print(f"    '{outfile}')")
             else:
                 print(line, end='')
                 
         cmd = ['python', script_file, file_id]
         subprocess.call(cmd)
+
+        exit()
         
-        shutil.move(script_file, scripts_dir)
-        # shutil.move(outfile, data_dir)
+        shutil.move(script_file, scripts_dir, overwrite=True)
+        shutil.move(outfile, data_dir)
