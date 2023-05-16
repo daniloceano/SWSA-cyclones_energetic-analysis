@@ -10,6 +10,7 @@ import subprocess
 import fileinput
 import shutil
 import pandas as pd
+import os 
 
 data_dir = '../met_data/ERA5/DATA/'
 scripts_dir = '../met_data/ERA5/scripts/APIs/'
@@ -52,6 +53,5 @@ with open('../dates_limits/intense', 'r') as f:
             cmd = ['python', script_file, file_id]
             subprocess.call(cmd)
 
-        
         shutil.move(script_file, scripts_dir)
         shutil.move(outfile, data_dir)
