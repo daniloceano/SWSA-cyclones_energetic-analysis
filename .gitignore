@@ -8,3 +8,4 @@ periods-energetics/intense/PCA/Pc1_3p.csv
 periods-energetics/intense/PCA/Pc2_3p_dn.csv
 periods-energetics/intense/PCA/Pc1_3p_dn.csv
 src/__pycache__/
+src/nohup.out
