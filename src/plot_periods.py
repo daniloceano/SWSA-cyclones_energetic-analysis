@@ -11,26 +11,26 @@ import pandas as pd
 import determine_periods as det
   
 
-data_dir = '../met_data/ERA5/DATA/'
+results_dir = '../LEC_results/*ERA5*'
 track_dir = '../tracks_LEC-format/intense/'
 output_directory = '../periods-energetics/figures/intense/'
 periods_outfile_path = output_directory + 'periods/'    
 periods_didatic_outfile_path = output_directory + 'periods_didactic/'
 
-for testfile in glob.glob(data_dir+'/*'):  
+for result in glob.glob(results_dir):  
     
-    fname = testfile.split('/')[-1].split('.nc')[0] 
+    fname = result.split('/')[-1].split('.nc')[0] 
     id_cyclone = fname.split('_')[0]
-    track_file = track_dir+'track_'+id_cyclone
+    track_file = glob.glob(f"{results_dir}/{fname}_track")[0]
     print('Cyclone ID:',id_cyclone)
-    print('Track file:',track_file)  
+    print('Track file:',track_file) 
+
+    det.check_create_folder(periods_outfile_path)
+    det.check_create_folder(periods_didatic_outfile_path)
 
     # Set the output file names
     periods_outfile = f"{periods_outfile_path}{id_cyclone}"
     periods_didatic_outfile = f"{periods_outfile_path}{id_cyclone}"
-
-    det.check_create_folder(periods_outfile_path)
-    det.check_create_folder(periods_didatic_outfile_path)
 
     # Read the track file and extract the vorticity data
     track = pd.read_csv(track_file, parse_dates=[0], delimiter=';', index_col=[0])
@@ -41,7 +41,7 @@ for testfile in glob.glob(data_dir+'/*'):
     periods = det.get_phases(vorticity, output_directory)
 
     # Create plots
-    det.plot_periods(vorticity, periods, periods_outfile_path)
-    det.plot_didactic(vorticity, periods, periods_didatic_outfile_path)
+    det.plot_periods(vorticity, periods, periods_outfile)
+    det.plot_didactic(vorticity, periods, periods_didatic_outfile)
         
 
