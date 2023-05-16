@@ -13,9 +13,9 @@ import determine_periods as det
 
 results_dir = '../LEC_results/*ERA5*'
 track_dir = '../tracks_LEC-format/intense/'
-output_directory = '../periods-energetics/figures/intense/'
-periods_outfile_path = output_directory + 'periods/'    
-periods_didatic_outfile_path = output_directory + 'periods_didactic/'
+output_directory = '../figures/'
+periods_outfile_path = output_directory + 'periods/intense/'    
+periods_didatic_outfile_path = output_directory + 'periods_didactic/intense/'
 
 for result in glob.glob(results_dir):  
     
