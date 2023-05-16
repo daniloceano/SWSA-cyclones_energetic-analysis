@@ -85,7 +85,8 @@ if __name__ == "__main__":
         ids = get_ids(intensity)
 
         for period in ['1H', '6H', '12H', '24H', '48H']:
-                kwargs = {'terms':[], 'title':'10 Most Intense ('+period+' means)','datasource': datasource}
+                kwargs = {'terms':[], 'title':'10 Most Intense ('+period+' means)','datasource': datasource,
+                          'start':1979, 'end': '2020'}
 
                 plt.close('all')
                 plt.figure(figsize=(10,10))
@@ -103,7 +104,7 @@ if __name__ == "__main__":
         
         # Plot all periods
         kwargs = {'terms':[], 'title':'10 Most Intense '+'(periods mean)',
-                  'datasource': datasource}
+                  'datasource': datasource, 'start':1979, 'end': '2020'}
         for first in [False, True]:
                 first_suffix = "_first" if first else ""
                 for id in ids:
