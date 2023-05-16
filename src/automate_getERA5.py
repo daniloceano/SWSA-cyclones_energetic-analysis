@@ -53,5 +53,13 @@ with open('../dates_limits/intense', 'r') as f:
             cmd = ['python', script_file, file_id]
             subprocess.call(cmd)
 
-        shutil.move(script_file, scripts_dir, copy_function=shutil.copy2, dirs_exist_ok=True)
+        # Remove existing script file if it exists in the destination directory
+        script_dest = os.path.join(scripts_dir, script_file)
+        if os.path.exists(script_dest):
+            os.remove(script_dest)
+
+        # Move the new script file to the destination directory
+        shutil.move(script_file, scripts_dir)
+
+        # Move the outfile to the data directory
         shutil.move(outfile, data_dir)
