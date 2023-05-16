@@ -61,5 +61,12 @@ with open('../dates_limits/intense', 'r') as f:
         # Move the new script file to the destination directory
         shutil.move(script_file, scripts_dir)
 
-        # Move the outfile to the data directory
-        shutil.move(outfile, data_dir)
+        # Check if outfile already exists
+        outfile_path = os.path.join(data_dir, outfile)
+        if os.path.exists(outfile_path):
+            print(f"Destination path '{outfile_path}' already exists. Overwriting the file.")
+            # Overwrite the outfile
+            shutil.move(outfile, outfile_path, copy_function=shutil.copy2)
+        else:
+            # Move the outfile to the data directory
+            shutil.move(outfile, outfile_path)
