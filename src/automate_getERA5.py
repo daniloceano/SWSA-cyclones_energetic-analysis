@@ -11,7 +11,6 @@ import fileinput
 import shutil
 import pandas as pd
 
-
 data_dir = '../met_data/ERA5/DATA/'
 scripts_dir = '../met_data/ERA5/scripts/APIs/'
 
@@ -47,10 +46,12 @@ with open('../dates_limits/intense', 'r') as f:
                 print(f"    '{outfile}')")
             else:
                 print(line, end='')
-                
-        cmd = ['python', script_file, file_id]
-        subprocess.call(cmd)
+
+        # Check if outfile already exists
+        if not os.path.exists(os.path.join(data_dir, outfile)):
+            cmd = ['python', script_file, file_id]
+            subprocess.call(cmd)
 
         
-        shutil.move(script_file, scripts_dir, overwrite=True)
+        shutil.move(script_file, scripts_dir)
         shutil.move(outfile, data_dir)
