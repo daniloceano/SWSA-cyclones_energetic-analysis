@@ -48,10 +48,9 @@ with open('../dates_limits/intense', 'r') as f:
             else:
                 print(line, end='')
 
-        # Check if outfile already exists
-        if not os.path.exists(os.path.join(data_dir, outfile)):
-            cmd = ['python', script_file, file_id]
-            subprocess.call(cmd)
+        # Download file
+        cmd = ['python', script_file, file_id]
+        subprocess.call(cmd)
 
         # Remove existing script file if it exists in the destination directory
         script_dest = os.path.join(scripts_dir, script_file)
@@ -66,6 +65,7 @@ with open('../dates_limits/intense', 'r') as f:
         if os.path.exists(outfile_path):
             print(f"Destination path '{outfile_path}' already exists. Overwriting the file.")
             # Overwrite the outfile
+            os.remove(outfile_path)
             shutil.move(outfile, outfile_path, copy_function=shutil.copy2)
         else:
             # Move the outfile to the data directory
