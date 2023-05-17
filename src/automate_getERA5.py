@@ -21,7 +21,7 @@ with open('../dates_limits/intense', 'r') as f:
         
         file_id, date_start, date_end, south, north, west, east = line.strip().split(',')
 
-        if file_id in ['20160639', '20180722']:
+        if file_id in ['20180722']: #20160639
         
             shutil.copy('GetERA5-pl.py', f'GetERA5-pl_{file_id}.py')
             
