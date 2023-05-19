@@ -57,8 +57,9 @@ with open('../dates_limits/intense', 'r') as f:
         if os.path.exists(script_dest):
             os.remove(script_dest)
 
-        # Move the new script file to the destination directory
-        shutil.move(script_file, scripts_dir)
+        # Move the new script file to the destination directory, if it exists
+        if os.path.exists(script_file):
+            shutil.move(script_file, scripts_dir)
 
         # Check if outfile already exists
         outfile_path = os.path.join(data_dir, outfile)
@@ -68,5 +69,8 @@ with open('../dates_limits/intense', 'r') as f:
             os.remove(outfile_path)
             shutil.move(outfile, outfile_path, copy_function=shutil.copy2)
         else:
-            # Move the outfile to the data directory
-            shutil.move(outfile, outfile_path)
+            # Move the outfile to the data directory if it was downloaded
+            if os.path.exists(outfile_path):
+                shutil.move(outfile, outfile_path)
+            else:
+                print(f'{outfile} not downloaded')
