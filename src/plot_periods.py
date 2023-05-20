@@ -17,7 +17,7 @@ output_directory = '../figures/'
 periods_outfile_path = output_directory + 'periods/'    
 periods_didatic_outfile_path = output_directory + 'periods_didactic/'
 
-for result in glob.glob(results_dir)[6:]:  
+for result in glob.glob(results_dir):  
     
     fname = result.split('/')[-1].split('.nc')[0] 
     id_cyclone = fname.split('_')[0]
