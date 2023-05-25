@@ -38,10 +38,10 @@ for result in glob.glob(results_dir):
     vorticity = det.array_vorticity(zeta_df)
 
     # Determine the periods
-    periods = det.get_phases(vorticity, output_directory)
+    periods_dict, df = det.get_periods(vorticity)
 
     # Create plots
-    det.plot_periods(vorticity, periods, periods_outfile)
-    det.plot_didactic(vorticity, periods, periods_didatic_outfile)
+    det.plot_all_periods(periods_dict, df, ax=None, vorticity=vorticity.zeta, periods_outfile_path=periods_outfile)
+    det.plot_didactic(periods_dict, df, vorticity, periods_didatic_outfile)
         
 
