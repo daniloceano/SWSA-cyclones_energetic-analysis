@@ -27,7 +27,7 @@ def create_LPS_plots(fig_title, zoom=False, **kwargs):
 
 if __name__ == "__main__":
     
-    files = glob.glob('..//periods-energetics/intense/PCA/*3pcs.csv')
+    files = glob.glob('..//periods-energetics/intense/PCA/*25-05.csv')
 
     for file in files:
         
@@ -37,7 +37,8 @@ if __name__ == "__main__":
 
         kwargs = {'terms':[{'Ca': df['Ca'], 'Ck': df['Ck'],
                     'Ge': df['Ge'], 'Ke': df['Ke']}],
-                      'title':PC,'datasource': 'ERA5'}
+                      'title':PC,'datasource': 'ERA5',
+                      'start': '1979', 'end': '2020'}
     
         create_LPS_plots(f"{intensity}_{PC}", zoom=False, **kwargs)
         create_LPS_plots(f"{intensity}_{PC}", zoom=True, **kwargs)
