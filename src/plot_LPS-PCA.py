@@ -27,7 +27,7 @@ def create_LPS_plots(fig_title, zoom=False, **kwargs):
 
 if __name__ == "__main__":
     
-    files = glob.glob('..//periods-energetics/intense/PCA/*25-05.csv')
+    files = glob.glob('..//periods-energetics/intense/PCA/*PC*LPS.csv')
 
     for file in files:
         
