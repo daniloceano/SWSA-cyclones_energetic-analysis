@@ -38,6 +38,7 @@ for i, df in enumerate(cyclist2):
     cyclist2[i] = df.reindex(new_id)
     cyclist2[i] = cyclist2[i].loc[id_sel]
 
+    
 
 
 
@@ -124,5 +125,5 @@ if not os.path.exists(PCA_DIR):
     os.makedirs(PCA_DIR)
 
 # Saving the dataframes in csv files
-df_PC1.to_csv(os.path.join(PCA_DIR, 'Pc1_25-05.csv'))
-df_PC2.to_csv(os.path.join(PCA_DIR, 'Pc2_25-05.csv'))
+df_PC1.to_csv(os.path.join(PCA_DIR, 'Pc1_3p_dn.csv'))
+df_PC2.to_csv(os.path.join(PCA_DIR, 'Pc2_3p_dn.csv'))
