@@ -8,7 +8,7 @@ Created on Fri Feb  3 17:17:29 2023
 
 import glob
 import pandas as pd
-import determine_periodsv2 as det
+import determine_periods as det
   
 
 results_dir = '../LEC_results/*ERA5*'
