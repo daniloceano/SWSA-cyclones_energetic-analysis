@@ -8,6 +8,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.decomposition import NMF
 
+
 # Directory where the files are saved
 path = '../periods-energetics/intense/'
 
@@ -37,11 +38,17 @@ for i, df in enumerate(cyclist2):
     cyclist2[i] = df.reindex(new_id)
     cyclist2[i] = cyclist2[i].loc[id_sel]
 
+    
+
+
+
 # Getting all cyclone parameters (columns names)
 parameters = cyclist2[0].keys()
 
+
 # Creating a dictionary where the keys are the cyclone parameters (to save all Az, Ae... at the same time)
 variaveis = {param: [] for param in parameters}
+
 
 # Iterating in the list of dataframes, getting term by term of each case and saving in the dictionary
 for i in range(len(cyclist2)):
@@ -53,14 +60,24 @@ for i in range(len(cyclist2)):
         # saving the value in the dictionary
         variaveis[param].append(value)
 
+
+
 # Creating two dataframes to save the PCs
 df_PC1 = cyclist2[0].copy()
 df_PC1[:] = np.nan
 df_PC2 = df_PC1.copy()
 
+
 ## PCA
+
+
+
+
+
+
 for tr in variaveis.keys():
 
+  
   # Concatening all dataframes keeping the 7 phases (in this case it becomes a df with 7 lines and 240 columns [24 parameters * 10 cases])
   combined_df = pd.concat(variaveis[tr], axis=1)
 
@@ -73,6 +90,10 @@ for tr in variaveis.keys():
 
   # The normalized data is updated by the imputer (NaN = 0)
   final_data = imputer.fit_transform(normalized_data)
+  
+  #final_data = normalized_data
+  # print(final_data.shape) # 7 phases, 10 cases -> for each parameter
+
 
   # PCA (each iteration the 'final_data' is a parameter)
   pca = PCA(n_components=2)
@@ -83,13 +104,20 @@ for tr in variaveis.keys():
   # Desnormalizando os dados
   denormalized_data = scaler.inverse_transform(pca_inv) 
 
+
+  # NMF 
+  #nmf = NMF(n_components=2)
+  #nmf_final = nmf.fit_transform(final_data)
+
   # Getting the first and second principal components
   pc1 = denormalized_data[:,0]
   pc2 = denormalized_data[:,1]
 
+
   # Saving the PCs in the dataframes
   df_PC1[tr] = pc1
   df_PC2[tr] = pc2
+
 
 PCA_DIR = os.path.join(path, 'PCA')
 
@@ -97,5 +125,5 @@ if not os.path.exists(PCA_DIR):
     os.makedirs(PCA_DIR)
 
 # Saving the dataframes in csv files
-df_PC1.to_csv(os.path.join(PCA_DIR, 'PC1-LPS.csv'))
-df_PC2.to_csv(os.path.join(PCA_DIR, 'PC2-LPS.csv'))
+df_PC1.to_csv(os.path.join(PCA_DIR, 'Pc1_3p_dn.csv'))
+df_PC2.to_csv(os.path.join(PCA_DIR, 'Pc2_3p_dn.csv'))
