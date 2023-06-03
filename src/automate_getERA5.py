@@ -15,7 +15,9 @@ import os
 data_dir = '../met_data/ERA5/DATA/'
 scripts_dir = '../met_data/ERA5/scripts/APIs/'
 
-with open('../dates_limits/intense', 'r') as f:
+intensity = 'moda'
+
+with open(f'../dates_limits/{intensity}', 'r') as f:
     next(f)  # Skip the first line
     for line in f:
         
@@ -37,7 +39,7 @@ with open('../dates_limits/intense', 'r') as f:
         
         # Perform replacements in the script file
         script_file = f'GetERA5-pl_{file_id}.py'
-        outfile = f'{file_id}_ERA5.nc'
+        outfile = f'{intensity}-{file_id}_ERA5.nc'
         for line in fileinput.input(script_file, inplace=True):
             if "'date':" in line:
                 print(f"        'date': '{day_start_fmt}/{day_end_fmt}',")
