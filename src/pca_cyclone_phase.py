@@ -8,8 +8,9 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.decomposition import NMF
 
+intensity = 'moda'
 # Directory where the files are saved
-path = '../periods-energetics/intense/'
+path = f'../periods-energetics/{intensity}/'
 
 # Getting all files in the directory
 files_output = os.listdir(path)

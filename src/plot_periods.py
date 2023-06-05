@@ -11,36 +11,40 @@ import pandas as pd
 import determine_periods as det
   
 
-results_dir = '../LEC_results-moda/*ERA5*'
+intensities = ['10MostIntense', 'moda']
 output_directory = '../figures/'
 periods_outfile_path = output_directory + 'periods/'    
 periods_didatic_outfile_path = output_directory + 'periods_didactic/'
 
-for result in glob.glob(results_dir):  
-    
-    fname = result.split('/')[-1].split('.nc')[0] 
-    id_cyclone = fname.split('_')[0]
-    track_file = glob.glob(f"{results_dir}/{fname}_track")[0]
-    print('Cyclone ID:',id_cyclone)
-    print('Track file:',track_file) 
+for intensity in intensities:
 
-    det.check_create_folder(periods_outfile_path)
-    det.check_create_folder(periods_didatic_outfile_path)
+    print('Processing intensity %s' % intensity)
 
-    # Set the output file names
-    periods_outfile = f"{periods_outfile_path}{id_cyclone}"
-    periods_didatic_outfile = f"{periods_didatic_outfile_path}{id_cyclone}"
+    results_dir = f'../LEC_results-{intensity}/*ERA5*'
 
-    # Read the track file and extract the vorticity data
-    track = pd.read_csv(track_file, parse_dates=[0], delimiter=';', index_col=[0])
-    zeta_df = pd.DataFrame(track['min_zeta_850'].rename('zeta'))        
-    vorticity = det.array_vorticity(zeta_df)
-
-    # Determine the periods
-    periods_dict, df = det.get_periods(vorticity)
-
-    # Create plots
-    det.plot_all_periods(periods_dict, df, ax=None, vorticity=vorticity.zeta, periods_outfile_path=periods_outfile)
-    det.plot_didactic(periods_dict, df, vorticity, periods_didatic_outfile)
+    for result in glob.glob(results_dir):  
         
+        fname = result.split('/')[-1].split('.nc')[0] 
+        id_cyclone = fname.split('_')[0]
+        track_file = glob.glob(f"{results_dir}/{fname}_track")[0]
+        print('Cyclone ID:',id_cyclone)
+        print('Track file:',track_file) 
 
+        det.check_create_folder(periods_outfile_path)
+        det.check_create_folder(periods_didatic_outfile_path)
+
+        # Set the output file names
+        periods_outfile = f"{periods_outfile_path}{id_cyclone}"
+        periods_didatic_outfile = f"{periods_didatic_outfile_path}{id_cyclone}"
+
+        # Read the track file and extract the vorticity data
+        track = pd.read_csv(track_file, parse_dates=[0], delimiter=';', index_col=[0])
+        zeta_df = pd.DataFrame(track['min_zeta_850'].rename('zeta'))        
+        vorticity = det.array_vorticity(zeta_df)
+
+        # Determine the periods
+        periods_dict, df = det.get_periods(vorticity)
+
+        # Create plots
+        det.plot_all_periods(periods_dict, df, ax=None, vorticity=vorticity.zeta, periods_outfile_path=periods_outfile)
+        det.plot_didactic(periods_dict, df, vorticity, periods_didatic_outfile)

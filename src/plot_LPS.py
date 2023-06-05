@@ -8,14 +8,11 @@ Created on Wed Sep 14 17:05:29 2022
 
 
 import pandas as pd
-import matplotlib.colors as colors
 import matplotlib.pyplot as plt
-import cmocean
 import glob
-import numpy as np
 
 from LPS import LorenzPhaseSpace
-             
+from determine_periods import check_create_folder
 
 def get_ids(intensity):
         list = glob.glob('../raw_data/CycloneList_*'+intensity+'*')[0]
@@ -28,8 +25,8 @@ def get_ids(intensity):
         ids = pd.unique(df['track_id'])
         return ids
 
-def get_id_data(id):
-        outfile = glob.glob('../LEC_results/'+str(id)+'*ERA*/'+str(id)+'*ERA5*.csv')[0]
+def get_id_data(id, intensity):
+        outfile = glob.glob(f'../LEC_results-{intensity}/{intensity}-{id}*ERA*/{intensity}-{id}*ERA5*.csv')[0]
         df = pd.read_csv(outfile, index_col=[0])
         df['Datetime'] = pd.to_datetime(df.Date) + pd.to_timedelta(df.Hour, unit='h')
         return df
@@ -44,10 +41,10 @@ def smooth_data(df, period):
                                         ends.astype(str)).values
         return smoothed
 
-def period_data(id, first=False):
-        df = get_id_data(id)
-        outfile = glob.glob('../LEC_results/'+str(id)+'*ERA*/'+str(id)+'*ERA5*.csv')[0]
-        periods_file = glob.glob('../LEC_results/'+str(id)+'*ERA*/periods.csv')[0]
+def period_data(id, intensity, first=False):
+        df = get_id_data(id, intensity)
+        outfile =  glob.glob(f'../LEC_results-{intensity}/{intensity}-{id}*ERA*/{intensity}-{id}*ERA5*.csv')[0]
+        periods_file = glob.glob(f'../LEC_results-{intensity}/{intensity}-{id}*ERA*/periods.csv')[0]
         periods = pd.read_csv(periods_file, index_col=[0])
         periods = periods.dropna()
         for i in range(len(periods)):
@@ -67,13 +64,13 @@ def period_data(id, first=False):
                 period = period.loc[['intensification', 'mature', 'decay']]
         return period 
 
-def create_LPS_plots(fig_title, zoom=False, **kwargs):
+def create_LPS_plots(fig_title, figsdir, zoom=False, **kwargs):
         plt.close('all')
         plt.figure(figsize=(10,10))
         ax = plt.gca()
         LorenzPhaseSpace(ax, zoom=zoom, **kwargs)
         zoom_suffix = "_zoom" if zoom else ""
-        fname = f"../figures/LPS/LPS_{fig_title}{zoom_suffix}.png"
+        fname = f"{figsdir}/{fig_title}{zoom_suffix}.png"
         with plt.rc_context({'savefig.dpi': 500}):
                 plt.savefig(fname)
         print(f"{fname} created!")
@@ -81,11 +78,15 @@ def create_LPS_plots(fig_title, zoom=False, **kwargs):
 if __name__ == "__main__":
     
         datasource = 'ERA5'
-        intensity = '10MostIntense'
+        intensity = 'moda'
         ids = get_ids(intensity)
 
+        figsdir = f'../figures/LPS/{intensity}'
+        check_create_folder(figsdir)
+
+
         for period in ['1H', '6H', '12H', '24H', '48H']:
-                kwargs = {'terms':[], 'title':'10 Most Intense ('+period+' means)','datasource': datasource,
+                kwargs = {'terms':[], 'title':intensity+' ('+period+' means)','datasource': datasource,
                           'start':1979, 'end': '2020'}
 
                 plt.close('all')
@@ -93,26 +94,26 @@ if __name__ == "__main__":
                 ax = plt.gca()
                 
                 for id in ids:
-                        df = get_id_data(id)
+                        df = get_id_data(id, intensity)
                         smoothed = smooth_data(df, period)
                         terms = {'Ca': smoothed['Ca'], 'Ck': smoothed['Ck'],
                                   'Ge': smoothed['Ge'], 'Ke': smoothed['Ke']}
                         kwargs['terms'].append(terms)
 
-                create_LPS_plots(f"{intensity}_{period}", zoom=False, **kwargs)
-                create_LPS_plots(f"{intensity}_{period}", zoom=True, **kwargs)
+                create_LPS_plots(f"{intensity}_{period}", figsdir, zoom=False, **kwargs)
+                create_LPS_plots(f"{intensity}_{period}", figsdir, zoom=True, **kwargs)
         
         # Plot all periods
-        kwargs = {'terms':[], 'title':'10 Most Intense '+'(periods mean)',
+        kwargs = {'terms':[], 'title':intensity+' (periods mean)',
                   'datasource': datasource, 'start':1979, 'end': '2020'}
         for first in [False, True]:
                 first_suffix = "_first" if first else ""
                 for id in ids:
-                        period = period_data(id, first=first)
+                        period = period_data(id, intensity, first=first)
                         terms = {'Ca': period['Ca'], 'Ck': period['Ck'],
                                 'Ge': period['Ge'], 'Ke': period['Ke']}
                         kwargs['terms'].append(terms)
 
         
-                create_LPS_plots(f"{intensity}_periods{first_suffix}", zoom=False, **kwargs)
-                create_LPS_plots(f"{intensity}_periods{first_suffix}", zoom=True, **kwargs)
+                create_LPS_plots(f"{intensity}_periods{first_suffix}", figsdir, zoom=False, **kwargs)
+                create_LPS_plots(f"{intensity}_periods{first_suffix}", figsdir, zoom=True, **kwargs)
