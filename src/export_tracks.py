@@ -7,32 +7,30 @@ Created on Fri Sep  9 15:42:05 2022
 """
 
 import pandas as pd
-import glob
+import os
 
+for quantile in [0.9, 0.95, 0.99, 0.999]:
 
-prefix = '../raw_data/ff_*'
-files =  glob.glob(prefix)
+    for RG in range(1,4):
 
-for csv_name in files:
+        csv_name = f'../stats_tracks/BY_RG/tracks-RG{RG}_q{quantile}.csv'
+        output_dir = f'../tracks_LEC-format/BY_RG/{quantile}/RG{RG}/'
 
-    df =  pd.read_csv(csv_name, names = ['track_id', 'dt',
-                                         'date', 'lon vor',
-                                         'lat vor', 'vor42',
-                                         'lon mslp', 'lat mslp',
-                                         'mslp', 'lon 10spd',
-                                         'lat 10spd', '10spd'])
-    
-    ids = df.groupby('track_id').mean().index.values
-    
-    print(csv_name,ids)
-    
-    intensity = csv_name.split('.')[-2].split('_')[-1]
-    
-    for idi in ids:
-    
-        track = df[df['track_id']==idi][['date','lat vor', 'lon vor']]
-        track['date'] = pd.to_datetime(track.date).dt.strftime('%Y-%m-%d-%H%M')
-        track.columns = ['time','Lat','Lon']
-        
-        track.to_csv('../tracks_LEC-format/'+intensity+\
-                     '/track_'+str(idi),sep=';',index=False)
+        if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+
+        df =  pd.read_csv(csv_name, names = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42',
+                                                'lon mslp', 'lat mslp', 'mslp', 'lon 10spd',  'lat 10spd', '10spd'],
+                                                header=0)
+
+        ids = df.groupby('track_id').mean().index.values
+
+        print(csv_name,ids)
+
+        for idi in ids:
+
+            track = df[df['track_id']==idi][['date','lat vor', 'lon vor']]
+            track['date'] = pd.to_datetime(track.date).dt.strftime('%Y-%m-%d-%H%M')
+            track.columns = ['time','Lat','Lon']
+            
+            track.to_csv(f'{output_dir}/track_{idi}',sep=';',index=False)
