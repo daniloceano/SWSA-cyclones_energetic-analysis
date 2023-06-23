@@ -6,9 +6,11 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/06/22 23:58:42 by Danilo           ###   ########.fr        #
+#    Updated: 2023/06/23 00:47:37 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
+
+from functools import partial
 
 import multiprocessing
 import subprocess
@@ -18,7 +20,7 @@ import pandas as pd
 import os 
 import logging
 
-def download_ERA5(line, prefix, scripts_dir):
+def download_ERA5(args):
     """
     Downloads ERA5 data files for a given list of files and date ranges.
     
@@ -31,7 +33,9 @@ def download_ERA5(line, prefix, scripts_dir):
     data_dir (str):
       Path to the directory where the data should be saved.
     """
-            
+    
+    line, prefix, scripts_dir, src_directory, main_directory = args
+
     file_id, date_start, date_end, south, north, west, east = line.strip().split(',')
     
     shutil.copy('GetERA5-pl.py', f'GetERA5-pl_{file_id}.py')
@@ -84,7 +88,7 @@ def download_ERA5(line, prefix, scripts_dir):
 
     return outfile
 
-def find_track_file(file_id):
+def find_track_file(file_id, main_directory):
 
     # Directory containing the tracks_LEC-format
     tracks_lec_dir = os.path.join(main_directory, "tracks_LEC-format")
@@ -115,7 +119,7 @@ def run_LEC(infile, main_directory, src_directory):
     infile_name = os.path.basename(infile)
     file_id = infile_name.split("-")[1].split("_")[0]
 
-    track_file = find_track_file(file_id)
+    track_file = find_track_file(file_id, main_directory)
 
     # Copy track_file to lorenz-cycle/inputs/track
     shutil.copy(track_file, lorenz_input_track)
@@ -132,57 +136,54 @@ def run_LEC(infile, main_directory, src_directory):
     # Move back to the original directory
     os.chdir(main_directory)
 
-# Define a worker function to process each line
-def process_line(lines):
-    ERA5_file = download_ERA5(lines, prefix, scripts_dir)
+def process_line(args):
+
+    line, prefix, scripts_dir, src_directory, main_directory = args
+    
+    ERA5_file = download_ERA5(args)
     logging.info(f'{ERA5_file} download complete')
     run_LEC(ERA5_file, main_directory, src_directory)
     logging.info('LEC run complete')
     os.remove(ERA5_file)
     logging.info(f'{ERA5_file} deleted')
-
+    
 if __name__ == '__main__':
-
     # Create a pool of worker processes
-    pool = multiprocessing.Pool(processes=5)
+    with multiprocessing.Pool(processes=5) as pool:
+        # Configure logging
+        logging.basicConfig(filename='logfile-automate.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-    # Configure logging
-    logging.basicConfig(filename='logfile-automate.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+        # Save the current directory (src directory)
+        src_directory = os.getcwd()
 
+        # Get the parent directory of the main directory
+        main_directory = os.path.abspath(os.path.join(src_directory, os.pardir))
 
-    # Save the current directory (src directory)
-    src_directory = os.getcwd()
+        print("src_directory:", src_directory)
+        print("main_directory:", main_directory)
 
-    # Get the parent directory of the main directory
-    main_directory = os.path.abspath(os.path.join(src_directory, os.pardir))
+        # Directory containing the input files
+        infiles_dir = os.path.join(main_directory, "dates_limits")
 
-    print("src_directory:", src_directory)
-    print("main_directory:", main_directory)
+        # Path to the scripts directory
+        scripts_dir = os.path.join(main_directory, "met_data/ERA5/scripts/APIs/")
 
-    # Directory containing the input files
-    infiles_dir = os.path.join(main_directory, "dates_limits")
+        # Prefix for the output file names
+        prefix = "q0.999"
 
-    # Path to the scripts directory
-    scripts_dir = os.path.join(main_directory, "met_data/ERA5/scripts/APIs/")
+        # Get a list of all input files in the directory
+        infiles = [os.path.join(infiles_dir, f) for f in os.listdir(infiles_dir) if f.startswith("RG") and "-0.999" in f]
+        print(f"infiles: {infiles}")
 
-    # Prefix for the output file names
-    prefix = "q0.999"
+        # Iterate over each input file
+        for infile in infiles:
+            print(f"Processing {infile}...")
+            with open(infile, 'r') as f:
+                next(f)  # Skip the first line
+                lines = list(f)  # Create a list of lines in the file
+                process_line_partial = partial(process_line, prefix=prefix)
+                # Process each line in parallel
+                line_args = [(line, prefix, scripts_dir, src_directory, main_directory) for line in lines]
+                pool.map(process_line, line_args)
 
-    # Get a list of all input files in the directory
-    infiles = [os.path.join(infiles_dir, f) for f in os.listdir(infiles_dir) if f.startswith("RG") and "-0.999" in f]
-    print(f"infiles: {infiles}")
-
-    # Iterate over each input file
-    for infile in infiles:
-
-        print(f"Processing {infile}...")
-
-        with open(infile, 'r') as f:
-            next(f)  # Skip the first line
-
-            # Create a list of lines in the file
-            lines = list(f)
-
-            # Process each line in parallel
-            pool.map(process_line, lines)
-
+        # The worker processes will be automatically terminated when the pool context exits
