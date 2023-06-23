@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/06/23 00:47:37 by Danilo           ###   ########.fr        #
+#    Updated: 2023/06/23 00:53:17 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -130,7 +130,7 @@ def run_LEC(infile, main_directory, src_directory):
     infile_path = os.path.join(src_directory, infile)
 
     # Run program
-    cmd = ["python", "lorenz-cycle.py", infile_path, "-t", "-r", "-g", "> output.txt"]
+    cmd = ["python", "lorenz-cycle.py", infile_path, "-t", "-r", "-g"]
     subprocess.call(cmd)
 
     # Move back to the original directory
