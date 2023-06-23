@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/06/22 23:47:24 by Danilo           ###   ########.fr        #
+#    Updated: 2023/06/22 23:58:42 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -141,46 +141,48 @@ def process_line(lines):
     os.remove(ERA5_file)
     logging.info(f'{ERA5_file} deleted')
 
+if __name__ == '__main__':
 
-# Save the current directory (src directory)
-src_directory = os.getcwd()
+    # Create a pool of worker processes
+    pool = multiprocessing.Pool(processes=5)
 
-# Get the parent directory of the main directory
-main_directory = os.path.abspath(os.path.join(src_directory, os.pardir))
+    # Configure logging
+    logging.basicConfig(filename='logfile-automate.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-print("src_directory:", src_directory)
-print("main_directory:", main_directory)
 
-# Directory containing the input files
-infiles_dir = os.path.join(main_directory, "dates_limits")
+    # Save the current directory (src directory)
+    src_directory = os.getcwd()
 
-# Path to the scripts directory
-scripts_dir = os.path.join(main_directory, "met_data/ERA5/scripts/APIs/")
+    # Get the parent directory of the main directory
+    main_directory = os.path.abspath(os.path.join(src_directory, os.pardir))
 
-# Prefix for the output file names
-prefix = "q0.999"
+    print("src_directory:", src_directory)
+    print("main_directory:", main_directory)
 
-# Get a list of all input files in the directory
-infiles = [os.path.join(infiles_dir, f) for f in os.listdir(infiles_dir) if f.startswith("RG") and "-0.999" in f]
-print(f"infiles: {infiles}")
+    # Directory containing the input files
+    infiles_dir = os.path.join(main_directory, "dates_limits")
 
-# Create a pool of worker processes
-pool = multiprocessing.Pool(processes=5)
+    # Path to the scripts directory
+    scripts_dir = os.path.join(main_directory, "met_data/ERA5/scripts/APIs/")
 
-# Configure logging
-logging.basicConfig(filename='logfile-automate.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    # Prefix for the output file names
+    prefix = "q0.999"
 
-# Iterate over each input file
-for infile in infiles:
+    # Get a list of all input files in the directory
+    infiles = [os.path.join(infiles_dir, f) for f in os.listdir(infiles_dir) if f.startswith("RG") and "-0.999" in f]
+    print(f"infiles: {infiles}")
 
-    print(f"Processing {infile}...")
+    # Iterate over each input file
+    for infile in infiles:
 
-    with open(infile, 'r') as f:
-        next(f)  # Skip the first line
+        print(f"Processing {infile}...")
 
-        # Create a list of lines in the file
-        lines = list(f)
+        with open(infile, 'r') as f:
+            next(f)  # Skip the first line
 
-        # Process each line in parallel
-        pool.map(process_line, lines)
+            # Create a list of lines in the file
+            lines = list(f)
+
+            # Process each line in parallel
+            pool.map(process_line, lines)
 
