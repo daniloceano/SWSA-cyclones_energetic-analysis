@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/06/23 01:25:28 by Danilo           ###   ########.fr        #
+#    Updated: 2023/06/23 11:04:59 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -70,21 +70,25 @@ def download_ERA5(args):
     outfile_path = os.path.join(src_directory, outfile)
     if os.path.exists(outfile_path):
         print(f"Destination path '{outfile_path}' already exists. Skipping download.")
+        logging.info(f'{outfile} already exists')
     else:
         # Download the file
         cmd = ['python', script_file, file_id]
         subprocess.call(cmd)
+        logging.info(f'{outfile} download complete')
 
     # Remove existing script file if it exists in the destination directory
     script_dest = os.path.join(scripts_dir, script_file)
     if os.path.exists(script_dest):
         print(f"{script_file} already exists in {script_dest}. Removing it.")
         os.remove(script_dest)
+        logging.info(f'{script_dest} in {script_dest} deleted')
         
     # Move the new script file to the destination directory, if it exists
     if os.path.exists(script_file):
         shutil.move(script_file, scripts_dir)
         print(f"moved {script_file} to {scripts_dir}")
+        logging.info(f'{script_file} moved to {script_dest}')
 
     return outfile
 
@@ -105,6 +109,7 @@ def find_track_file(file_id, main_directory):
                 matching_file = os.path.join(root, file)
                 break
         if matching_file:
+            logging.info(f'{matching_file} found')
             break
     return matching_file
 
@@ -123,6 +128,7 @@ def run_LEC(infile, main_directory, src_directory):
 
     # Copy track_file to lorenz-cycle/inputs/track
     shutil.copy(track_file, lorenz_input_track)
+    logging.info(f'{track_file} copied to {lorenz_input_track}')
 
     # Move to the desired directory
     os.chdir(lorenz_src_dir)
@@ -140,7 +146,6 @@ def process_line(args):
     line, prefix, scripts_dir, src_directory, main_directory = args
 
     ERA5_file = download_ERA5(args)
-    logging.info(f'{ERA5_file} download complete')
 
     # Check if ERA5_file was downloaded successfully
     if ERA5_file is not None:
