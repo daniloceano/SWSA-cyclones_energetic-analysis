@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    automate_GetERA-LEC_RG.py                          :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/06/21 22:12:31 by Danilo           ###   ########.fr        #
+#    Updated: 2023/06/22 21:37:45 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -132,8 +132,8 @@ def run_LEC(infile, main_directory, src_directory):
     os.chdir(main_directory)
 
 # Define a worker function to process each line
-def process_line(line):
-    ERA5_file = download_ERA5(line, prefix, scripts_dir)
+def process_line(lines):
+    ERA5_file = download_ERA5(lines, prefix, scripts_dir)
     run_LEC(ERA5_file, main_directory, src_directory)
     os.remove(ERA5_file)
 
@@ -176,19 +176,4 @@ for infile in infiles:
 
         # Process each line in parallel
         pool.map(process_line, lines)
-
-    # print(f"Processing {infile}...")
-
-    # with open(infile, 'r') as f:
-    #     next(f)  # Skip the first line
-    #     for line in f:
-
-    #         # Download ERA5 data for the current file
-    #         ERA5_file = download_ERA5(line, prefix, scripts_dir)
-
-    #         # Run lorenz-cycle program for the downloaded file
-    #         run_LEC(ERA5_file, main_directory, src_directory)
-
-    #         # Remove the downloaded data
-    #         # os.remove(ERA5_file)
 
