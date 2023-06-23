@@ -10,3 +10,4 @@ periods-energetics/intense/PCA/Pc1_3p_dn.csv
 src/__pycache__/
 src/nohup.out
 .vscode/launch.json
+src/logfile-automate.txt
