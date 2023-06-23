@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/06/22 21:37:45 by Danilo           ###   ########.fr        #
+#    Updated: 2023/06/22 23:47:24 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,6 +16,7 @@ import fileinput
 import shutil
 import pandas as pd
 import os 
+import logging
 
 def download_ERA5(line, prefix, scripts_dir):
     """
@@ -125,7 +126,7 @@ def run_LEC(infile, main_directory, src_directory):
     infile_path = os.path.join(src_directory, infile)
 
     # Run program
-    cmd = ["python", "lorenz-cycle.py", infile_path, "-t", "-r", "-g"]
+    cmd = ["python", "lorenz-cycle.py", infile_path, "-t", "-r", "-g", "> output.txt"]
     subprocess.call(cmd)
 
     # Move back to the original directory
@@ -134,8 +135,11 @@ def run_LEC(infile, main_directory, src_directory):
 # Define a worker function to process each line
 def process_line(lines):
     ERA5_file = download_ERA5(lines, prefix, scripts_dir)
+    logging.info(f'{ERA5_file} download complete')
     run_LEC(ERA5_file, main_directory, src_directory)
+    logging.info('LEC run complete')
     os.remove(ERA5_file)
+    logging.info(f'{ERA5_file} deleted')
 
 
 # Save the current directory (src directory)
@@ -162,6 +166,9 @@ print(f"infiles: {infiles}")
 
 # Create a pool of worker processes
 pool = multiprocessing.Pool(processes=5)
+
+# Configure logging
+logging.basicConfig(filename='logfile-automate.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Iterate over each input file
 for infile in infiles:
