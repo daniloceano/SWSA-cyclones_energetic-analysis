@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/06/23 00:53:17 by Danilo           ###   ########.fr        #
+#    Updated: 2023/06/23 01:24:22 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -137,15 +137,17 @@ def run_LEC(infile, main_directory, src_directory):
     os.chdir(main_directory)
 
 def process_line(args):
-
     line, prefix, scripts_dir, src_directory, main_directory = args
-    
-    ERA5_file = download_ERA5(args)
+
+    ERA5_file = download_ERA5(line, prefix, scripts_dir)
     logging.info(f'{ERA5_file} download complete')
-    run_LEC(ERA5_file, main_directory, src_directory)
-    logging.info('LEC run complete')
-    os.remove(ERA5_file)
-    logging.info(f'{ERA5_file} deleted')
+
+    # Check if ERA5_file was downloaded successfully
+    if ERA5_file is not None:
+        run_LEC(ERA5_file, main_directory, src_directory)
+        logging.info('LEC run complete')
+        os.remove(ERA5_file)
+        logging.info(f'{ERA5_file} deleted')
     
 if __name__ == '__main__':
     # Create a pool of worker processes
