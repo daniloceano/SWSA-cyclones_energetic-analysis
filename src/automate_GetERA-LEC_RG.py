@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    automate_GetERA-LEC_RG.py                          :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
+#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/06/23 11:04:59 by Danilo           ###   ########.fr        #
+#    Updated: 2023/06/23 21:26:02 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,6 +19,8 @@ import shutil
 import pandas as pd
 import os 
 import logging
+
+testing = True
 
 def download_ERA5(args):
     """
@@ -48,8 +50,12 @@ def download_ERA5(args):
     
     # Get dates and hours as distinct variables
     day_start = date_start.split()[0]
-    day_start_fmt = pd.to_datetime(day_start).strftime('%Y-%m-%d')
-    # day_end = pd.to_datetime(day_start) + pd.Timedelta(days=1)
+
+    if testing: 
+        day_end = pd.to_datetime(day_start) + pd.Timedelta(days=1)
+    else:
+        day_start_fmt = pd.to_datetime(day_start).strftime('%Y-%m-%d')
+
     day_end = date_end.split()[0]
     day_end_fmt = pd.to_datetime(day_end).strftime('%Y-%m-%d')
     
@@ -69,26 +75,31 @@ def download_ERA5(args):
     # Check if the outfile already exists
     outfile_path = os.path.join(src_directory, outfile)
     if os.path.exists(outfile_path):
-        print(f"Destination path '{outfile_path}' already exists. Skipping download.")
-        logging.info(f'{outfile} already exists')
+        logging.info(f"Destination path '{outfile_path}' already exists. Skipping download.")
     else:
         # Download the file
+        logging.info(f"Downloading ERA5 data for file ID: {file_id}")
         cmd = ['python', script_file, file_id]
-        subprocess.call(cmd)
-        logging.info(f'{outfile} download complete')
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+
+        # Check if the file was downloaded successfully
+        if process.returncode == 0:
+            logging.info(f'{outfile} download complete')
+        else:
+            logging.error(f'Error occurred during ERA5 file download: {stderr.decode()}')
+
 
     # Remove existing script file if it exists in the destination directory
     script_dest = os.path.join(scripts_dir, script_file)
     if os.path.exists(script_dest):
-        print(f"{script_file} already exists in {script_dest}. Removing it.")
+        logging.info(f"{script_file} already exists in {script_dest}. Removing it.")
         os.remove(script_dest)
-        logging.info(f'{script_dest} in {script_dest} deleted')
         
     # Move the new script file to the destination directory, if it exists
     if os.path.exists(script_file):
         shutil.move(script_file, scripts_dir)
-        print(f"moved {script_file} to {scripts_dir}")
-        logging.info(f'{script_file} moved to {script_dest}')
+        logging.info(f"moved {script_file} to {scripts_dir}")
 
     return outfile
 
@@ -136,6 +147,7 @@ def run_LEC(infile, main_directory, src_directory):
     infile_path = os.path.join(src_directory, infile)
 
     # Run program
+    logging.info(f"Running LEC for ERA5 file: {infile}")
     cmd = ["python", "lorenz-cycle.py", infile_path, "-t", "-r", "-g"]
     subprocess.call(cmd)
 
@@ -149,48 +161,66 @@ def process_line(args):
 
     # Check if ERA5_file was downloaded successfully
     if ERA5_file is not None:
-        run_LEC(ERA5_file, main_directory, src_directory)
-        logging.info('LEC run complete')
-        os.remove(ERA5_file)
-        logging.info(f'{ERA5_file} deleted')
+        try:
+            run_LEC(ERA5_file, main_directory, src_directory)
+            logging.info('LEC run complete')
+        except Exception as e:
+            logging.error(f'Error running LEC: {e}')
+        finally:
+            os.remove(ERA5_file)
+            logging.info(f'{ERA5_file} deleted')
     
 if __name__ == '__main__':
-    # Create a pool of worker processes
-    with multiprocessing.Pool(processes=5) as pool:
-        # Configure logging
-        logging.basicConfig(filename='logfile-automate.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-        # Save the current directory (src directory)
-        src_directory = os.getcwd()
+    # Configure logging
+    logging.basicConfig(filename='logfile-automate.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-        # Get the parent directory of the main directory
-        main_directory = os.path.abspath(os.path.join(src_directory, os.pardir))
+    try:
+        logging.info("Starting the script")
 
-        print("src_directory:", src_directory)
-        print("main_directory:", main_directory)
+        # Create a pool of worker processes
+        with multiprocessing.Pool(processes=5) as pool:
+            
 
-        # Directory containing the input files
-        infiles_dir = os.path.join(main_directory, "dates_limits")
+            # Save the current directory (src directory)
+            src_directory = os.getcwd()
 
-        # Path to the scripts directory
-        scripts_dir = os.path.join(main_directory, "met_data/ERA5/scripts/APIs/")
+            # Get the parent directory of the main directory
+            main_directory = os.path.abspath(os.path.join(src_directory, os.pardir))
 
-        # Prefix for the output file names
-        prefix = "q0.999"
+            print("src_directory:", src_directory)
+            print("main_directory:", main_directory)
 
-        # Get a list of all input files in the directory
-        infiles = [os.path.join(infiles_dir, f) for f in os.listdir(infiles_dir) if f.startswith("RG") and "-0.999" in f]
-        print(f"infiles: {infiles}")
+            # Directory containing the input files
+            infiles_dir = os.path.join(main_directory, "dates_limits")
 
-        # Iterate over each input file
-        for infile in infiles:
-            print(f"Processing {infile}...")
-            with open(infile, 'r') as f:
-                next(f)  # Skip the first line
-                lines = list(f)  # Create a list of lines in the file
-                process_line_partial = partial(process_line, prefix=prefix)
-                # Process each line in parallel
-                line_args = [(line, prefix, scripts_dir, src_directory, main_directory) for line in lines]
-                pool.map(process_line, line_args)
+            # Path to the scripts directory
+            scripts_dir = os.path.join(main_directory, "met_data/ERA5/scripts/APIs/")
 
-        # The worker processes will be automatically terminated when the pool context exits
+            # Get a list of all input files in the directory
+            infiles = [os.path.join(infiles_dir, f) for f in os.listdir(infiles_dir) if f.startswith("RG") and "-0.999" in f]
+
+            # Iterate over each input file
+            for infile in infiles:
+                logging.info(f"Processing {infile}...")
+                with open(infile, 'r') as f:
+                    next(f)  # Skip the first line
+
+                    lines = list(f)[0] if testing else list(f) # Create a list of lines in the file
+
+                    # Extract the pattern from the infile name
+                    RG = infile.split("RG")[1].split("-0.999")[0]
+
+                    # Create the prefix with the pattern
+                    prefix = f"RG{RG}-q0.999" if testing else f"q0.999"
+                    
+                    process_line_partial = partial(process_line, prefix=prefix)
+                    # Process each line in parallel
+                    line_args = [(line, prefix, scripts_dir, src_directory, main_directory) for line in lines]
+                    pool.map(process_line, line_args)
+
+        logging.info("Script execution completed")
+
+    except Exception as e:
+    
+        logging.exception(f"An error occurred in the main block: {e}")
