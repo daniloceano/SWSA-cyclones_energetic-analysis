@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/06/24 20:44:50 by Danilo           ###   ########.fr        #
+#    Updated: 2023/06/24 20:58:56 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -161,7 +161,7 @@ def process_line(args):
         try:
             while not os.path.exists(ERA5_file):
                 print('waiting for ERA5 file to be downloaded...')
-                time.sleep(30)  # Wait for the file to be downloaded
+                time.sleep(60)  # Wait for the file to be downloaded
 
             if os.path.isfile(ERA5_file):
                 print(f'ERA5 file exists: {ERA5_file}')
