@@ -11,3 +11,4 @@ src/__pycache__/
 src/nohup.out
 .vscode/launch.json
 src/logfile-automate.txt
+src/GetERA5-pl_*.py

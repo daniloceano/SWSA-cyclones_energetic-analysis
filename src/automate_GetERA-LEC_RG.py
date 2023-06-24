@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/06/23 21:26:02 by Danilo           ###   ########.fr        #
+#    Updated: 2023/06/23 22:50:20 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,49 +19,16 @@ import shutil
 import pandas as pd
 import os 
 import logging
+import time
 
 testing = True
 
-def download_ERA5(args):
-    """
-    Downloads ERA5 data files for a given list of files and date ranges.
-    
-    infile (srt):
-      Path to the input file containing a list of files and date ranges.
-    prefix (str):
-      Prefix for the output file names.
-    scripts_dir (str):
-      Path to the directory where the scripts should be saved.
-    data_dir (str):
-      Path to the directory where the data should be saved.
-    """
-    
-    line, prefix, scripts_dir, src_directory, main_directory = args
-
-    file_id, date_start, date_end, south, north, west, east = line.strip().split(',')
-    
-    shutil.copy('GetERA5-pl.py', f'GetERA5-pl_{file_id}.py')
-    
-    # Increase area size a little bit for avoinding data too close to boundaries
-    north = round(float(north)+8)
-    south = round(float(south)-8)
-    east = round(float(east)+8)
-    west = round(float(west)-8)
-    
-    # Get dates and hours as distinct variables
-    day_start = date_start.split()[0]
-
-    if testing: 
-        day_end = pd.to_datetime(day_start) + pd.Timedelta(days=1)
-    else:
-        day_start_fmt = pd.to_datetime(day_start).strftime('%Y-%m-%d')
-
-    day_end = date_end.split()[0]
-    day_end_fmt = pd.to_datetime(day_end).strftime('%Y-%m-%d')
-    
-    # Perform replacements in the script file
+def copy_script_file(file_id):
     script_file = f'GetERA5-pl_{file_id}.py'
-    outfile = f'{prefix}-{file_id}_ERA5.nc'
+    shutil.copy('GetERA5-pl.py', script_file)
+    return script_file
+
+def replace_script_variables(script_file, day_start_fmt, day_end_fmt, north, west, south, east, outfile):
     for line in fileinput.input(script_file, inplace=True):
         if "'date':" in line:
             print(f"        'date': '{day_start_fmt}/{day_end_fmt}',")
@@ -72,57 +39,86 @@ def download_ERA5(args):
         else:
             print(line, end='')
 
-    # Check if the outfile already exists
+def download_ERA5_file(script_file, file_id, outfile, src_directory):
+    cmd = ['python', script_file, file_id]
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    if process.returncode == 0:
+        logging.info(f'{outfile} download complete')
+    else:
+        logging.error(f'Error occurred during ERA5 file download: {stderr.decode()}')
+
+def move_script_file(script_file, scripts_dir):
+    script_dest = os.path.join(scripts_dir, script_file)
+    if os.path.exists(script_dest):
+        os.remove(script_dest)
+    if os.path.exists(script_file):
+        shutil.move(script_file, scripts_dir)
+        logging.info(f"Moved {script_file} to {scripts_dir}")
+
+def download_ERA5(args):
+    line, prefix, scripts_dir, src_directory, main_directory = args
+    file_id, date_start, date_end, south, north, west, east = line.strip().split(',')
+
+    script_file = copy_script_file(file_id)
+
+    # Increase area size a little bit for avoiding data too close to boundaries
+    north = round(float(north) + 8)
+    south = round(float(south) - 8)
+    east = round(float(east) + 8)
+    west = round(float(west) - 8)
+
+    day_start_fmt = pd.to_datetime(date_start.split()[0]).strftime('%Y-%m-%d')
+    if testing: 
+        day_end = pd.to_datetime(date_start) + pd.Timedelta(days=1)
+    else:
+        day_end = date_end.split()[0]
+    day_end_fmt = pd.to_datetime(day_end).strftime('%Y-%m-%d')
+
+    outfile = f'{prefix}-{file_id}_ERA5.nc'
+
+    replace_script_variables(script_file, day_start_fmt, day_end_fmt, north, west, south, east, outfile)
+
     outfile_path = os.path.join(src_directory, outfile)
     if os.path.exists(outfile_path):
         logging.info(f"Destination path '{outfile_path}' already exists. Skipping download.")
     else:
-        # Download the file
         logging.info(f"Downloading ERA5 data for file ID: {file_id}")
-        cmd = ['python', script_file, file_id]
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = process.communicate()
+        download_ERA5_file(script_file, file_id, outfile, src_directory)
 
-        # Check if the file was downloaded successfully
-        if process.returncode == 0:
-            logging.info(f'{outfile} download complete')
-        else:
-            logging.error(f'Error occurred during ERA5 file download: {stderr.decode()}')
-
-
-    # Remove existing script file if it exists in the destination directory
-    script_dest = os.path.join(scripts_dir, script_file)
-    if os.path.exists(script_dest):
-        logging.info(f"{script_file} already exists in {script_dest}. Removing it.")
-        os.remove(script_dest)
-        
-    # Move the new script file to the destination directory, if it exists
-    if os.path.exists(script_file):
-        shutil.move(script_file, scripts_dir)
-        logging.info(f"moved {script_file} to {scripts_dir}")
+    move_script_file(script_file, scripts_dir)
 
     return outfile
 
-def find_track_file(file_id, main_directory):
-
+def find_track_file(file_id, main_directory, dir_prefix):
     # Directory containing the tracks_LEC-format
-    tracks_lec_dir = os.path.join(main_directory, "tracks_LEC-format")
+    tracks_lec_dir = os.path.join(main_directory, f"tracks_LEC-format/BY_RG/{dir_prefix}")
 
     # Define the file name pattern to search for
     file_name_pattern = f"track_{file_id}"
 
-    # Search for the file within the directory structure
-    matching_file = None
+    try:
+        # Search for the file within the directory structure
+        matching_file = None
 
-    for root, dirs, files in os.walk(tracks_lec_dir):
-        for file in files:
-            if file.startswith(file_name_pattern):
-                matching_file = os.path.join(root, file)
+        for root, dirs, files in os.walk(tracks_lec_dir):
+            for file in files:
+                if file.startswith(file_name_pattern):
+                    matching_file = os.path.join(root, file)
+                    break
+            if matching_file:
+                logging.info(f'{matching_file} found')
                 break
-        if matching_file:
-            logging.info(f'{matching_file} found')
-            break
-    return matching_file
+
+        if matching_file is None:
+            logging.warning(f'No matching file found for ID: {file_id}')
+
+        return matching_file
+
+    except Exception as e:
+        logging.error(f'Error occurred during file search: {e}')
+        return None
+
 
 
 def run_LEC(infile, main_directory, src_directory):
@@ -133,9 +129,10 @@ def run_LEC(infile, main_directory, src_directory):
 
     # Extract the ID from the infile name
     infile_name = os.path.basename(infile)
-    file_id = infile_name.split("-")[1].split("_")[0]
+    file_id = infile_name.split("-")[2].split("_")[0]
+    dir_prefix = infile.split("q")[1].split("-")[0]
 
-    track_file = find_track_file(file_id, main_directory)
+    track_file = find_track_file(file_id, main_directory, dir_prefix)
 
     # Copy track_file to lorenz-cycle/inputs/track
     shutil.copy(track_file, lorenz_input_track)
@@ -162,25 +159,36 @@ def process_line(args):
     # Check if ERA5_file was downloaded successfully
     if ERA5_file is not None:
         try:
-            run_LEC(ERA5_file, main_directory, src_directory)
-            logging.info('LEC run complete')
+            while not os.path.exists(ERA5_file):
+                print('waiting for ERA5 file to be downloaded...')
+                time.sleep(1)  # Wait for the file to be downloaded
+
+            if os.path.isfile(ERA5_file):
+                print(f'ERA5 file exists: {ERA5_file}')
+                run_LEC(ERA5_file, main_directory, src_directory)
+                logging.info('LEC run complete')
+            else:
+                logging.error(f'ERA5 file does not exist: {ERA5_file}')
         except Exception as e:
             logging.error(f'Error running LEC: {e}')
         finally:
             os.remove(ERA5_file)
             logging.info(f'{ERA5_file} deleted')
+    else:
+        logging.error('ERA5 file was not downloaded successfully')
     
 if __name__ == '__main__':
 
     # Configure logging
-    logging.basicConfig(filename='logfile-automate.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(filename='logfile-automate.txt', level=logging.INFO,
+                         format='%(asctime)s - %(levelname)s - %(message)s',
+                         filemode='w')
 
     try:
         logging.info("Starting the script")
 
         # Create a pool of worker processes
         with multiprocessing.Pool(processes=5) as pool:
-            
 
             # Save the current directory (src directory)
             src_directory = os.getcwd()
@@ -188,8 +196,8 @@ if __name__ == '__main__':
             # Get the parent directory of the main directory
             main_directory = os.path.abspath(os.path.join(src_directory, os.pardir))
 
-            print("src_directory:", src_directory)
-            print("main_directory:", main_directory)
+            logging.info(f"src_directory: {src_directory}")
+            logging.info(f"main_directory: {main_directory}")
 
             # Directory containing the input files
             infiles_dir = os.path.join(main_directory, "dates_limits")
@@ -202,17 +210,20 @@ if __name__ == '__main__':
 
             # Iterate over each input file
             for infile in infiles:
+                print(infile)
                 logging.info(f"Processing {infile}...")
                 with open(infile, 'r') as f:
                     next(f)  # Skip the first line
+                    
+                    lines = list(f)[1:3] if testing else list(f) # Create a list of lines in the file
 
-                    lines = list(f)[0] if testing else list(f) # Create a list of lines in the file
-
+                    print(lines)
+                    
                     # Extract the pattern from the infile name
                     RG = infile.split("RG")[1].split("-0.999")[0]
 
                     # Create the prefix with the pattern
-                    prefix = f"RG{RG}-q0.999" if testing else f"q0.999"
+                    prefix = f"test-RG{RG}-q0.999" if testing else f"RG{RG}-q0.999"
                     
                     process_line_partial = partial(process_line, prefix=prefix)
                     # Process each line in parallel
