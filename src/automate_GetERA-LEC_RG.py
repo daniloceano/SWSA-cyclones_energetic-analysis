@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    automate_GetERA-LEC_RG.py                          :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/06/23 22:50:20 by Danilo           ###   ########.fr        #
+#    Updated: 2023/06/24 20:44:50 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -129,7 +129,7 @@ def run_LEC(infile, main_directory, src_directory):
 
     # Extract the ID from the infile name
     infile_name = os.path.basename(infile)
-    file_id = infile_name.split("-")[2].split("_")[0]
+    file_id =  infile_name.split("q")[1].split("-")[1].split("_")[0]
     dir_prefix = infile.split("q")[1].split("-")[0]
 
     track_file = find_track_file(file_id, main_directory, dir_prefix)
@@ -161,7 +161,7 @@ def process_line(args):
         try:
             while not os.path.exists(ERA5_file):
                 print('waiting for ERA5 file to be downloaded...')
-                time.sleep(1)  # Wait for the file to be downloaded
+                time.sleep(30)  # Wait for the file to be downloaded
 
             if os.path.isfile(ERA5_file):
                 print(f'ERA5 file exists: {ERA5_file}')
