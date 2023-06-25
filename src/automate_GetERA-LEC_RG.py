@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/06/24 20:58:56 by Danilo           ###   ########.fr        #
+#    Updated: 2023/06/24 23:11:07 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,7 +21,7 @@ import os
 import logging
 import time
 
-testing = True
+testing = False
 
 def copy_script_file(file_id):
     script_file = f'GetERA5-pl_{file_id}.py'
@@ -158,10 +158,10 @@ def process_line(args):
 
     # Check if ERA5_file was downloaded successfully
     if ERA5_file is not None:
+        print('waiting for ERA5 file to be downloaded...')
         try:
             while not os.path.exists(ERA5_file):
-                print('waiting for ERA5 file to be downloaded...')
-                time.sleep(60)  # Wait for the file to be downloaded
+                time.sleep(1)  # Wait for the file to be downloaded
 
             if os.path.isfile(ERA5_file):
                 print(f'ERA5 file exists: {ERA5_file}')
@@ -169,6 +169,9 @@ def process_line(args):
                 logging.info('LEC run complete')
             else:
                 logging.error(f'ERA5 file does not exist: {ERA5_file}')
+                
+        except FileNotFoundError:
+            logging.error(f'ERA5 file not found: {ERA5_file}')
         except Exception as e:
             logging.error(f'Error running LEC: {e}')
         finally:
