@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/06/24 23:11:07 by Danilo           ###   ########.fr        #
+#    Updated: 2023/06/25 18:12:46 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -76,6 +76,8 @@ def download_ERA5(args):
     day_end_fmt = pd.to_datetime(day_end).strftime('%Y-%m-%d')
 
     outfile = f'{prefix}-{file_id}_ERA5.nc'
+
+    print(f'Downloading ERA5 file: {outfile}')
 
     replace_script_variables(script_file, day_start_fmt, day_end_fmt, north, west, south, east, outfile)
 
@@ -149,7 +151,7 @@ def run_LEC(infile, main_directory, src_directory):
     subprocess.call(cmd)
 
     # Move back to the original directory
-    os.chdir(main_directory)
+    os.chdir(src_directory)
 
 def process_line(args):
     line, prefix, scripts_dir, src_directory, main_directory = args
@@ -158,7 +160,6 @@ def process_line(args):
 
     # Check if ERA5_file was downloaded successfully
     if ERA5_file is not None:
-        print('waiting for ERA5 file to be downloaded...')
         try:
             while not os.path.exists(ERA5_file):
                 time.sleep(1)  # Wait for the file to be downloaded
@@ -220,7 +221,9 @@ if __name__ == '__main__':
                     
                     lines = list(f)[1:3] if testing else list(f) # Create a list of lines in the file
 
-                    print(lines)
+                    print("Systems which will be analyzed:")
+                    for line in lines:
+                        print(line)
                     
                     # Extract the pattern from the infile name
                     RG = infile.split("RG")[1].split("-0.999")[0]
