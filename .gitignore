@@ -7,9 +7,9 @@ periods-energetics/intense/PCA/Pc2_3p.csv
 periods-energetics/intense/PCA/Pc1_3p.csv
 periods-energetics/intense/PCA/Pc2_3p_dn.csv
 periods-energetics/intense/PCA/Pc1_3p_dn.csv
-src/__pycache__/
-src/nohup.out
+*/__pycache__/
+*/nohup.out
 .vscode/launch.json
-src/logfile-automate.txt
-src/GetERA5-pl_*.py
+*/logfile-automate.txt
+src*/GetERA5-pl_*.py
 nohup.out
