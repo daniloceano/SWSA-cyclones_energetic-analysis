@@ -10,6 +10,7 @@ Created on Wed Sep 14 17:05:29 2022
 import pandas as pd
 import matplotlib.pyplot as plt
 import glob
+import os
 
 from LPS import LorenzPhaseSpace
 
