@@ -15,3 +15,4 @@ src*/GetERA5-pl_*.py
 nohup.out
 src_process-tracks/.vscode/launch.json
 src_figures/.vscode/launch.json
+src_determine-patterns/.vscode/launch.json
