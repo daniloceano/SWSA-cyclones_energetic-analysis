@@ -86,12 +86,11 @@ def create_LPS_plots(fig_title, figsdir, zoom=False, **kwargs):
 if __name__ == "__main__":
     
         datasource = 'ERA5'
-        intensity = 'moda'
+        intensity = 'q0.999'
         ids = get_ids(intensity)
 
         figsdir = f'../figures/LPS/{intensity}'
         check_create_folder(figsdir)
-
 
         for period in ['1H', '6H', '12H', '24H', '48H']:
                 kwargs = {'terms':[], 'title':intensity+' ('+period+' means)','datasource': datasource,
