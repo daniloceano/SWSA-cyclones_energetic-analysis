@@ -12,7 +12,14 @@ import matplotlib.pyplot as plt
 import glob
 
 from LPS import LorenzPhaseSpace
-from determine_periods import check_create_folder
+
+def check_create_folder(DirName, verbosity=False):
+    if not os.path.exists(DirName):
+                os.makedirs(DirName)
+                print(DirName+' created')
+    else:
+        if verbosity:
+            print(DirName+' directory exists')
 
 def get_ids(intensity):
         list = glob.glob('../raw_data/CycloneList_*'+intensity+'*')[0]
