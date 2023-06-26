@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    automate_GetERA-LEC_RG.py                          :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
+#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/06/25 18:12:46 by Danilo           ###   ########.fr        #
+#    Updated: 2023/06/26 14:11:01 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -187,6 +187,8 @@ if __name__ == '__main__':
     logging.basicConfig(filename='logfile-automate.txt', level=logging.INFO,
                          format='%(asctime)s - %(levelname)s - %(message)s',
                          filemode='w')
+    
+    quantile = 0.99
 
     try:
         logging.info("Starting the script")
@@ -210,7 +212,7 @@ if __name__ == '__main__':
             scripts_dir = os.path.join(main_directory, "met_data/ERA5/scripts/APIs/")
 
             # Get a list of all input files in the directory
-            infiles = [os.path.join(infiles_dir, f) for f in os.listdir(infiles_dir) if f.startswith("RG") and "-0.999" in f]
+            infiles = [os.path.join(infiles_dir, f) for f in os.listdir(infiles_dir) if f.startswith("RG") and f"-{quantile}" in f]
 
             # Iterate over each input file
             for infile in infiles:
@@ -226,10 +228,10 @@ if __name__ == '__main__':
                         print(line)
                     
                     # Extract the pattern from the infile name
-                    RG = infile.split("RG")[1].split("-0.999")[0]
+                    RG = infile.split("RG")[1].split(f"-{quantile}")[0]
 
                     # Create the prefix with the pattern
-                    prefix = f"test-RG{RG}-q0.999" if testing else f"RG{RG}-q0.999"
+                    prefix = f"test-RG{RG}-q{quantile}" if testing else f"RG{RG}-q{quantile}"
                     
                     process_line_partial = partial(process_line, prefix=prefix)
                     # Process each line in parallel
