@@ -7,10 +7,13 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.decomposition import NMF
+import sys 
 
-intensity = 'moda'
+percentile = '0.999'
+region = 'RG3'
+
 # Directory where the files are saved
-path = f'../periods-energetics/{intensity}/'
+path = f'../periods-energetics/{percentile}/{region}/'
 
 # Getting all files in the directory
 files_output = os.listdir(path)
@@ -28,6 +31,43 @@ for case in files_use:
   dfcyc = dfcyc[columns_to_read]
   cyclist1.append(dfcyc)
 
+
+for i, df in enumerate(cyclist1):
+    fases_presentes = list(df.index)
+    decay_ocorreu = False
+    for fase in fases_presentes:
+        if fase == 'decay':
+            decay_ocorreu = True
+        elif fase == 'incipient' and decay_ocorreu:
+            # remove a fase incipient que ta bugada
+            df.drop(fase, inplace=True)
+
+            cyclist1[i] = df
+        elif fase == 'incipient 2' and decay_ocorreu:
+            df.drop(fase, inplace=True)
+
+            cyclist1[i] = df
+
+
+
+fases_possiveis = ['incipient', 'intensification', 'mature', 'decay','intensification 2', 'mature 2', 'decay 2']
+grupos = {}
+
+for df in cyclist1:
+    
+    fases_presentes = list(df.index)
+
+    chave_grupo = ''.join(['1' if fase in fases_presentes else '0' for fase in fases_possiveis])
+    
+    if chave_grupo not in grupos:
+        grupos[chave_grupo] = [df]
+    else:
+        grupos[chave_grupo].append(df)
+
+
+
+
+sys.exit()
 # List of cyclone phases
 new_id = ['incipient','intensification','mature','decay','intensification 2', 'mature 2', 'decay 2']
 id_sel = ['intensification','mature','decay']
