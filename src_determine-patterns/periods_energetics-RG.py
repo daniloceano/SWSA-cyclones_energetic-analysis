@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/26 15:02:10 by Danilo            #+#    #+#              #
-#    Updated: 2023/06/26 15:06:06 by Danilo           ###   ########.fr        #
+#    Updated: 2023/06/27 22:37:14 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,7 +15,7 @@ import glob
 from determine_periods import check_create_folder
 
 
-qauntile = 0.999
+qauntile = 0.99
 
 for RG in range(1,4):
 
