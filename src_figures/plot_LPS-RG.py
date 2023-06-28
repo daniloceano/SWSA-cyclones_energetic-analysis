@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/26 13:20:05 by Danilo            #+#    #+#              #
-#    Updated: 2023/06/26 13:40:56 by Danilo           ###   ########.fr        #
+#    Updated: 2023/06/27 22:39:39 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -73,7 +73,10 @@ def period_data(id, prefix, first=False):
         period['Datetime'] = (periods['start'].astype(str)+' - '+\
                                                 periods['end'].astype(str)).values
         if first == True:
-                period = period.loc[['intensification', 'mature', 'decay']]
+                try:
+                        period = period.loc[['intensification', 'mature', 'decay']]
+                except:
+                       pass
         return period 
 
 def create_LPS_plots(fig_title, figsdir, zoom=False, **kwargs):
@@ -90,7 +93,7 @@ def create_LPS_plots(fig_title, figsdir, zoom=False, **kwargs):
 if __name__ == "__main__":
     
         datasource = 'ERA5'
-        prefix = 'q0.999'
+        prefix = 'q0.99'
 
         for RG in range(1,4):
 
