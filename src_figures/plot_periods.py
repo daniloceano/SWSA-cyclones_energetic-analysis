@@ -11,7 +11,7 @@ import pandas as pd
 import determine_periods as det
   
 
-intensities = ['10MostIntense', 'moda']
+intensities = ['q0.99']
 output_directory = '../figures/'
 periods_outfile_path = output_directory + 'periods/'    
 periods_didatic_outfile_path = output_directory + 'periods_didactic/'
