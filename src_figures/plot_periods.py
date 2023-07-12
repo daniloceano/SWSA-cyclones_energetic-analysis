@@ -9,12 +9,12 @@ Created on Fri Feb  3 17:17:29 2023
 import glob
 import pandas as pd
 import determine_periods as det
-  
+import matplotlib.pyplot as plt
 
 intensities = ['q0.99']
 output_directory = '../figures/'
-periods_outfile_path = output_directory + 'periods/'    
-periods_didatic_outfile_path = output_directory + 'periods_didactic/'
+periods_outfile_path = output_directory + 'periods/BY_RG/'    
+periods_didatic_outfile_path = output_directory + 'periods_didactic/BY_RG/'
 
 for intensity in intensities:
 
@@ -24,6 +24,7 @@ for intensity in intensities:
 
     for result in glob.glob(results_dir):  
         
+        plt.close('all') # save memory
         fname = result.split('/')[-1].split('.nc')[0] 
         id_cyclone = fname.split('_')[0]
         track_file = glob.glob(f"{results_dir}/{fname}_track")[0]
@@ -47,4 +48,4 @@ for intensity in intensities:
 
         # Create plots
         det.plot_all_periods(periods_dict, df, ax=None, vorticity=vorticity.zeta, periods_outfile_path=periods_outfile)
-        det.plot_didactic(periods_dict, df, vorticity, periods_didatic_outfile)
+        det.plot_didactic(df, vorticity, periods_didatic_outfile)

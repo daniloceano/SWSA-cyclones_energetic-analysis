@@ -116,6 +116,8 @@ def find_mature_stage(df):
     dz_valleys = df[df['dz_peaks_valleys'] == 'valley'].index
     z_valleys = df[df['z_peaks_valleys'] == 'valley'].index
 
+    series_length = df.index[-1] - df.index[0]
+
     # Iterate over z valleys
     for z_valley in z_valleys:
         # Find the previous and next dz valleys relative to the current z valley
@@ -127,22 +129,25 @@ def find_mature_stage(df):
 
         previous_dz_valley = previous_dz_valley[-1]
 
-        # Find the next dz peak after the z valley
-        next_dz_peak = dz_peaks[dz_peaks > z_valley]
-
-        # Check if there is a next dz peak
-        if len(next_dz_peak) == 0:
-            continue
-
-        next_dz_peak = next_dz_peak[0]
+        # Find the previous and next z peaks relative to the current z valley
+        previous_z_peak = df[(df.index < z_valley) & (df['z_peaks_valleys'] == 'peak')].index.max()
+        next_z_peak = df[(df.index > z_valley) & (df['z_peaks_valleys'] == 'peak')].index.min()
 
         # Calculate the distances between z valley and the previous/next dz valleys
         distance_to_previous_dz_valley = z_valley - previous_dz_valley
-        distance_to_next_dz_peak = next_dz_peak - z_valley
+        distance_to_previous_z_peak = z_valley - previous_z_peak
+        distance_to_next_z_peak = next_z_peak - z_valley
+
+        # Check if either the previous or next z peak is within 5% of the length of z away from the valley
+        if (
+            distance_to_previous_z_peak <= 0.075 * series_length) or (
+            distance_to_next_z_peak <= 0.075 * series_length):
+            print()
+            continue
 
         # Calculate the 3/4 distances from z valley to the previous/next dz valleys
         three_fourth_previous = z_valley - (1 / 4) * distance_to_previous_dz_valley
-        three_fourth_next = z_valley + (1 / 4) * distance_to_next_dz_peak
+        three_fourth_next = z_valley + (1 / 4) * distance_to_next_z_peak
 
         # Fill the period between three_fourth_previous and three_fourth_next with 'mature'
         df.loc[three_fourth_previous:three_fourth_next, 'periods'] = 'mature'
@@ -154,13 +159,18 @@ def find_intensification_period(df):
     z_peaks = df[df['z_peaks_valleys'] == 'peak'].index
     z_valleys = df[df['z_peaks_valleys'] == 'valley'].index
 
+    length = df.index[-1] - df.index[0]
+
     # Find intensification periods between z peaks and valleys
     for z_peak in z_peaks:
         next_z_valley = z_valleys[z_valleys > z_peak].min()
         if next_z_valley is not pd.NaT:
             intensification_start = z_peak
             intensification_end = next_z_valley
-            df.loc[intensification_start:intensification_end, 'periods'] = 'intensification'
+
+            # Intensification needs to be at least 7.5% of the total series length
+            if intensification_end-intensification_start > length*0.12:
+                df.loc[intensification_start:intensification_end, 'periods'] = 'intensification'
 
     return df
 
@@ -168,6 +178,8 @@ def find_decay_period(df):
     # Find z peaks and valleys
     z_peaks = df[df['z_peaks_valleys'] == 'peak'].index
     z_valleys = df[df['z_peaks_valleys'] == 'valley'].index
+
+    length = df.index[-1] - df.index[0]
 
     # Find decay periods between z valleys and peaks
     for z_valley in z_valleys:
@@ -178,13 +190,58 @@ def find_decay_period(df):
         else:
             decay_start = z_valley
             decay_end = df.index[-1]  # Last index of the DataFrame
-        df.loc[decay_start:decay_end, 'periods'] = 'decay'
+
+        # Decay needs to be at least 12% of the total series length
+        if decay_end - decay_start > length*0.12:
+            df.loc[decay_start:decay_end, 'periods'] = 'decay'
 
     return df
 
+def find_residual_period(df):
+    mature_periods = df[df['periods'] == 'mature'].index
+    decay_periods = df[df['periods'] == 'decay'].index
+    intensification_periods = df[df['periods'] == 'intensification'].index
 
+    # Find residual periods where there is no decay stage after the mature stage
+    for mature_period in mature_periods:
+        next_decay_period = decay_periods[decay_periods > mature_period].min()
+        if next_decay_period is pd.NaT:
+            df.loc[mature_period:, 'periods'] = 'residual'
+
+    mature_periods = df[df['periods'] == 'mature'].index
+    # Find residual periods where there is no mature stage after the intensification stage
+    for intensification_period in intensification_periods:
+        next_mature_period = mature_periods[mature_periods > intensification_period].min()
+        if next_mature_period is pd.NaT:
+            df.loc[intensification_period:, 'periods'] = 'residual'
+
+    return df
 
 def find_incipient_period(df):
+
+    periods = df['periods']
+    decay_periods = df[periods == 'decay'].index
+
+    dt = df.index[1] - df.index[0]
+
+    # Find blocks of continuous indexes for 'decay' periods
+    blocks = np.split(decay_periods, np.where(np.diff(decay_periods) != dt)[0] + 1)
+
+    # Iterate over the blocks
+    for block in blocks:
+        if len(block) > 0:
+            first_index = block[0]
+
+            if first_index == df.index[0]:
+                df.loc[block, 'periods'] = 'incipient'
+
+            else:
+                prev_index = first_index - dt
+                # Check if the previous index is incipient o
+                if df.loc[prev_index, 'periods'] == 'incipient' or pd.isna(df.loc[prev_index, 'periods']):
+                    # Set the first period of the block to incipient
+                    df.loc[block, 'periods'] = 'incipient'
+    
     df['periods'].fillna('incipient', inplace=True)
     return df
 
@@ -219,12 +276,12 @@ def periods_to_dict(df):
         start = period_starts[i]
         end = period_ends[i]
 
-        # Add 6 hours to the beginning and to the end of the period as confidence intervals,
-        # except for the beginning adn the end of the series
-        if start != df.index[0]:
-            start -= pd.Timedelta(hours=6)
-        if end != df.index[0]:
-            end += pd.Timedelta(hours=6)
+        # # Add 6 hours to the beginning and to the end of the period as confidence intervals,
+        # # except for the beginning and the end of the series
+        # if start != df.index[0]:
+        #     start -= pd.Timedelta(hours=6)
+        # if end != df.index[0]:
+        #     end += pd.Timedelta(hours=6)
 
         # Check if the period name already exists in the dictionary
         if period_name in periods_dict.keys():
@@ -243,7 +300,7 @@ def plot_phase(df, phase, ax=None, show_title=True):
     df_copy = df.copy()
 
     colors_phases = {'incipient': '#65a1e6', 'intensification': '#f7b538',
-                     'mature': '#d62828', 'decay': '#9aa981'}
+                     'mature': '#d62828', 'decay': '#9aa981', 'residual': 'gray'}
 
     # Find the start and end indices of the period
     phase_starts = df_copy[(df_copy['periods'] == phase) &
@@ -383,7 +440,11 @@ def plot_peaks_valleys_series(series, ax, *peaks_valleys_series_list):
 
 
 def plot_all_periods(phases_dict, df, ax=None, vorticity=None, periods_outfile_path=None):
-    colors_phases = {'incipient': '#65a1e6', 'intensification': '#f7b538', 'mature': '#d62828', 'decay': '#9aa981'}
+    colors_phases = {'incipient': '#65a1e6',
+                      'intensification': '#f7b538',
+                        'mature': '#d62828',
+                          'decay': '#9aa981',
+                          'residual': 'gray'}
 
     # Create a new figure if ax is not provided
     if ax is None:
@@ -456,18 +517,14 @@ def get_periods(vorticity):
 
     df['periods'] = np.nan
 
-    # Intensification phase: between consecutive valleys of dz2 and zeta.
     df = find_intensification_period(df)
 
-    # Decay phase: between consecutive valleys of z and dz2.
-    # The mean dz value between consecutive peak of dz and valley of dz2 must be negtive
     df = find_decay_period(df)
 
-    # Calculate the periods# Mature stage: between consecutive valleys and peaks of dz.
-    # Valleys of dz must be negative and the phase needs to be at least 1 day long.
     df = find_mature_stage(df)
 
-    # Incipient phase: all times not classified previously
+    df = find_residual_period(df)
+
     df = find_incipient_period(df)
 
     # Remove noisy periods that are less than 3 hours long
@@ -480,7 +537,7 @@ def get_periods(vorticity):
 
     return periods_dict, df
 
-def plot_didactic(periods_dict, df, vorticity, output_directory):
+def plot_didactic(df, vorticity, output_directory):
     
     # First step: filter vorticity data
     fig = plt.figure(figsize=(10, 8))
@@ -501,42 +558,43 @@ def plot_didactic(periods_dict, df, vorticity, output_directory):
         )
     
     # Intensification phase
+    df_int = find_intensification_period(df.copy())
     ax4 = fig.add_subplot(334)
-    plot_phase(df, "intensification", ax4)
-    plot_specific_peaks_valleys(df, ax4, "z_valleys", "dz_valleys", "dz2_valleys")
+    plot_phase(df_int, "intensification", ax4)
+    plot_specific_peaks_valleys(df_int, ax4, "z_valleys", "dz_valleys", "dz2_valleys")
 
     # Decay phase
+    df_decay = find_decay_period(df.copy())
     ax5 = fig.add_subplot(335)
-    plot_phase(df, "decay", ax5)
-    plot_specific_peaks_valleys(df, ax5, "z_valleys", "dz_peaks", "dz2_valleys")
+    plot_phase(df_decay, "decay", ax5)
+    plot_specific_peaks_valleys(df_decay, ax5, "z_valleys", "dz_peaks", "dz2_valleys")
 
     # Mature phase
+    df_mature = find_mature_stage(df.copy())
     ax6 = fig.add_subplot(336)
-    plot_phase(df, "mature", ax6)
-    plot_specific_peaks_valleys(df, ax6, "dz_valleys", "dz_peaks", )
+    plot_phase(df_mature, "mature", ax6)
+    plot_specific_peaks_valleys(df_mature, ax6, "dz_valleys", "dz_peaks")
 
-    # Put everything together
+    # Residual stage
     ax7 = fig.add_subplot(337)
-    plot_phase(df, "intensification", ax7, show_title=False)
-    plot_phase(df, "mature", ax7, show_title=False)
-    plot_phase(df, "decay", ax7, show_title=False)
-    ax7.set_title("combine everythng")
-    ax7.title.set_position([0.55, 1.05])
+    plot_phase(df, "residual", ax7)
 
     # Incipient phase
     ax8 = fig.add_subplot(338)
-    plot_phase(df, "intensification", ax8, show_title=False)
-    plot_phase(df, "mature", ax8, show_title=False)
-    plot_phase(df, "decay", ax8, show_title=False)
     plot_phase(df, "incipient", ax8, show_title=False)
     ax8.set_title("add incipient phase")
     ax8.title.set_position([0.55, 1.05])
 
-    # Post processing of periods
+    # Put everything together
     ax9 = fig.add_subplot(339)
-    plot_all_periods(periods_dict, df, ax9)
-    ax9.set_title("add buffer times (6h)")
+    plot_phase(df, "incipient", ax9, show_title=False)
+    plot_phase(df, "intensification", ax9, show_title=False)
+    plot_phase(df, "mature", ax9, show_title=False)
+    plot_phase(df, "decay", ax9, show_title=False)
+    plot_phase(df, "residual", ax9)
+    ax9.set_title("combine everythng")
     ax9.title.set_position([0.55, 1.05])
+
 
     # Set y-axis labels in scientific notation (power notation) and change date format to "%m%d"
     for ax in [ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8, ax9]:
@@ -580,13 +638,13 @@ def determine_periods(track_file, output_directory):
 
     # Create plots
     plot_all_periods(periods_dict, df, ax=None, vorticity=vorticity.zeta, periods_outfile_path=periods_outfile_path)
-    plot_didactic(periods_dict, df, vorticity, periods_didatic_outfile_path)
+    plot_didactic(df, vorticity, periods_didatic_outfile_path)
     export_periods_to_csv(periods_dict, periods_outfile_path)
     
 
 # Testing #
 if __name__ == "__main__":
 
-    track_file = '/home/daniloceano/Documents/Programs_and_scripts/SWSA-cyclones_energetic-analysis/LEC_results-q0.99/RG3-q0.99-20080445_ERA5_track-15x15/RG3-q0.99-20080445_ERA5_track-15x15_track'
+    track_file = '/home/daniloceano/Documents/Programs_and_scripts/SWSA-cyclones_energetic-analysis/LEC_results-q0.99/RG1-q0.99-20000415_ERA5_track-15x15/RG1-q0.99-20000415_ERA5_track-15x15_track'
     output_directory = '/home/daniloceano/Documents/Programs_and_scripts/SWSA-cyclones_energetic-analysis/src_figures/'
     determine_periods(track_file, output_directory)
