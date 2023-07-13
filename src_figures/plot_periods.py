@@ -8,7 +8,7 @@ Created on Fri Feb  3 17:17:29 2023
 
 import glob
 import pandas as pd
-import determine_periodsv2 as det
+import determine_periodv2 as det
 import matplotlib.pyplot as plt
 
 intensities = ['q0.99']

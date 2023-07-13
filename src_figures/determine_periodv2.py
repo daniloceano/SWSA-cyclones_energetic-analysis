@@ -1,15 +1,12 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    periods-cyclone.py                                 :+:      :+:    :+:    #
+#    determine_periodv2.py                              :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: danilocs <danilocs@student.42.fr>          +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/05/19 19:06:47 by danilocs          #+#    #+#              #
-#    Updated: 2023/07/12 20:11:24 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/13 00:24:56 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -117,6 +114,7 @@ def find_mature_stage(df):
     z_valleys = df[df['z_peaks_valleys'] == 'valley'].index
 
     series_length = df.index[-1] - df.index[0]
+    dt = df.index[1] - df.index[0]
 
     # Iterate over z valleys
     for z_valley in z_valleys:
@@ -154,6 +152,15 @@ def find_mature_stage(df):
             # Fill the period between three_fourth_previous and three_fourth_next with 'mature'
             df.loc[three_fourth_previous:three_fourth_next, 'periods'] = 'mature'
 
+    # Check if all mature stages are preceeded by an intensification
+    mature_periods = df[df['periods'] == 'mature'].index
+    if len(mature_periods) > 0:
+        blocks = np.split(mature_periods, np.where(np.diff(mature_periods) != dt)[0] + 1)
+        for block in blocks:
+            block_start, block_end = block[0], block[-1]
+            if df.loc[block_start - dt, 'periods'] != 'intensification':
+                df.loc[block_start:block_end, 'periods'] = np.nan
+
     return df
 
 def find_intensification_period(df):
@@ -182,6 +189,7 @@ def find_decay_period(df):
     z_valleys = df[df['z_peaks_valleys'] == 'valley'].index
 
     length = df.index[-1] - df.index[0]
+    dt = df.index[1] - df.index[0]
 
     # Find decay periods between z valleys and peaks
     for z_valley in z_valleys:
@@ -199,7 +207,7 @@ def find_decay_period(df):
 
     # Check if there are multiple blocks of consecutive decay periods
     decay_periods = df[df['periods'] == 'decay'].index
-    blocks = np.split(decay_periods, np.where(np.diff(decay_periods) != pd.Timedelta(days=1))[0] + 1)
+    blocks = np.split(decay_periods, np.where(np.diff(decay_periods) != dt)[0] + 1)
 
     for i in range(len(blocks) - 1):
         block_end = blocks[i][-1]
@@ -212,6 +220,7 @@ def find_decay_period(df):
 
     return df
 
+
 def find_residual_period(df):
     mature_periods = df[df['periods'] == 'mature'].index
     decay_periods = df[df['periods'] == 'decay'].index
@@ -219,20 +228,28 @@ def find_residual_period(df):
 
     # Find residual periods where there is no decay stage after the mature stage
     for mature_period in mature_periods:
-        next_decay_period = decay_periods[decay_periods > mature_period].min()
-        if next_decay_period is pd.NaT:
-            df.loc[mature_period:, 'periods'] = 'residual'
+        # Assume that there are more than two unique periods (excluding NaN)
+       if len([item for item in df['periods'].unique() if pd.notnull(item)]) > 2:
+            next_decay_period = decay_periods[decay_periods > mature_period].min()
+            if next_decay_period is pd.NaT:
+                df.loc[mature_period:, 'periods'] = 'residual'
 
-    # Find residual periods where there is no mature stage after the intensification stage
-    mature_periods = df[df['periods'] == 'mature'].index
-    for intensification_period in intensification_periods:
-        next_mature_period = mature_periods[mature_periods > intensification_period].min()
-        if next_mature_period is pd.NaT:
-            df.loc[intensification_period:, 'periods'] = 'residual'
+    # Fills with residual period intensification stage if there isn't a mature stage after it
+    # but only if there's more than two periods
+    if len([item for item in df['periods'].unique() if (pd.notnull(item) and item != 'residual')]) > 2:
+        mature_periods = df[df['periods'] == 'mature'].index
+        for intensification_period in intensification_periods:
+            next_mature_period = mature_periods[mature_periods > intensification_period].min()
+            if next_mature_period is pd.NaT:
+                df.loc[intensification_period:, 'periods'] = 'residual'
 
-    # Fill NaNs after decay with residual
+    # Fill NaNs after decay with residual if there is a decay, else, fill the NaNs after mature
     if len(df[df['periods'] == 'decay'].index) > 0:
         last_decay_index = df[df['periods'] == 'decay'].index[-1]
+        dt = df.index[1] - df.index[0]
+        df.loc[last_decay_index+dt:, 'periods'].fillna('residual', inplace=True)
+    elif len(df[df['periods'] == 'mature'].index) > 0:
+        last_decay_index = df[df['periods'] == 'mature'].index[-1]
         dt = df.index[1] - df.index[0]
         df.loc[last_decay_index+dt:, 'periods'].fillna('residual', inplace=True)
 
@@ -246,7 +263,7 @@ def find_incipient_period(df):
     dt = df.index[1] - df.index[0]
 
     # if there's more than one period
-    if len(df['periods'].unique()) > 1:
+    if len([item for item in df['periods'].unique() if (pd.notnull(item) and item != 'residual')]) > 2:
         # Find blocks of continuous indexes for 'decay' periods
         blocks = np.split(decay_periods, np.where(np.diff(decay_periods) != dt)[0] + 1)
 
@@ -669,6 +686,6 @@ def determine_periods(track_file, output_directory):
 # Testing #
 if __name__ == "__main__":
 
-    track_file = '/home/daniloceano/Documents/Programs_and_scripts/SWSA-cyclones_energetic-analysis/LEC_results-q0.99/RG1-q0.99-20060364_ERA5_track-15x15/RG1-q0.99-20060364_ERA5_track-15x15_track'
-    output_directory = '/home/daniloceano/Documents/Programs_and_scripts/SWSA-cyclones_energetic-analysis/src_figures/'
+    track_file = '../LEC_results-q0.99/RG3-q0.99-19830101_ERA5_track-15x15/RG3-q0.99-19830101_ERA5_track-15x15_track'
+    output_directory = './'
     determine_periods(track_file, output_directory)
