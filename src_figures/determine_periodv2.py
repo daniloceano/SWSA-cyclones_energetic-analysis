@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    determine_periodv2.py                              :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
+#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/05/19 19:06:47 by danilocs          #+#    #+#              #
-#    Updated: 2023/07/13 00:24:56 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/13 15:57:10 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -136,7 +136,7 @@ def find_mature_stage(df):
         distance_to_previous_z_peak = z_valley - previous_z_peak
         distance_to_next_z_peak = next_z_peak - z_valley
 
-        # Check if either the previous or next z peak is within 5% of the length of z away from the valley
+        # Check if either the previous or next z peak is within 7.5% of the length of z away from the valley
         if (
             distance_to_previous_z_peak <= 0.075 * series_length) or (
             distance_to_next_z_peak <= 0.075 * series_length):
@@ -169,6 +169,7 @@ def find_intensification_period(df):
     z_valleys = df[df['z_peaks_valleys'] == 'valley'].index
 
     length = df.index[-1] - df.index[0]
+    dt = df.index[1] - df.index[0]
 
     # Find intensification periods between z peaks and valleys
     for z_peak in z_peaks:
@@ -180,6 +181,19 @@ def find_intensification_period(df):
             # Intensification needs to be at least 7.5% of the total series length
             if intensification_end-intensification_start > length*0.12:
                 df.loc[intensification_start:intensification_end, 'periods'] = 'intensification'
+    
+    # Check if there are multiple blocks of consecutive intensification periods
+    intensefication_periods = df[df['periods'] == 'intensification'].index
+    blocks = np.split(intensefication_periods, np.where(np.diff(intensefication_periods) != dt)[0] + 1)
+
+    for i in range(len(blocks) - 1):
+        block_end = blocks[i][-1]
+        next_block_start = blocks[i+1][0]
+        gap = next_block_start - block_end
+
+        # If the gap between blocks is smaller than 7.5%, fill with decay
+        if gap < length*0.075:
+            df.loc[block_end:next_block_start, 'periods'] = 'intensification'
 
     return df
 
@@ -214,8 +228,8 @@ def find_decay_period(df):
         next_block_start = blocks[i+1][0]
         gap = next_block_start - block_end
 
-        # If the gap between blocks is 7% or smaller, fill with decay
-        if gap <= length*0.07:
+        # If the gap between blocks is smaller than 7.5%, fill with decay
+        if gap < length*0.075:
             df.loc[block_end:next_block_start, 'periods'] = 'decay'
 
     return df
@@ -686,6 +700,6 @@ def determine_periods(track_file, output_directory):
 # Testing #
 if __name__ == "__main__":
 
-    track_file = '../LEC_results-q0.99/RG3-q0.99-19830101_ERA5_track-15x15/RG3-q0.99-19830101_ERA5_track-15x15_track'
+    track_file = '../LEC_results-10MostIntense/10MostIntense-19920334_ERA5_track-15x15/10MostIntense-19920334_ERA5_track-15x15_track'
     output_directory = './'
     determine_periods(track_file, output_directory)
