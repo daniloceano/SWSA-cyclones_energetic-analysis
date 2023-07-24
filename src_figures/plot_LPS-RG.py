@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/26 13:20:05 by Danilo            #+#    #+#              #
-#    Updated: 2023/06/27 22:39:39 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/24 20:10:30 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -79,13 +79,13 @@ def period_data(id, prefix, first=False):
                        pass
         return period 
 
-def create_LPS_plots(fig_title, figsdir, zoom=False, **kwargs):
+def create_LPS_plots(fig_title, figsdir, LPS_type, zoom=False, **kwargs):
         plt.close('all')
         plt.figure(figsize=(10,10))
         ax = plt.gca()
-        LorenzPhaseSpace(ax, zoom=zoom, **kwargs)
+        LorenzPhaseSpace(ax, LPS_type, zoom=zoom, **kwargs)
         zoom_suffix = "_zoom" if zoom else ""
-        fname = f"{figsdir}/{fig_title}{zoom_suffix}.png"
+        fname = f"{figsdir}/{fig_title}_{LPS_type}{zoom_suffix}.png"
         with plt.rc_context({'savefig.dpi': 500}):
                 plt.savefig(fname)
         print(f"{fname} created!")
@@ -97,40 +97,61 @@ if __name__ == "__main__":
 
         for RG in range(1,4):
 
-            ids = get_ids(prefix, RG)
+                ids = get_ids(prefix, RG)
 
-            figsdir = f'../figures/LPS/{prefix}/RG{RG}'
-            check_create_folder(figsdir)
+                figsdir = f'../figures/LPS/{prefix}/RG{RG}'
+                check_create_folder(figsdir)
 
-            for period in ['1H', '6H', '12H', '24H', '48H']:
-                    kwargs = {'terms':[], 'title':f'RG{RG} {prefix}+ (+period+ means)','datasource': datasource,
-                            'start':1979, 'end': '2020'}
+                # Plot all times
+                for LPS_type in ['mixed', 'baroclinic', 'barotropic']:
+                        period = '1H'
+                        
+                        kwargs = {'terms':[], 'title':f'RG{RG} {prefix}+ (+period+ means)','datasource': datasource,
+                                'start':1979, 'end': '2020'}
 
-                    plt.close('all')
-                    plt.figure(figsize=(10,10))
-                    ax = plt.gca()
-                    
-                    for id in ids:
-                            df = get_id_data(id, prefix)
-                            smoothed = smooth_data(df, period)
-                            terms = {'Ca': smoothed['Ca'], 'Ck': smoothed['Ck'],
-                                    'Ge': smoothed['Ge'], 'Ke': smoothed['Ke']}
-                            kwargs['terms'].append(terms)
+                        plt.close('all')
+                        plt.figure(figsize=(10,10))
+                        ax = plt.gca()
+                        
+                        for id in ids:
+                                print(f"Plotting {id}")
+                                df = get_id_data(id, prefix)
+                                smoothed = smooth_data(df, period)
+                                if LPS_type == 'mixed':
+                                        terms = {'y_axis': df['Ca'], 'x_axis': df['Ck'],
+                                                        'circles_colors': df['Ge'], 'circles_size': df['Ke']}
+                                elif LPS_type == 'baroclinic':
+                                        terms = {'y_axis': df['Ca'], 'x_axis': df['Ce'],
+                                                        'circles_colors': df['Ge'], 'circles_size': df['Ke']}
+                                elif LPS_type == 'barotropic':
+                                        terms = {'y_axis': df['BKz'], 'x_axis': df['Ck'],
+                                                        'circles_colors': df['Ge'], 'circles_size': df['Ke']}
+                                kwargs['terms'].append(terms)
 
-                    create_LPS_plots(f"RG{RG}-{prefix}_{period}", figsdir, zoom=False, **kwargs)
-                    create_LPS_plots(f"RG{RG}-{prefix}_{period}", figsdir, zoom=True, **kwargs)
-            
-            # Plot all periods
-            kwargs = {'terms':[], 'title':f"RG{RG} {prefix} (periods mean)",
-                    'datasource': datasource, 'start':1979, 'end': '2020'}
-            for first in [False, True]:
-                    first_suffix = "_first" if first else ""
-                    for id in ids:
-                            period = period_data(id, prefix, first=first)
-                            terms = {'Ca': period['Ca'], 'Ck': period['Ck'],
-                                    'Ge': period['Ge'], 'Ke': period['Ke']}
-                            kwargs['terms'].append(terms)
+                        create_LPS_plots(f"RG{RG}-{prefix}_{period}", figsdir, LPS_type, zoom=False, **kwargs)
+                        create_LPS_plots(f"RG{RG}-{prefix}_{period}", figsdir, LPS_type, zoom=True, **kwargs)
+                        
+                # Plot all periods
+                kwargs = {'terms':[], 'title':f"RG{RG} {prefix} (periods mean)",
+                        'datasource': datasource, 'start':1979, 'end': '2020'}
+                        
+                for first in [False, True]:
+                        first_suffix = "_first" if first else ""
 
-            
-                    create_LPS_plots(f"RG{RG}-{prefix}_periods{first_suffix}", figsdir, zoom=False, **kwargs)
-                    create_LPS_plots(f"RG{RG}-{prefix}_periods{first_suffix}", figsdir, zoom=True, **kwargs)
+                        for id in ids:
+                                period = period_data(id, prefix, first=first)
+
+                                if LPS_type == 'mixed':
+                                        terms = {'y_axis': df['Ca'], 'x_axis': df['Ck'],
+                                                        'circles_colors': df['Ge'], 'circles_size': df['Ke']}
+                                elif LPS_type == 'baroclinic':
+                                        terms = {'y_axis': df['Ca'], 'x_axis': df['Ce'],
+                                                        'circles_colors': df['Ge'], 'circles_size': df['Ke']}
+                                elif LPS_type == 'barotropic':
+                                        terms = {'y_axis': df['BKz'], 'x_axis': df['Ck'],
+                                                        'circles_colors': df['Ge'], 'circles_size': df['Ke']}
+                                
+                                kwargs['terms'].append(terms)
+
+                        create_LPS_plots(f"RG{RG}-{prefix}_periods{first_suffix}", figsdir, LPS_type, zoom=False, **kwargs)
+                        create_LPS_plots(f"RG{RG}-{prefix}_periods{first_suffix}", figsdir, LPS_type, zoom=True, **kwargs)
