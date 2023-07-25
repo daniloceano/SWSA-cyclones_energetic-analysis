@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    automate_GetERA-LEC_RG.py                          :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
+#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/25 09:39:01 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/25 14:37:45 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -194,7 +194,7 @@ if __name__ == '__main__':
         logging.info("Starting the script")
 
         # Create a pool of worker processes
-        with multiprocessing.Pool(processes=5) as pool:
+        with multiprocessing.Pool(processes=10) as pool:
 
             # Save the current directory (src directory)
             src_directory = os.getcwd()
