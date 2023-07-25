@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    automate_GetERA-LEC_RG.py                          :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/06/26 14:11:01 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/25 09:39:01 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -209,7 +209,7 @@ if __name__ == '__main__':
             infiles_dir = os.path.join(main_directory, "dates_limits")
 
             # Path to the scripts directory
-            scripts_dir = os.path.join(main_directory, "met_data/ERA5/scripts/APIs/")
+            scripts_dir = os.path.join(main_directory, "met_data/scripts/")
 
             # Get a list of all input files in the directory
             infiles = [os.path.join(infiles_dir, f) for f in os.listdir(infiles_dir) if f.startswith("RG") and f"-{quantile}" in f]
