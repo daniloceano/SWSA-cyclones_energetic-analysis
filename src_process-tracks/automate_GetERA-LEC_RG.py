@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/25 14:37:45 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/25 18:24:37 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -213,10 +213,12 @@ if __name__ == '__main__':
 
             # Get a list of all input files in the directory
             infiles = [os.path.join(infiles_dir, f) for f in os.listdir(infiles_dir) if f.startswith("RG") and f"-{quantile}" in f]
+            print(f"infiles: {infiles}")
+            logging.info(f"infile to be processed: {infiles}.")
 
             # Iterate over each input file
             for infile in infiles:
-                print(infile)
+                print(f"processing infile: {infile}")
                 logging.info(f"Processing {infile}...")
                 with open(infile, 'r') as f:
                     next(f)  # Skip the first line
