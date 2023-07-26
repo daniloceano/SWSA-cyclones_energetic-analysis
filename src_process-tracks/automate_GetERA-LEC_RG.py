@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/26 09:00:51 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/26 09:02:13 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -154,7 +154,7 @@ def run_LEC(infile, main_directory, src_directory):
     # Move back to the original directory
     os.chdir(src_directory)
 
-def process_line(args, process_number):
+def process_line(args):
     line, prefix, scripts_dir, src_directory, main_directory = args
 
     ERA5_file = download_ERA5(args)
