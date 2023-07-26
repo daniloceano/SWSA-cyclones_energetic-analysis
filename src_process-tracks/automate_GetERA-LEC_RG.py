@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/26 08:56:44 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/26 09:00:51 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,7 +22,7 @@ import logging
 import time
 
 testing = False
-num_cores = 40
+num_cores = 2
 
 def copy_script_file(file_id):
     script_file = f'GetERA5-pl_{file_id}.py'
@@ -154,14 +154,8 @@ def run_LEC(infile, main_directory, src_directory):
     # Move back to the original directory
     os.chdir(src_directory)
 
-def process_line(args):
+def process_line(args, process_number):
     line, prefix, scripts_dir, src_directory, main_directory = args
-
-    # Get the process number from the enumerate function
-    process_number, line = line
-
-    # Log the process number
-    logging.info(f"Process {process_number}: Started processing line - {line}")
 
     ERA5_file = download_ERA5(args)
 
@@ -230,7 +224,7 @@ if __name__ == '__main__':
 
                 with open(infile, 'r') as f:
                     next(f)  # Skip the first line
-
+                    
                     lines = list(f)[1:3] if testing else list(f)
 
                     print("Systems which will be analyzed:")
@@ -245,9 +239,8 @@ if __name__ == '__main__':
                     
                     process_line_partial = partial(process_line, prefix=prefix)
                     # Process each line in parallel
-                    line_args = [(line, prefix, scripts_dir, src_directory, main_directory, process_number)
-                                 for process_number, line in enumerate(lines)]
-
+                    line_args = [(line, prefix, scripts_dir, src_directory, main_directory) for line in lines]
+                    
                     logging.info("Starting parallel processing for input file...")
                     pool.map(process_line, line_args)
                     logging.info("Parallel processing completed for input file.")
