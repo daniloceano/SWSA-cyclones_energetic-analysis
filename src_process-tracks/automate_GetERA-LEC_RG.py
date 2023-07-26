@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/26 09:02:13 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/26 09:02:41 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,7 +22,7 @@ import logging
 import time
 
 testing = False
-num_cores = 2
+num_cores = 40
 
 def copy_script_file(file_id):
     script_file = f'GetERA5-pl_{file_id}.py'
