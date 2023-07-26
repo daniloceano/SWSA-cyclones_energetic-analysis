@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    automate_GetERA-LEC_RG.py                          :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
+#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/26 09:02:41 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/26 15:26:39 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,7 +21,7 @@ import os
 import logging
 import time
 
-testing = False
+testing = True
 num_cores = 40
 
 def copy_script_file(file_id):
@@ -213,8 +213,10 @@ if __name__ == '__main__':
             scripts_dir = os.path.join(main_directory, "met_data/scripts/")
 
             # Get a list of all input files in the directory
-            infiles = [os.path.join(infiles_dir, f) for f in os.listdir(infiles_dir) if f.startswith("RG") and f"-{quantile}" in f]
-            print(f"infiles: {infiles}")
+            infiles = [os.path.join(infiles_dir, f) for f in os.listdir(infiles_dir) if f.startswith("RG") and (f"-{quantile}" in f and not f.endswith("-0.999"))]
+            for file in infiles:
+                print(file)
+            print("--------------------------------")
             logging.info(f"infile to be processed: {infiles}.")
 
             # Iterate over each input file
