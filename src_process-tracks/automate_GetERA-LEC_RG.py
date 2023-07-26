@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/26 17:41:08 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/26 17:44:59 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,7 +21,7 @@ import os
 import logging
 import time
 
-testing = True
+testing = False
 num_cores = 40
 
 def copy_script_file(file_id):
