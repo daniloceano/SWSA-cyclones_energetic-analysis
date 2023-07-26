@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/26 08:52:50 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/26 08:55:03 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -154,8 +154,8 @@ def run_LEC(infile, main_directory, src_directory):
     # Move back to the original directory
     os.chdir(src_directory)
 
-def process_line(args, process_number):
-    line, prefix, scripts_dir, src_directory, main_directory = args
+def process_line(args):
+    line, prefix, scripts_dir, src_directory, main_directory, process_number = args
 
     # Log the process number
     logging.info(f"Process {process_number}: Started processing line - {line}")
@@ -242,13 +242,11 @@ if __name__ == '__main__':
                     
                     process_line_partial = partial(process_line, prefix=prefix)
                     # Process each line in parallel
-                    line_args = [(line, prefix, scripts_dir, src_directory, main_directory) for line in lines]
-                    
-                    # Use enumerate to get the process number and line_args pair
-                    process_line_args = [(args, process_number) for process_number, args in enumerate(line_args)]
+                    line_args = [(line, prefix, scripts_dir, src_directory, main_directory, process_number)
+                                 for process_number, line in enumerate(lines)]
 
                     logging.info("Starting parallel processing for input file...")
-                    pool.map(process_line, process_line_args)
+                    pool.map(process_line, line_args)
                     logging.info("Parallel processing completed for input file.")
 
         logging.info("Script execution completed")
