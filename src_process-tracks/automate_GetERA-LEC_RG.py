@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/26 15:26:39 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/26 17:41:08 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -181,6 +181,8 @@ def process_line(args):
             logging.info(f'{ERA5_file} deleted')
     else:
         logging.error('ERA5 file was not downloaded successfully')
+
+    logging.info(f'finished processing: {ERA5_file}')
     
 if __name__ == '__main__':
 
@@ -216,8 +218,8 @@ if __name__ == '__main__':
             infiles = [os.path.join(infiles_dir, f) for f in os.listdir(infiles_dir) if f.startswith("RG") and (f"-{quantile}" in f and not f.endswith("-0.999"))]
             for file in infiles:
                 print(file)
+                logging.info(f"infile to be processed: {file}.")
             print("--------------------------------")
-            logging.info(f"infile to be processed: {infiles}.")
 
             # Iterate over each input file
             for infile in infiles:
