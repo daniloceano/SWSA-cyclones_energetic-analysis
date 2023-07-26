@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/26 08:55:03 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/26 08:56:44 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -155,7 +155,10 @@ def run_LEC(infile, main_directory, src_directory):
     os.chdir(src_directory)
 
 def process_line(args):
-    line, prefix, scripts_dir, src_directory, main_directory, process_number = args
+    line, prefix, scripts_dir, src_directory, main_directory = args
+
+    # Get the process number from the enumerate function
+    process_number, line = line
 
     # Log the process number
     logging.info(f"Process {process_number}: Started processing line - {line}")
