@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    automate_GetERA-LEC_RG.py                          :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/25 18:24:37 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/26 08:52:50 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,6 +22,7 @@ import logging
 import time
 
 testing = False
+num_cores = 40
 
 def copy_script_file(file_id):
     script_file = f'GetERA5-pl_{file_id}.py'
@@ -153,8 +154,11 @@ def run_LEC(infile, main_directory, src_directory):
     # Move back to the original directory
     os.chdir(src_directory)
 
-def process_line(args):
+def process_line(args, process_number):
     line, prefix, scripts_dir, src_directory, main_directory = args
+
+    # Log the process number
+    logging.info(f"Process {process_number}: Started processing line - {line}")
 
     ERA5_file = download_ERA5(args)
 
@@ -194,7 +198,7 @@ if __name__ == '__main__':
         logging.info("Starting the script")
 
         # Create a pool of worker processes
-        with multiprocessing.Pool(processes=10) as pool:
+        with multiprocessing.Pool(processes=num_cores) as pool:
 
             # Save the current directory (src directory)
             src_directory = os.getcwd()
@@ -220,10 +224,11 @@ if __name__ == '__main__':
             for infile in infiles:
                 print(f"processing infile: {infile}")
                 logging.info(f"Processing {infile}...")
+
                 with open(infile, 'r') as f:
                     next(f)  # Skip the first line
-                    
-                    lines = list(f)[1:3] if testing else list(f) # Create a list of lines in the file
+
+                    lines = list(f)[1:3] if testing else list(f)
 
                     print("Systems which will be analyzed:")
                     for line in lines:
@@ -238,10 +243,20 @@ if __name__ == '__main__':
                     process_line_partial = partial(process_line, prefix=prefix)
                     # Process each line in parallel
                     line_args = [(line, prefix, scripts_dir, src_directory, main_directory) for line in lines]
-                    pool.map(process_line, line_args)
+                    
+                    # Use enumerate to get the process number and line_args pair
+                    process_line_args = [(args, process_number) for process_number, args in enumerate(line_args)]
+
+                    logging.info("Starting parallel processing for input file...")
+                    pool.map(process_line, process_line_args)
+                    logging.info("Parallel processing completed for input file.")
 
         logging.info("Script execution completed")
 
     except Exception as e:
-    
         logging.exception(f"An error occurred in the main block: {e}")
+    
+    finally:
+        pool.close()
+        pool.join()
+        logging.info("Pool of worker processes closed.")
