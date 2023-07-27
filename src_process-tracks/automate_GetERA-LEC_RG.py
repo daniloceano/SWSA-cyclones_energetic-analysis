@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    automate_GetERA-LEC_RG.py                          :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
+#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/27 10:37:20 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/27 16:46:26 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,9 +21,6 @@ import os
 import logging
 import time
 import datetime
-
-# Global variable for testing mode
-testing = False
 
 def copy_script_file(file_id):
     script_file = f'GetERA5-pl_{file_id}.py'
@@ -44,11 +41,20 @@ def replace_script_variables(script_file, day_start_fmt, day_end_fmt, north, wes
 def download_ERA5_file(script_file, file_id, outfile, src_directory):
     cmd = ['python', script_file, file_id]
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    
+    # Print dots while waiting for the process to finish
+    while process.poll() is None:
+        print('.', end='', flush=True)
+        time.sleep(1)  # Adjust the interval between dots if needed
+    
     stdout, stderr = process.communicate()
+
     if process.returncode == 0:
+        print()  # Print a new line after the download is complete
         logging.info(f'{outfile} download complete')
     else:
         logging.error(f'Error occurred during ERA5 file download: {stderr.decode()}')
+
 
 def move_script_file(script_file, scripts_dir):
     script_dest = os.path.join(scripts_dir, script_file)
@@ -94,9 +100,12 @@ def download_ERA5(args, testing):
 
     return outfile
 
-def find_track_file(file_id, main_directory, dir_prefix):
+def find_track_file(file_id, main_directory, infile_name):
+
+    quantile = infile_name.split('-')[1]
+
     # Directory containing the tracks_LEC-format
-    tracks_lec_dir = os.path.join(main_directory, f"tracks_LEC-format/BY_RG/{dir_prefix}")
+    tracks_lec_dir = os.path.join(main_directory, f"tracks_LEC-format/BY_RG/{quantile}")
 
     # Define the file name pattern to search for
     file_name_pattern = f"track_{file_id}"
@@ -127,16 +136,18 @@ def find_track_file(file_id, main_directory, dir_prefix):
 
 def run_LEC(infile, main_directory, src_directory):
 
+    print(f'Initializing LEC for: {infile}')
+
     lorenz_dir = os.path.join("../../", "lorenz-cycle")
     lorenz_src_dir = os.path.join(lorenz_dir, "src")
     lorenz_input_track = os.path.join(lorenz_dir, "inputs", "track")
 
     # Extract the ID from the infile name
-    infile_name = os.path.basename(infile)
-    file_id =  infile_name.split("q")[1].split("-")[1].split("_")[0]
-    dir_prefix = infile.split("q")[1].split("-")[0]
+    print('oi')
+    file_id =  infile.split("-")[2].split("_")[0]
 
-    track_file = find_track_file(file_id, main_directory, dir_prefix)
+    track_file = find_track_file(file_id, main_directory, infile)
+    print(f'track file: {track_file}')
 
     # Copy track_file to lorenz-cycle/inputs/track
     shutil.copy(track_file, lorenz_input_track)
@@ -159,27 +170,36 @@ def process_line(args):
     line, prefix, scripts_dir, src_directory, main_directory = args
 
     ERA5_file = download_ERA5(args, testing)
+    print(f'ERA5 file to be processed: {ERA5_file}')
 
     # Check if ERA5_file was downloaded successfully
     if ERA5_file is not None:
         try:
+            print('Waiting ERA5 file to be donwloaded..', end='')
             while not os.path.exists(ERA5_file):
                 time.sleep(1)  # Wait for the file to be downloaded
+                print('.', end='')  # Print dots on the same line
 
             if os.path.isfile(ERA5_file):
                 print(f'ERA5 file exists: {ERA5_file}')
+                logging.info(f'ERA5 file found: {ERA5_file}')
                 run_LEC(ERA5_file, main_directory, src_directory)
                 logging.info('LEC run complete')
+
             else:
+                print(f'{ERA5_file} not found')
                 logging.error(f'ERA5 file does not exist: {ERA5_file}')
                 
         except FileNotFoundError:
             logging.error(f'ERA5 file not found: {ERA5_file}')
+
         except Exception as e:
             logging.error(f'Error running LEC: {e}')
+
         finally:
             os.remove(ERA5_file)
             logging.info(f'{ERA5_file} deleted')
+            
     else:
         logging.error('ERA5 file was not downloaded successfully')
 
@@ -189,7 +209,7 @@ def process_line(args):
 def main(infile, num_cores, testing):
     if infile is None:
         # Provide a default input file when not provided
-        infile = '../dates_limits/RG1-0.999'
+        infile = '../dates_limits/RG2-0.999'
     
     filename = os.path.basename(infile)
 
@@ -197,7 +217,10 @@ def main(infile, num_cores, testing):
     prefix = f"test_{filename}" if testing else filename
             
     # Set up the log file name with the infile name and current date and time
-    log_file_name = f"logfile-automate-{os.path.basename(infile)}-{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+    if testing:
+        log_file_name = "logfile-automate_test"
+    else:
+        log_file_name = f"logfile-automate-{os.path.basename(infile)}-{datetime.datetime.now().strftime('%Y%m%d')}.txt"
     
     # Configure logging with the updated log file name
     logging.basicConfig(filename=log_file_name, level=logging.INFO,
@@ -232,7 +255,7 @@ def main(infile, num_cores, testing):
 
                 print("Systems which will be analyzed:")
                 for line in lines:
-                    print(line)
+                    print(line[:7])
                 
                 # Process each line in parallel
                 line_args = [(line, prefix, scripts_dir, src_directory, main_directory) for line in lines]
@@ -260,14 +283,12 @@ if __name__ == '__main__':
                     help='Path to the input file to be processed.')
     parser.add_argument('--num_cores', type=int, default=1,
                          help='Number of CPU cores to use for parallel processing.')
-    parser.add_argument('--testing', action='store_true',
-                         help='Flag to enable testing mode.')
 
     # Parse the arguments
     args = parser.parse_args()
 
     # Set the testing flag based on the argument
-    testing = args.testing
+    testing = False
 
     # Call the main function with the infile, num_cores, and testing flag
-    main(args.infile, args.num_cores, args.testing)
+    main(args.infile, args.num_cores, testing)
