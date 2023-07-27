@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/27 16:46:26 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/27 16:53:33 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -45,7 +45,7 @@ def download_ERA5_file(script_file, file_id, outfile, src_directory):
     # Print dots while waiting for the process to finish
     while process.poll() is None:
         print('.', end='', flush=True)
-        time.sleep(1)  # Adjust the interval between dots if needed
+        time.sleep(3)  # Adjust the interval between dots if needed
     
     stdout, stderr = process.communicate()
 
