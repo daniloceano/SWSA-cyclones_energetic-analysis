@@ -3,15 +3,15 @@
 #                                                         :::      ::::::::    #
 #    automate_GetERA-LEC_RG.py                          :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/26 17:44:59 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/27 10:37:20 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 from functools import partial
-
+import argparse
 import multiprocessing
 import subprocess
 import fileinput
@@ -20,9 +20,10 @@ import pandas as pd
 import os 
 import logging
 import time
+import datetime
 
+# Global variable for testing mode
 testing = False
-num_cores = 40
 
 def copy_script_file(file_id):
     script_file = f'GetERA5-pl_{file_id}.py'
@@ -57,7 +58,7 @@ def move_script_file(script_file, scripts_dir):
         shutil.move(script_file, scripts_dir)
         logging.info(f"Moved {script_file} to {scripts_dir}")
 
-def download_ERA5(args):
+def download_ERA5(args, testing):
     line, prefix, scripts_dir, src_directory, main_directory = args
     file_id, date_start, date_end, south, north, west, east = line.strip().split(',')
 
@@ -157,7 +158,7 @@ def run_LEC(infile, main_directory, src_directory):
 def process_line(args):
     line, prefix, scripts_dir, src_directory, main_directory = args
 
-    ERA5_file = download_ERA5(args)
+    ERA5_file = download_ERA5(args, testing)
 
     # Check if ERA5_file was downloaded successfully
     if ERA5_file is not None:
@@ -183,71 +184,62 @@ def process_line(args):
         logging.error('ERA5 file was not downloaded successfully')
 
     logging.info(f'finished processing: {ERA5_file}')
-    
-if __name__ == '__main__':
 
-    # Configure logging
-    logging.basicConfig(filename='logfile-automate.txt', level=logging.INFO,
+    
+def main(infile, num_cores, testing):
+    if infile is None:
+        # Provide a default input file when not provided
+        infile = '../dates_limits/RG1-0.999'
+    
+    filename = os.path.basename(infile)
+
+    # Create the prefix with the file name
+    prefix = f"test_{filename}" if testing else filename
+            
+    # Set up the log file name with the infile name and current date and time
+    log_file_name = f"logfile-automate-{os.path.basename(infile)}-{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+    
+    # Configure logging with the updated log file name
+    logging.basicConfig(filename=log_file_name, level=logging.INFO,
                          format='%(asctime)s - %(levelname)s - %(message)s',
                          filemode='w')
     
-    quantile = 0.99
+    # Save the current directory (src directory)
+    src_directory = os.getcwd()
 
+    # Get the parent directory of the main directory
+    main_directory = os.path.abspath(os.path.join(src_directory, os.pardir))
+
+    logging.info(f"src_directory: {src_directory}")
+    logging.info(f"main_directory: {main_directory}")
+
+    # Path to the scripts directory
+    scripts_dir = os.path.join(main_directory, "met_data/scripts/")
+
+    print(f"processing infile: {infile}")
+    logging.info(f"Processing {infile}...")
+    
     try:
         logging.info("Starting the script")
 
         # Create a pool of worker processes
         with multiprocessing.Pool(processes=num_cores) as pool:
 
-            # Save the current directory (src directory)
-            src_directory = os.getcwd()
+            with open(infile, 'r') as f:
+                next(f)  # Skip the first line
+                
+                lines = list(f)[1:3] if testing else list(f)
 
-            # Get the parent directory of the main directory
-            main_directory = os.path.abspath(os.path.join(src_directory, os.pardir))
-
-            logging.info(f"src_directory: {src_directory}")
-            logging.info(f"main_directory: {main_directory}")
-
-            # Directory containing the input files
-            infiles_dir = os.path.join(main_directory, "dates_limits")
-
-            # Path to the scripts directory
-            scripts_dir = os.path.join(main_directory, "met_data/scripts/")
-
-            # Get a list of all input files in the directory
-            infiles = [os.path.join(infiles_dir, f) for f in os.listdir(infiles_dir) if f.startswith("RG") and (f"-{quantile}" in f and not f.endswith("-0.999"))]
-            for file in infiles:
-                print(file)
-                logging.info(f"infile to be processed: {file}.")
-            print("--------------------------------")
-
-            # Iterate over each input file
-            for infile in infiles:
-                print(f"processing infile: {infile}")
-                logging.info(f"Processing {infile}...")
-
-                with open(infile, 'r') as f:
-                    next(f)  # Skip the first line
-                    
-                    lines = list(f)[1:3] if testing else list(f)
-
-                    print("Systems which will be analyzed:")
-                    for line in lines:
-                        print(line)
-                    
-                    # Extract the pattern from the infile name
-                    RG = infile.split("RG")[1].split(f"-{quantile}")[0]
-
-                    # Create the prefix with the pattern
-                    prefix = f"test-RG{RG}-q{quantile}" if testing else f"RG{RG}-q{quantile}"
-                    
-                    process_line_partial = partial(process_line, prefix=prefix)
-                    # Process each line in parallel
-                    line_args = [(line, prefix, scripts_dir, src_directory, main_directory) for line in lines]
-                    
-                    logging.info("Starting parallel processing for input file...")
-                    pool.map(process_line, line_args)
-                    logging.info("Parallel processing completed for input file.")
+                print("Systems which will be analyzed:")
+                for line in lines:
+                    print(line)
+                
+                # Process each line in parallel
+                line_args = [(line, prefix, scripts_dir, src_directory, main_directory) for line in lines]
+                
+                logging.info("Starting parallel processing for input file...")
+                pool.map(process_line, line_args)
+                logging.info("Parallel processing completed for input file.")
 
         logging.info("Script execution completed")
 
@@ -258,3 +250,24 @@ if __name__ == '__main__':
         pool.close()
         pool.join()
         logging.info("Pool of worker processes closed.")
+
+if __name__ == '__main__':
+    # Create an argument parser
+    parser = argparse.ArgumentParser(description='Process ERA5 data for a specific infile.')
+
+    # Add arguments for the infile, number of cores, and testing flag
+    parser.add_argument('--infile', type=str, default=None,
+                    help='Path to the input file to be processed.')
+    parser.add_argument('--num_cores', type=int, default=1,
+                         help='Number of CPU cores to use for parallel processing.')
+    parser.add_argument('--testing', action='store_true',
+                         help='Flag to enable testing mode.')
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    # Set the testing flag based on the argument
+    testing = args.testing
+
+    # Call the main function with the infile, num_cores, and testing flag
+    main(args.infile, args.num_cores, args.testing)
