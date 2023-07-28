@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/28 13:07:26 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/28 13:09:21 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -42,6 +42,13 @@ def download_ERA5_file(script_file, file_id, outfile, src_directory):
     cmd = ['python', script_file, file_id]
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
     
+    # Function to update the progress bar
+    def update_progress_bar(progress):
+        bar_length = 50
+        block = int(round(bar_length * progress))
+        progress_bar = f"[{'#' * block}{'-' * (bar_length - block)}] {int(progress * 100)}%"
+        print(f"\r{progress_bar}", end='', flush=True)
+
     # Print dots while waiting for the process to finish
     while True:
         return_code = process.poll()
@@ -51,7 +58,15 @@ def download_ERA5_file(script_file, file_id, outfile, src_directory):
         # Read and print the standard output and standard error in real-time
         stdout_line = process.stdout.readline()
         if stdout_line:
-            print(stdout_line.strip())  # Print the line without newline character
+            # Extract progress information from the output if available
+            if "progress" in stdout_line.lower():
+                try:
+                    progress = float(stdout_line.split(":")[-1].strip())
+                    update_progress_bar(progress)
+                except ValueError:
+                    pass  # Ignore if progress extraction fails
+            else:
+                print(stdout_line.strip())  # Print the line without newline character
 
         # Add a small delay to avoid excessive CPU usage
         time.sleep(0.1)
@@ -65,11 +80,6 @@ def download_ERA5_file(script_file, file_id, outfile, src_directory):
     else:
         print(f'Error occurred during ERA5 file download')
 
-    if process.returncode == 0:
-        print()  # Print a new line after the download is complete
-        print(f'{outfile} download complete')
-    else:
-        print(f'Error occurred during ERA5 file download: {stderr_line.strip()}')
 
 def move_script_file(script_file, scripts_dir):
     script_dest = os.path.join(scripts_dir, script_file)
