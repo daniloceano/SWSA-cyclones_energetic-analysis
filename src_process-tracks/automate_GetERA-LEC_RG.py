@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/28 11:51:24 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/28 11:54:39 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -48,7 +48,7 @@ def download_ERA5_file(script_file, file_id, outfile, src_directory):
         if return_code is not None:
             break  # Process has completed, exit the loop
         print('.', end='', flush=True)
-        time.sleep(3)  # Adjust the interval between dots if needed
+        time.sleep(1)  # Adjust the interval between dots if needed
     
     stdout, stderr = process.communicate()
 
@@ -59,7 +59,6 @@ def download_ERA5_file(script_file, file_id, outfile, src_directory):
         logging.error(f'Error occurred during ERA5 file download: {stderr.decode()}')
 
     process.wait()  # Wait for the process to finish before continuin
-
 
 def move_script_file(script_file, scripts_dir):
     script_dest = os.path.join(scripts_dir, script_file)
