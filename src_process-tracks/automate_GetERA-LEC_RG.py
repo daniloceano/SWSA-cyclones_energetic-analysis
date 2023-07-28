@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/28 10:19:00 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/28 11:51:24 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -43,7 +43,10 @@ def download_ERA5_file(script_file, file_id, outfile, src_directory):
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
     # Print dots while waiting for the process to finish
-    while process.poll() is None:
+    while True:
+        return_code = process.poll()
+        if return_code is not None:
+            break  # Process has completed, exit the loop
         print('.', end='', flush=True)
         time.sleep(3)  # Adjust the interval between dots if needed
     
@@ -54,6 +57,8 @@ def download_ERA5_file(script_file, file_id, outfile, src_directory):
         logging.info(f'{outfile} download complete')
     else:
         logging.error(f'Error occurred during ERA5 file download: {stderr.decode()}')
+
+    process.wait()  # Wait for the process to finish before continuin
 
 
 def move_script_file(script_file, scripts_dir):
