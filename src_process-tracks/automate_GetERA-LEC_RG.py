@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/28 13:01:59 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/28 13:07:26 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -40,7 +40,7 @@ def replace_script_variables(script_file, day_start_fmt, day_end_fmt, north, wes
 
 def download_ERA5_file(script_file, file_id, outfile, src_directory):
     cmd = ['python', script_file, file_id]
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
     
     # Print dots while waiting for the process to finish
     while True:
@@ -48,25 +48,22 @@ def download_ERA5_file(script_file, file_id, outfile, src_directory):
         if return_code is not None:
             break  # Process has completed, exit the loop
 
-        # Read and print the standard output in real-time
+        # Read and print the standard output and standard error in real-time
         stdout_line = process.stdout.readline()
         if stdout_line:
             print(stdout_line.strip())  # Print the line without newline character
-            # You can log the output to a log file if needed
-            # log_file.write(stdout_line)
-
-        # Read and print the standard error in real-time
-        stderr_line = process.stderr.readline()
-        if stderr_line:
-            print(stderr_line.strip())  # Print the line without newline character
-            # You can log the output to a log file if needed
-            # log_file.write(stderr_line)
 
         # Add a small delay to avoid excessive CPU usage
         time.sleep(0.1)
     
     # Wait for the process to finish before proceeding
     process.wait()
+
+    if process.returncode == 0:
+        print()  # Print a new line after the download is complete
+        print(f'{outfile} download complete')
+    else:
+        print(f'Error occurred during ERA5 file download')
 
     if process.returncode == 0:
         print()  # Print a new line after the download is complete
@@ -149,8 +146,6 @@ def find_track_file(file_id, main_directory, infile_name):
     except Exception as e:
         logging.error(f'Error occurred during file search: {e}')
         return None
-
-
 
 def run_LEC(infile, main_directory, src_directory):
 
