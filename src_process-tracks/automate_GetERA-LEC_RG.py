@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/28 13:15:55 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/28 13:31:23 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -302,7 +302,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Set the testing flag based on the argument
-    testing = True
+    testing = False
 
     # Call the main function with the infile, num_cores, and testing flag
     main(args.infile, args.num_cores, testing)
