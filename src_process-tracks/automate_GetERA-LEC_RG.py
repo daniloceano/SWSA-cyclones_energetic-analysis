@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    automate_GetERA-LEC_RG.py                          :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/21 17:59:14 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/27 16:53:33 by Danilo           ###   ########.fr        #
+#    Updated: 2023/07/28 10:19:00 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -175,20 +175,11 @@ def process_line(args):
     # Check if ERA5_file was downloaded successfully
     if ERA5_file is not None:
         try:
-            print('Waiting ERA5 file to be donwloaded..', end='')
-            while not os.path.exists(ERA5_file):
-                time.sleep(1)  # Wait for the file to be downloaded
-                print('.', end='')  # Print dots on the same line
-
             if os.path.isfile(ERA5_file):
                 print(f'ERA5 file exists: {ERA5_file}')
                 logging.info(f'ERA5 file found: {ERA5_file}')
                 run_LEC(ERA5_file, main_directory, src_directory)
                 logging.info('LEC run complete')
-
-            else:
-                print(f'{ERA5_file} not found')
-                logging.error(f'ERA5 file does not exist: {ERA5_file}')
                 
         except FileNotFoundError:
             logging.error(f'ERA5 file not found: {ERA5_file}')
