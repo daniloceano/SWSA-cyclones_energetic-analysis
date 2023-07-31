@@ -16,6 +16,11 @@ output_directory = '../figures/'
 periods_outfile_path = output_directory + 'periods/BY_RG/'    
 periods_didatic_outfile_path = output_directory + 'periods_didactic/BY_RG/'
 
+# intensities = ['10MostIntense', 'moda']
+# output_directory = '../figures/'
+# periods_outfile_path = output_directory + 'periods/intensity/'    
+# periods_didatic_outfile_path = output_directory + 'periods_didactic/intensity/'
+
 for intensity in intensities:
 
     print('Processing intensity %s' % intensity)
