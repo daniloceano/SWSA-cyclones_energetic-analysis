@@ -86,7 +86,7 @@ def create_LPS_plots(fig_title, figsdir, LPS_type, zoom=False, **kwargs):
 if __name__ == "__main__":
     
         datasource = 'ERA5'
-        intensity = '10MostIntense'
+        intensity = 'moda'
         ids = get_ids(intensity)
 
         figsdir = f'../figures/LPS/{intensity}'
