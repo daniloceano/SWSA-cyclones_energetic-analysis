@@ -72,13 +72,13 @@ def period_data(id, intensity, first=False):
                 period = period.loc[['intensification', 'mature', 'decay']]
         return period 
 
-def create_LPS_plots(fig_title, figsdir, zoom=False, **kwargs):
+def create_LPS_plots(fig_title, figsdir, LPS_type, zoom=False, **kwargs):
         plt.close('all')
         plt.figure(figsize=(10,10))
         ax = plt.gca()
-        LorenzPhaseSpace(ax, zoom=zoom, **kwargs)
+        LorenzPhaseSpace(ax, LPS_type, zoom=zoom, **kwargs)
         zoom_suffix = "_zoom" if zoom else ""
-        fname = f"{figsdir}/{fig_title}{zoom_suffix}.png"
+        fname = f"{figsdir}/{fig_title}_{LPS_type}{zoom_suffix}.png"
         with plt.rc_context({'savefig.dpi': 500}):
                 plt.savefig(fname)
         print(f"{fname} created!")
@@ -86,41 +86,61 @@ def create_LPS_plots(fig_title, figsdir, zoom=False, **kwargs):
 if __name__ == "__main__":
     
         datasource = 'ERA5'
-        intensity = 'q0.999'
+        intensity = '10MostIntense'
         ids = get_ids(intensity)
 
         figsdir = f'../figures/LPS/{intensity}'
         check_create_folder(figsdir)
 
-        for period in ['1H', '6H', '12H', '24H', '48H']:
-                kwargs = {'terms':[], 'title':intensity+' ('+period+' means)','datasource': datasource,
-                          'start':1979, 'end': '2020'}
+        # Plot all times
+        for LPS_type in ['mixed', 'baroclinic', 'barotropic']:
+                period = '1H'
+                
+                kwargs = {'terms':[], 'title':f'{intensity}+ (+period+ means)','datasource': datasource,
+                        'start':1979, 'end': '2020'}
 
                 plt.close('all')
                 plt.figure(figsize=(10,10))
                 ax = plt.gca()
                 
                 for id in ids:
+                        print(f"Plotting {id}")
                         df = get_id_data(id, intensity)
                         smoothed = smooth_data(df, period)
-                        terms = {'Ca': smoothed['Ca'], 'Ck': smoothed['Ck'],
-                                  'Ge': smoothed['Ge'], 'Ke': smoothed['Ke']}
+                        if LPS_type == 'mixed':
+                                terms = {'y_axis': df['Ca'], 'x_axis': df['Ck'],
+                                                'circles_colors': df['Ge'], 'circles_size': df['Ke']}
+                        elif LPS_type == 'baroclinic':
+                                terms = {'y_axis': df['Ca'], 'x_axis': df['Ce'],
+                                                'circles_colors': df['Ge'], 'circles_size': df['Ke']}
+                        elif LPS_type == 'barotropic':
+                                terms = {'y_axis': df['BKz'], 'x_axis': df['Ck'],
+                                                'circles_colors': df['Ge'], 'circles_size': df['Ke']}
                         kwargs['terms'].append(terms)
 
-                create_LPS_plots(f"{intensity}_{period}", figsdir, zoom=False, **kwargs)
-                create_LPS_plots(f"{intensity}_{period}", figsdir, zoom=True, **kwargs)
+                create_LPS_plots(f"{intensity}", figsdir, LPS_type, zoom=False, **kwargs)
+                create_LPS_plots(f"{intensity}", figsdir, LPS_type, zoom=True, **kwargs)
+                        
         
         # Plot all periods
-        kwargs = {'terms':[], 'title':intensity+' (periods mean)',
-                  'datasource': datasource, 'start':1979, 'end': '2020'}
         for first in [False, True]:
                 first_suffix = "_first" if first else ""
+
                 for id in ids:
                         period = period_data(id, intensity, first=first)
-                        terms = {'Ca': period['Ca'], 'Ck': period['Ck'],
-                                'Ge': period['Ge'], 'Ke': period['Ke']}
+
+                        if LPS_type == 'mixed':
+                                terms = {'y_axis': df['Ca'], 'x_axis': df['Ck'],
+                                                'circles_colors': df['Ge'], 'circles_size': df['Ke']}
+                        elif LPS_type == 'baroclinic':
+                                terms = {'y_axis': df['Ca'], 'x_axis': df['Ce'],
+                                                'circles_colors': df['Ge'], 'circles_size': df['Ke']}
+                        elif LPS_type == 'barotropic':
+                                terms = {'y_axis': df['BKz'], 'x_axis': df['Ck'],
+                                                'circles_colors': df['Ge'], 'circles_size': df['Ke']}
+                        
                         kwargs['terms'].append(terms)
 
         
-                create_LPS_plots(f"{intensity}_periods{first_suffix}", figsdir, zoom=False, **kwargs)
-                create_LPS_plots(f"{intensity}_periods{first_suffix}", figsdir, zoom=True, **kwargs)
+                create_LPS_plots(f"{intensity}_periods{first_suffix}", figsdir, LPS_type, zoom=False, **kwargs)
+                create_LPS_plots(f"{intensity}_periods{first_suffix}", figsdir, LPS_type, zoom=True, **kwargs)
