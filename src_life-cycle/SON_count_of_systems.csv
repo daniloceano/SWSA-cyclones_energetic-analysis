@@ -1,0 +1,34 @@
+Type of System,Count
+"incipient, intensification, decay",7
+"intensification, mature, decay",1263
+intensification,63
+"intensification, incipient",3
+"intensification, mature, decay, intensification 2, mature 2, decay 2",100
+"incipient, intensification, mature, decay",104
+"decay, incipient, decay 2",3
+"intensification, decay",52
+decay,18
+"incipient, decay, intensification",3
+"decay, intensification, decay 2",6
+"intensification, mature, intensification 2",2
+"decay, intensification",11
+"intensification, mature",25
+"intensification, mature, decay, intensification 2, decay 2",2
+"intensification, mature, incipient, intensification 2, mature 2, decay",14
+"intensification, decay, intensification 2, mature, decay 2",9
+"intensification, mature, decay, incipient",17
+"intensification, decay, incipient, decay 2",1
+"intensification, mature, intensification 2, residual 2",1
+"incipient, intensification, mature",1
+"intensification, incipient, intensification 2, mature, decay",4
+"intensification, decay, intensification 2, decay 2",2
+"intensification, mature, incipient, mature 2, decay",2
+"incipient, decay",4
+"intensification, mature, incipient",1
+"mature, decay",1
+"decay, intensification, decay 2, intensification 2",1
+"incipient, intensification",1
+"intensification, decay, intensification 2",2
+"intensification, incipient, decay",1
+"intensification, incipient, mature, decay",1
+"intensification, mature, intensification 2, mature 2, decay",1
