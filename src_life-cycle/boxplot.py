@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:44:54 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/03 19:21:42 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/03 20:08:45 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,7 +22,7 @@ def get_filtered_df(df, percentage_threshold=1, num_phases_threshold=2):
     filtered_df = filtered_df[filtered_df['Num Phases'] > num_phases_threshold]
     return filtered_df
 
-def plot_boxplot(df, season, output_directory):
+def plot_barplot(df, season, output_directory, filter=False):
     plt.close('all')
 
     # Mapping labels to the desired scheme
@@ -43,25 +43,38 @@ def plot_boxplot(df, season, output_directory):
     # Replace labels with the desired scheme and join them back
     df['Type of System'] = df['Type of System'].apply(lambda x: ', '.join([label_mapping.get(word, word) for word in x.split(', ')]))
 
-    # Create a boxplot using Seaborn
-    plt.figure(figsize=(10, 6))
-    sns.boxplot(x='Total Count', y='Type of System', data=df, orient='h')
-    plt.xlabel('Total Count')
-    plt.ylabel('Type of System')
-    plt.title(f'Boxplot of Total Count by Type of System for {season} season')
+    # Create a bar plot using Seaborn
+    plt.figure(figsize=(12, 6))
+    sns.barplot(x='Total Count', y='Type of System', data=df, orient='h', ci=None, palette='pastel', edgecolor='grey')
+    plt.title(season)
     
-    # Save the plot as an image file
-    output_file = os.path.join(output_directory, f'{season}_boxplot.png')
-    plt.savefig(output_file)
-    
-def plot_boxplots(df, filtered_df, season, output_directory):
-    # Plot boxplot for all systems
-    print(f"Boxplot for All Systems in {season} season:")
-    plot_boxplot(df, season, output_directory)
+    # Add text annotations for total count and percentage on the right side of each bar
+    for index, value in enumerate(df['Total Count']):
+        percentage = df.loc[df.index[index], 'Percentage']
+        plt.text(value + 20, index, f"{value} ({percentage:.2f}%)", va='center', color='black', fontweight='bold')
 
-    # Plot boxplot for filtered systems
-    print(f"Boxplot for Filtered Systems in {season} season:")
-    plot_boxplot(filtered_df, season, output_directory)
+    # Set y-axis limit to start at 0
+    plt.ylim(-0.5, len(df) - 0.5)
+
+    plt.tight_layout()
+
+    # Save the plot as an image file
+    if filter:
+        output_file = os.path.join(output_directory, f'{season}_barplot_filtered.png')
+    else:
+        output_file = os.path.join(output_directory, f'{season}_barplot.png')
+    plt.savefig(output_file)
+    print(f'{output_file} saved.')
+    
+def plot_barplots(df, filtered_df, season, output_directory):
+    # Plot bar plot for all systems
+    plot_barplot(df, season, output_directory)
+
+    # Reset the index of filtered DataFrame before plotting
+    filtered_df = filtered_df.reset_index(drop=True)
+
+    # Plot bar plot for filtered systems
+    plot_barplot(filtered_df, season, output_directory, filter=True)
 
 if __name__ == "__main__":
     output_directory = '../figures/periods_statistics/'
@@ -77,5 +90,4 @@ if __name__ == "__main__":
         # Assuming 'Percentage' and 'Type of System' columns are present in the DataFrame
         filtered_df = get_filtered_df(df)
 
-        plot_boxplots(df, filtered_df, season, output_directory)
-
+        plot_barplots(df, filtered_df, season, output_directory)
