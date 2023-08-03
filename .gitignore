@@ -23,3 +23,7 @@ src_process-tracks/logfile-automate*
 src_figures/periods.png
 src_figures/periods.csv
 src_figures/periods_didatic.png
+
+# All systems
+figures/periods/BY_RG-all_raw/*
+figures/periods_didactic/*
