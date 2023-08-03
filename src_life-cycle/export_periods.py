@@ -1,10 +1,14 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Feb  3 17:17:29 2023
-
-@author: daniloceano
-"""
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    export_periods.py                                  :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
+#    Updated: 2023/08/03 16:46:11 by Danilo           ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
 
 import glob
 import pandas as pd
