@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 14:07:51 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/03 17:53:32 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/03 19:19:14 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -60,6 +60,6 @@ total_df.to_csv('total_count_of_systems.csv', index=False)
 
 # Export seasonal counts and relative percentages to separate CSV files
 for season in seasonal_phase_counts.keys():
-    season_df = pd.DataFrame(list(seasonal_phase_counts[season].items()), columns=['Type of System', 'Count'])
-    season_df['Percentage'] = season_df['Count'] / total_systems * 100
+    season_df = pd.DataFrame(list(seasonal_phase_counts[season].items()), columns=['Type of System', 'Total Count'])
+    season_df['Percentage'] = season_df['Total Count'] / total_systems * 100
     season_df.to_csv(f'{season}_count_of_systems.csv', index=False)
