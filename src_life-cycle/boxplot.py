@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:44:54 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/03 20:08:45 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/03 20:20:53 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -56,6 +56,10 @@ def plot_barplot(df, season, output_directory, filter=False):
     # Set y-axis limit to start at 0
     plt.ylim(-0.5, len(df) - 0.5)
 
+    # Hide axis titles
+    plt.xlabel(None)
+    plt.ylabel(None)
+
     plt.tight_layout()
 
     # Save the plot as an image file
@@ -86,6 +90,7 @@ if __name__ == "__main__":
     for season in seasons:
         # Read data from CSV file
         df = pd.read_csv(f'{season}_count_of_systems.csv')
+        df = df.sort_values(by='Total Count', ascending=False)
 
         # Assuming 'Percentage' and 'Type of System' columns are present in the DataFrame
         filtered_df = get_filtered_df(df)
