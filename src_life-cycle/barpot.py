@@ -1,12 +1,12 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    boxplot.py                                         :+:      :+:    :+:    #
+#    barpot.py                                          :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:44:54 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/03 20:20:53 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/04 17:07:53 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
-def get_filtered_df(df, percentage_threshold=1, num_phases_threshold=2):
+def get_filtered_df(df, percentage_threshold=1, num_phases_threshold=0):
     # Filter rows based on percentage and number of phases
     filtered_df = df[df['Percentage'] > percentage_threshold]
     filtered_df['Num Phases'] = filtered_df['Type of System'].apply(lambda x: len(x.split(', ')))
@@ -37,6 +37,9 @@ def plot_barplot(df, season, output_directory, filter=False):
         'decay 2': 'D2',
     }
 
+    total_count = df['Total Count'].sum()
+    total_percentage = df['Percentage'].sum()
+
     # Convert 'Type of System' column to string to handle NaN values
     df['Type of System'] = df['Type of System'].astype(str)
 
@@ -46,7 +49,7 @@ def plot_barplot(df, season, output_directory, filter=False):
     # Create a bar plot using Seaborn
     plt.figure(figsize=(12, 6))
     sns.barplot(x='Total Count', y='Type of System', data=df, orient='h', ci=None, palette='pastel', edgecolor='grey')
-    plt.title(season)
+    plt.title(f'{season} ({total_count} - {total_percentage:.1f}%)', fontweight='bold')
     
     # Add text annotations for total count and percentage on the right side of each bar
     for index, value in enumerate(df['Total Count']):
@@ -64,9 +67,9 @@ def plot_barplot(df, season, output_directory, filter=False):
 
     # Save the plot as an image file
     if filter:
-        output_file = os.path.join(output_directory, f'{season}_barplot_filtered.png')
+        output_file = os.path.join(output_directory, f'{season}_filtered.png')
     else:
-        output_file = os.path.join(output_directory, f'{season}_barplot.png')
+        output_file = os.path.join(output_directory, f'{season}.png')
     plt.savefig(output_file)
     print(f'{output_file} saved.')
     
@@ -81,7 +84,7 @@ def plot_barplots(df, filtered_df, season, output_directory):
     plot_barplot(filtered_df, season, output_directory, filter=True)
 
 if __name__ == "__main__":
-    output_directory = '../figures/periods_statistics/'
+    output_directory = '../figures/periods_statistics/barplots/'
     os.makedirs(output_directory, exist_ok=True)
 
     # List of season names
@@ -94,5 +97,8 @@ if __name__ == "__main__":
 
         # Assuming 'Percentage' and 'Type of System' columns are present in the DataFrame
         filtered_df = get_filtered_df(df)
+
+        if season == 'total':
+            filtered_df['Type of System'].to_csv('filtered_periods.csv', index=False)
 
         plot_barplots(df, filtered_df, season, output_directory)
