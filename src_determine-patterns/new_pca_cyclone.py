@@ -142,3 +142,16 @@ for chave_gp in variaveis.keys():
         # Saving the dataframes in csv files
         df_PC1.to_csv(os.path.join(PCA_DIR, f'DF_PC1-{chave_gp}.csv'))
         df_PC2.to_csv(os.path.join(PCA_DIR, f'DF_PC2-{chave_gp}.csv'))
+
+    #add readme file
+    readme = open(os.path.join(PCA_DIR, 'readme.txt'), 'w')
+    readme.write('PCA analysis of cyclone phases')
+    readme.write('\n')
+    readme.write('\n')
+    readme.write('the species of cyclones are: \n')
+    readme.write(f'{variaveis.keys()} \n associated to the following phases: \n')
+    readme.write(f'{fases_possiveis}')
+    readme.write('\n')  
+    readme.write('if the phase is present, the value is 1, otherwise 0')
+    readme.write('\n')
+    readme.close()
