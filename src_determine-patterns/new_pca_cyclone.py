@@ -9,7 +9,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.decomposition import NMF
 import sys 
 
-percentile = '0.999'
+percentile = '0.99'
 region = 'RG3'
 
 # Directory where the files are saved
@@ -20,6 +20,8 @@ files_output = os.listdir(path)
 
 # Selecting only the files with cyclone phases
 files_use = [file for file in files_output if "_ERA5.csv" in file]
+
+
 
 # Creating a list to save all dataframes
 cyclist1= []
@@ -50,7 +52,7 @@ for i, df in enumerate(cyclist1):
 
 
 
-fases_possiveis = ['incipient', 'intensification', 'mature', 'decay','intensification 2', 'mature 2', 'decay 2']
+fases_possiveis = ['incipient', 'intensification', 'mature', 'decay','intensification 2', 'mature 2', 'decay 2', 'residual']
 grupos = {}
 
 for df in cyclist1:
@@ -67,76 +69,76 @@ for df in cyclist1:
 
 
 
-sys.exit()
-# List of cyclone phases
-new_id = ['incipient','intensification','mature','decay','intensification 2', 'mature 2', 'decay 2']
-id_sel = ['intensification','mature','decay']
-cyclist2 = cyclist1.copy() 
 
-# Reindexing all dataframes to the same cyclone phases
-for i, df in enumerate(cyclist2):
-    cyclist2[i] = df.reindex(new_id)
-    cyclist2[i] = cyclist2[i].loc[id_sel]
+    
 
 # Getting all cyclone parameters (columns names)
-parameters = cyclist2[0].keys()
+parameters = cyclist1[0].keys()
 
-# Creating a dictionary where the keys are the cyclone parameters (to save all Az, Ae... at the same time)
-variaveis = {param: [] for param in parameters}
+grupos_var = {}
 
-# Iterating in the list of dataframes, getting term by term of each case and saving in the dictionary
-for i in range(len(cyclist2)):
-    for param in parameters:
+# Creating a dictionary where the keys are the cyclone grupos and these groups are keys that are all parameters (to save all Az, Ae... at the same time)
 
-        # getting the value of the term 'termo' in the dataframe 'cyclist[i]'
-        value = cyclist2[i][param]
-        
-        # saving the value in the dictionary
-        variaveis[param].append(value)
+variaveis = {chave_grupo: {param: [] for param in parameters} for chave_grupo in grupos.keys()}
 
-# Creating two dataframes to save the PCs
-df_PC1 = cyclist2[0].copy()
-df_PC1[:] = np.nan
-df_PC2 = df_PC1.copy()
+variaveis2 = variaveis.copy()
 
-## PCA
-for tr in variaveis.keys():
+for gp_key in grupos.keys():
+    #print(gp_key)
+    for i in range(len(grupos[gp_key])):
+        #print(i)
+        for param in parameters:
+            #print(param)
+            value = grupos[gp_key][i][param]
+            #print(value)
+            variaveis[gp_key][param].append(value)
+            #print(variaveis)
+            print('-----------------')
 
-  # Concatening all dataframes keeping the 7 phases (in this case it becomes a df with 7 lines and 240 columns [24 parameters * 10 cases])
-  combined_df = pd.concat(variaveis[tr], axis=1)
 
-  # Normalizing the data
-  scaler = StandardScaler()
-  normalized_data = scaler.fit_transform(combined_df)
-  #normalized_data = combined_df
-  # Imputer (NaN = 0)
-  imputer = SimpleImputer(missing_values=np.nan, strategy='constant', fill_value=0)
 
-  # The normalized data is updated by the imputer (NaN = 0)
-  final_data = imputer.fit_transform(normalized_data)
 
-  # PCA (each iteration the 'final_data' is a parameter)
-  pca = PCA(n_components=2)
-  pca_final = pca.fit_transform(final_data)
-  # Invertendo a transformação do PCA
-  pca_inv = pca.inverse_transform(pca_final)
+for chave_gp in variaveis.keys():
+    #print(chave_gp)
+    df_PC1 = grupos[chave_gp][0].copy()
+    df_PC1[:] = np.nan
+    df_PC2 = df_PC1.copy()
+    for tr in variaveis[chave_gp].keys():
+        #print(tr)
+        combined_df = pd.concat(variaveis[chave_gp][tr], axis=1)
+        #print(len(combined_df))
+        # Normalizing the data
+        scaler = StandardScaler()
+        normalized_data = scaler.fit_transform(combined_df)
+        #normalized_data = combined_df
+        # Imputer (NaN = 0)
+        imputer = SimpleImputer(missing_values=np.nan, strategy='constant', fill_value=0)
 
-  # Desnormalizando os dados
-  denormalized_data = scaler.inverse_transform(pca_inv) 
+        # The normalized data is updated by the imputer (NaN = 0)
+        final_data = imputer.fit_transform(normalized_data)
 
-  # Getting the first and second principal components
-  pc1 = denormalized_data[:,0]
-  pc2 = denormalized_data[:,1]
+        # PCA (each iteration the 'final_data' is a parameter)
+        pca = PCA(n_components=2)
+        pca_final = pca.fit_transform(final_data)
+        # Invertendo a transformação do PCA
+        pca_inv = pca.inverse_transform(pca_final)
 
-  # Saving the PCs in the dataframes
-  df_PC1[tr] = pc1
-  df_PC2[tr] = pc2
+        # Desnormalizando os dados
+        denormalized_data = scaler.inverse_transform(pca_inv) 
 
-PCA_DIR = os.path.join(path, 'PCA')
+        # Getting the first and second principal components
+        pc1 = denormalized_data[:,0]
+        pc2 = denormalized_data[:,1]
 
-if not os.path.exists(PCA_DIR):
-    os.makedirs(PCA_DIR)
+        # Saving the PCs in the dataframes
+        df_PC1[tr] = pc1
+        df_PC2[tr] = pc2
 
-# Saving the dataframes in csv files
-df_PC1.to_csv(os.path.join(PCA_DIR, 'TESTE_PC1-LPS.csv'))
-df_PC2.to_csv(os.path.join(PCA_DIR, 'TESTE_PC2-LPS.csv'))
+        PCA_DIR = os.path.join(path, 'PCA')
+
+        if not os.path.exists(PCA_DIR):
+            os.makedirs(PCA_DIR)
+
+        # Saving the dataframes in csv files
+        df_PC1.to_csv(os.path.join(PCA_DIR, f'DF_PC1-{chave_gp}.csv'))
+        df_PC2.to_csv(os.path.join(PCA_DIR, f'DF_PC2-{chave_gp}.csv'))
