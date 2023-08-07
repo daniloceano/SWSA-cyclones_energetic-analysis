@@ -18,6 +18,7 @@ src_figures/.vscode/launch.json
 src_determine-patterns/.vscode/launch.json
 LEC_results-q0.99
 LEC_results-0.99
+LEC_results-0.99/*
 src_process-tracks/logfile-automate*
 
 # Debugging

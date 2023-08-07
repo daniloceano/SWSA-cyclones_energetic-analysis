@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/26 15:02:10 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/31 17:13:51 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/07 13:04:38 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,7 +19,7 @@ qauntile = 0.99
 
 for RG in range(1,4):
 
-    results = glob.glob(f'../LEC_results-q{qauntile}/RG{RG}-{qauntile}*ERA5*')
+    results = glob.glob(f'../LEC_results-{qauntile}/RG{RG}-{qauntile}*ERA5*')
     outdir = f'../periods-energetics/{qauntile}/RG{RG}'
     check_create_folder(outdir) 
 
