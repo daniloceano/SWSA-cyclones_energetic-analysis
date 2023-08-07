@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/26 13:20:05 by Danilo            #+#    #+#              #
-#    Updated: 2023/07/24 20:10:30 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/07 11:34:46 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,7 +27,7 @@ def check_create_folder(DirName, verbosity=False):
             print(DirName+' directory exists')
 
 def get_ids(prefix, RG):
-        list = glob.glob(f'../stats_tracks/BY_RG/tracks-RG{RG}_{prefix}.csv')[0]
+        list = glob.glob(f'../stats_tracks/BY_RG/tracks-RG{RG}_q{prefix}.csv')[0]
         df =  pd.read_csv(list, names = ['track_id', 'dt',
                                              'date', 'lon vor',
                                              'lat vor', 'vor42',
@@ -93,7 +93,7 @@ def create_LPS_plots(fig_title, figsdir, LPS_type, zoom=False, **kwargs):
 if __name__ == "__main__":
     
         datasource = 'ERA5'
-        prefix = 'q0.99'
+        prefix = '0.99'
 
         for RG in range(1,4):
 
