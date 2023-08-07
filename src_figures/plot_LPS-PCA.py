@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
     for intensity in intensities:
 
-        figsdir = f'../figures/LPS/q{intensity}/RG3/'
+        figsdir = f'../figures/LPS/{intensity}/RG3/'
 
         for PC in range(1,3):
     
