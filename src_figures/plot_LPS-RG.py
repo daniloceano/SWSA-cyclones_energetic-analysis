@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/26 13:20:05 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/07 11:34:46 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/07 13:11:01 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -106,7 +106,7 @@ if __name__ == "__main__":
                 for LPS_type in ['mixed', 'baroclinic', 'barotropic']:
                         period = '1H'
                         
-                        kwargs = {'terms':[], 'title':f'RG{RG} {prefix}+ (+period+ means)','datasource': datasource,
+                        kwargs = {'terms':[], 'title':f'RG{RG} {prefix} (period means)','datasource': datasource,
                                 'start':1979, 'end': '2020'}
 
                         plt.close('all')
