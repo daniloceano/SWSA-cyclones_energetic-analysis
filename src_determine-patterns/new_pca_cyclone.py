@@ -106,52 +106,54 @@ for chave_gp in variaveis.keys():
     for tr in variaveis[chave_gp].keys():
         #print(tr)
         combined_df = pd.concat(variaveis[chave_gp][tr], axis=1)
-        #print(len(combined_df))
-        # Normalizing the data
-        scaler = StandardScaler()
-        normalized_data = scaler.fit_transform(combined_df)
-        #normalized_data = combined_df
-        # Imputer (NaN = 0)
-        imputer = SimpleImputer(missing_values=np.nan, strategy='constant', fill_value=0)
+        print(len(combined_df.columns))
+        if len(combined_df.columns) > 1:
 
-        # The normalized data is updated by the imputer (NaN = 0)
-        final_data = imputer.fit_transform(normalized_data)
+            # Normalizing the data
+            scaler = StandardScaler()
+            normalized_data = scaler.fit_transform(combined_df)
+            #normalized_data = combined_df
+            # Imputer (NaN = 0)
+            imputer = SimpleImputer(missing_values=np.nan, strategy='constant', fill_value=0)
 
-        # PCA (each iteration the 'final_data' is a parameter)
-        pca = PCA(n_components=2)
-        pca_final = pca.fit_transform(final_data)
-        # Invertendo a transformação do PCA
-        pca_inv = pca.inverse_transform(pca_final)
+            # The normalized data is updated by the imputer (NaN = 0)
+            final_data = imputer.fit_transform(normalized_data)
 
-        # Desnormalizando os dados
-        denormalized_data = scaler.inverse_transform(pca_inv) 
+            # PCA (each iteration the 'final_data' is a parameter)
+            pca = PCA(n_components=2)
+            pca_final = pca.fit_transform(final_data)
+            # Invertendo a transformação do PCA
+            pca_inv = pca.inverse_transform(pca_final)
 
-        # Getting the first and second principal components
-        pc1 = denormalized_data[:,0]
-        pc2 = denormalized_data[:,1]
+            # Desnormalizando os dados
+            denormalized_data = scaler.inverse_transform(pca_inv) 
 
-        # Saving the PCs in the dataframes
-        df_PC1[tr] = pc1
-        df_PC2[tr] = pc2
+            # Getting the first and second principal components
+            pc1 = denormalized_data[:,0]
+            pc2 = denormalized_data[:,1]
 
-        PCA_DIR = os.path.join(path, 'PCA')
+            # Saving the PCs in the dataframes
+            df_PC1[tr] = pc1
+            df_PC2[tr] = pc2
 
-        if not os.path.exists(PCA_DIR):
-            os.makedirs(PCA_DIR)
+            PCA_DIR = os.path.join(path, 'PCA')
 
-        # Saving the dataframes in csv files
-        df_PC1.to_csv(os.path.join(PCA_DIR, f'DF_PC1-{chave_gp}.csv'))
-        df_PC2.to_csv(os.path.join(PCA_DIR, f'DF_PC2-{chave_gp}.csv'))
+            if not os.path.exists(PCA_DIR):
+                os.makedirs(PCA_DIR)
 
-    #add readme file
-    readme = open(os.path.join(PCA_DIR, 'readme.txt'), 'w')
-    readme.write('PCA analysis of cyclone phases')
-    readme.write('\n')
-    readme.write('\n')
-    readme.write('the species of cyclones are: \n')
-    readme.write(f'{variaveis.keys()} \n associated to the following phases: \n')
-    readme.write(f'{fases_possiveis}')
-    readme.write('\n')  
-    readme.write('if the phase is present, the value is 1, otherwise 0')
-    readme.write('\n')
-    readme.close()
+            # Saving the dataframes in csv files
+            df_PC1.to_csv(os.path.join(PCA_DIR, f'DF_PC1-{chave_gp}.csv'))
+            df_PC2.to_csv(os.path.join(PCA_DIR, f'DF_PC2-{chave_gp}.csv'))
+
+#add readme file
+readme = open(os.path.join(PCA_DIR, 'readme.txt'), 'w')
+readme.write('PCA analysis of cyclone phases')
+readme.write('\n')
+readme.write('\n')
+readme.write('the species of cyclones are: \n')
+readme.write(f'{variaveis.keys()} \n associated to the following phases: \n')
+readme.write(f'{fases_possiveis}')
+readme.write('\n')  
+readme.write('if the phase is present, the value is 1, otherwise 0')
+readme.write('\n')
+readme.close()
