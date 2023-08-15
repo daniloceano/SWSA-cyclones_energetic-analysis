@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/04 09:20:43 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/15 16:56:06 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/15 19:44:44 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -143,7 +143,7 @@ def main():
 
 if __name__ == '__main__':
 
-    periods_directory = '../periods-energetics/BY_RG-all_raw/'
+    periods_directory = '../periods-energetics/BY_RG-all/'
     output_directory = '../figures/periods_statistics/maps/'
     os.makedirs(output_directory, exist_ok=True)
 
