@@ -6,22 +6,15 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/08 20:33:08 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/09 16:00:21 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/15 16:54:37 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-# Adapted from Carolina B. Gramcianinov (cbgramcianinov@gmail.com)
+"""
+Adapted from Carolina B. Gramcianinov (cbgramcianinov@gmail.com) - Feb/2021
 
-# Carolina B. Gramcianinov: cbgramcianinov@gmail.com
-# Feb/2021
-#
-# script to plot cyclone genesis density with KDE method
-# using sklearn package
-# - options:
-# * to save the density in a netcdf file set savenc key to 'y'
-# * to plot (with cartopy + matplotlib) set plot ket to 'y'
-# --------------
-
+Script to plot cyclone density with KDE method from sklearn package
+"""
 
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
