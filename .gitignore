@@ -28,6 +28,7 @@ src_figures/periods_didatic.png
 src_life-cycle/.vscode/launch.json
 
 # All systems
-figures/periods/BY_RG-all_raw/*
-figures/periods_didactic/*
+figures/periods/BY_RG-all/*
+figures/periods_didactic/BY_RG-all/*
 src_life-cycle/determine_periods.py
+figures/periods/BY_RG-all/*
