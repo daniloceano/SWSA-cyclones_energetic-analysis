@@ -6,9 +6,14 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/04 09:20:43 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/04 17:39:19 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/15 16:56:06 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
+
+"""
+Script to produce maps of the tracks of of the cyclones where the colors indicate the periods
+of the life cycle of each system.
+"""
 
 import cartopy.crs as ccrs
 import cartopy
@@ -21,8 +26,6 @@ import glob
 import os
 
 def gridlines(ax):
-    # ax.add_feature(cartopy.feature.LAND)
-    # ax.add_feature(cartopy.feature.OCEAN,facecolor=("lightblue"))
     gl = ax.gridlines(draw_labels=True,zorder=2,linestyle='dashed',alpha=0.8,
                  color='#383838')
     gl.xlabel_style = {'size': 14, 'color': '#383838'}
