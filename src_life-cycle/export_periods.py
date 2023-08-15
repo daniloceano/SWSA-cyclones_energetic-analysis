@@ -6,16 +6,21 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/03 16:46:11 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/15 16:53:12 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
+
+"""
+This script exports the cyclone periods to a csv file in '../periods-energetics/BY_RG-all/'
+for each cyclone
+
+"""
 
 import glob
 import pandas as pd
 import determine_periods as det
 import matplotlib.pyplot as plt
 import multiprocessing
-from functools import partial
 
 def process_cyclone(args):
     id_cyclone, track_file, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG = args
@@ -69,9 +74,9 @@ if testing == True:
 
 else:
     output_directory = '../figures/'
-    periods_outfile_path = output_directory + 'periods/BY_RG-all_raw/'    
-    periods_didatic_outfile_path = output_directory + 'periods_didactic/BY_RG-all_raw/'
-    periods_csv_outfile_path = '../periods-energetics/BY_RG-all_raw/'
+    periods_outfile_path = output_directory + 'periods/BY_RG-all/'    
+    periods_didatic_outfile_path = output_directory + 'periods_didactic/BY_RG-all/'
+    periods_csv_outfile_path = '../periods-energetics/BY_RG-all/'
 
 results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/',
                        '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG2_csv/',
