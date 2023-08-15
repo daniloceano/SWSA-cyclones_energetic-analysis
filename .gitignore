@@ -29,7 +29,5 @@ src_life-cycle/.vscode/launch.json
 
 # All systems
 figures/periods/BY_RG-all_raw/*
-periods-energetics/BY_RG-all/*
 figures/periods_didactic/*
 src_life-cycle/determine_periods.py
-figures/periods/BY_RG-all_raw/RG1_19800090.png
