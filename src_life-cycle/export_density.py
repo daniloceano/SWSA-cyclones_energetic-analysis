@@ -6,11 +6,16 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/09 14:56:39 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/15 17:02:15 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-# Adapted from Carolina B. Gramcianinov (cbgramcianinov@gmail.com)
+"""
+Adapted from Carolina B. Gramcianinov (cbgramcianinov@gmail.com)
+
+Reads the raw tracks and the processed periods for each system and produces netCDF files
+containing the density map of each period in  2.5 degree global grid
+"""
 
 import os
 import numpy as np
@@ -130,7 +135,7 @@ def compute_density(tracks_with_periods, num_time):
     return density, longrd, latgrd
 
 def main():
-    periods_directory = '../periods-energetics/BY_RG-all_raw/'
+    periods_directory = '../periods-energetics/BY_RG-all/'
     output_directory = '../figures/periods_statistics/heatmaps/'
     os.makedirs(output_directory, exist_ok=True)
 

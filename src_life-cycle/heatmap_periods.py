@@ -1,12 +1,12 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    heatmap_peruids.py                                 :+:      :+:    :+:    #
+#    heatmap_periods.py                                 :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/08 10:54:18 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/08 19:47:37 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/15 17:18:54 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,9 +20,11 @@ import cartopy.crs as ccrs
 import matplotlib.colors as mcolors
 from dateutil.relativedelta import relativedelta
 
+"""
+Reads the periods exported by export_periods.py and produce heatmaps
+"""
+
 def gridlines(ax):
-    # ax.add_feature(cartopy.feature.LAND)
-    # ax.add_feature(cartopy.feature.OCEAN,facecolor=("lightblue"))
     gl = ax.gridlines(draw_labels=True,zorder=2,linestyle='dashed',alpha=0.8,
                  color='#383838')
     gl.xlabel_style = {'size': 14, 'color': '#383838'}
@@ -90,7 +92,7 @@ def plot_phase_count(ds, phase, num_months):
 
 if __name__ == '__main__':
 
-    periods_directory = '../periods-energetics/BY_RG-all_raw/'
+    periods_directory = '../periods-energetics/BY_RG-all/'
     output_directory = '../figures/periods_statistics/heatmaps/'
     os.makedirs(output_directory, exist_ok=True)
 

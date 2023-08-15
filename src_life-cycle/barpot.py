@@ -6,9 +6,14 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:44:54 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/04 17:07:53 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/15 16:58:42 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
+
+"""
+Reads the csv containing the number of systems and the percentage of each type of system
+produced by export_species.py and create barplots.
+"""
 
 import pandas as pd
 import matplotlib.pyplot as plt

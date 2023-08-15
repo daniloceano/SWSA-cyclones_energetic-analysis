@@ -6,14 +6,19 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 14:07:51 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/03 19:19:14 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/15 17:07:48 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 import pandas as pd
 import glob
 
-csv_directory = '../periods-energetics/BY_RG-all_raw/'
+""" 
+This script reads the tracks processed by export_periods.py and counts the number of systems
+that fits in one of each category of the life cycle.
+"""
+
+csv_directory = '../periods-energetics/BY_RG-all/'
 csv_files = glob.glob(f'{csv_directory}/*')
 
 phase_counts = {}
