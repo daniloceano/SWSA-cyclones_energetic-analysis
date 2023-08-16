@@ -32,6 +32,6 @@ src_life-cycle/periods.csv
 src_life-cycle/periods.png
 
 # All systems
+figures/periods/BY_RG-all
 figures/periods/BY_RG-all/*
 figures/periods_didactic/BY_RG-all/*
-figures/periods/BY_RG-all/*
