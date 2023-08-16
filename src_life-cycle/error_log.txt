@@ -205,3 +205,6 @@ Error message: Timestamp('1998-12-22 20:00:00')
 Error processing cyclone: 20050788 - RG: RG3 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/ff_trs_neg_ExSAt_200512_joint_mslp_10spd_GenRG3.csv
 Error message: Timestamp('2005-12-12 08:00:00')
 
+Empty track file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198003_joint_mslp_10spd_GenRG1.csv - Skipping processing.
+Empty track file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198003_joint_mslp_10spd_GenRG1.csv - Skipping processing.
+Empty track file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198003_joint_mslp_10spd_GenRG1.csv - Skipping processing.

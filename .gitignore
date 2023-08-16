@@ -26,9 +26,14 @@ src_figures/periods.png
 src_figures/periods.csv
 src_figures/periods_didatic.png
 src_life-cycle/.vscode/launch.json
+src_life-cycle/track-test-periods
+src_life-cycle/periods_didatic.png
+src_life-cycle/periods.csv
 
 # All systems
 figures/periods/BY_RG-all/*
 figures/periods_didactic/BY_RG-all/*
 src_life-cycle/determine_periods.py
 figures/periods/BY_RG-all/*
+
+src_life-cycle/periods.png
