@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/08 20:33:08 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/15 16:54:37 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/16 17:05:37 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -74,7 +74,7 @@ for RG in ['1', '2', '3', 'all']:
         ax = fig.add_axes([-0.01, -0.05, 0.9, 0.7], projection=datacrs, frameon=True)
         ax.set_extent([-90, 180, 0, -90], crs=datacrs)
 
-        ds = xr.open_dataset(f'./track_density_RG1.nc')
+        ds = xr.open_dataset(f'./track_density_RG{RG}.nc')
 
         density = ds[phase]
         fname = f'density_map_{RG_str}_{phase}.png'
