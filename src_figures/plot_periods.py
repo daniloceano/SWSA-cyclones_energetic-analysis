@@ -11,7 +11,7 @@ import pandas as pd
 import determine_periods as det
 import matplotlib.pyplot as plt
 
-intensities = ['q0.99']
+intensities = ['0.99']
 output_directory = '../figures/'
 periods_outfile_path = output_directory + 'periods/BY_RG/'    
 periods_didatic_outfile_path = output_directory + 'periods_didactic/BY_RG/'
