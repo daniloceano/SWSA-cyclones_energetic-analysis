@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/15 20:08:44 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/15 23:57:11 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -83,7 +83,7 @@ results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_
                        '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/']
 
 # For testing 
-results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/']
+# results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/']
 ####
 
 det.check_create_folder(periods_outfile_path)
@@ -95,8 +95,8 @@ if __name__ == '__main__':
         for track_file in sorted(glob.glob(f'{results_dir}/*')):
 
             # For testing
-            if '1980' not in track_file:
-                continue
+            # if '1980' not in track_file:
+            #    continue
 
             # Check if the track_file is empty
             try:
