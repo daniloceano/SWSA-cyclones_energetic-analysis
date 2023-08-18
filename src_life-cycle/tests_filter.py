@@ -141,23 +141,21 @@ def plot_vorticity(ax, variable, color):
     
     return line
 
-tracks_Carol = pd.read_csv('../raw_data/ff_trs_SWSA_24h_1000km_1979-2020_mslp_spd850_intense.csv')
-tracks_Carol.columns = ['track_id', 'dt', 'date', 'lon vor','lat vor', 'vor42', 'lon mslp', 'lat mslp',
-                                       'mslp', 'lon 10spd', 'lat 10spd', '10spd']
-
-for file in sorted(glob('../tracks_LEC-format/ALL/intense/*')):
+for file in sorted(glob('../LEC_results-q0.99/*')):
 
     print(file)
 
-    cyclone_id = os.path.basename(file).split('_')[1]
+    cyclone_id = os.path.basename(file).split('_')[0].split('-')[2]
 
-    track_file = f'../LEC_results-10MostIntense/10MostIntense-{cyclone_id}_ERA5_track-15x15/10MostIntense-{cyclone_id}_ERA5_track-15x15_track'
-    output_directory = f'../figures/tests_filter/{cyclone_id}/'
+    try:
+        track_file = glob(f'{file}/*track')[0]
+    except:
+        print('failed for',cyclone_id)
+        continue
+    
+    output_directory = f'../figures/tests_filter/0.99/'
 
     os.makedirs(output_directory, exist_ok=True)
-
-    track_Carol = tracks_Carol[tracks_Carol['track_id'] == int(cyclone_id)]
-    vorticity_Carol = track_Carol['vor42'] * -1e-5
 
     # Set the output file names
     periods_outfile_path = output_directory + 'periods'
@@ -171,66 +169,59 @@ for file in sorted(glob('../tracks_LEC-format/ALL/intense/*')):
     lengh_zeta = len(zeta_df)
     frequency = 48
     window_length_savgol = lengh_zeta // 2 | 1
-    window_lengths_lanczo = [lengh_zeta // 20]
+    window_length_lanczo = lengh_zeta // 20
 
-    for i, window_length_lanczo in enumerate(window_lengths_lanczo):
+    # print(f'Frequency: {frequency}')
+    # fig1 = plt.figure(figsize=(14, 8))
+    
+    vorticity = array_vorticity(zeta_df.copy(), window_length_lanczo, frequency, window_length_savgol)
 
-        print(f'Frequency: {frequency}')
-        fig1 = plt.figure(figsize=(14, 8))
-       
-        vorticity = array_vorticity(zeta_df.copy(), window_length_lanczo, frequency, window_length_savgol)
+    # variables = [vorticity.zeta,
+    #             vorticity.zeta,
+    #             vorticity.dz_dt  * 0.25,
+    #             vorticity.dz_dt2  * 0.025]
+    
+    # filtered_variables = [vorticity.zeta_filt,
+    #                       vorticity.zeta_filt2,
+    #                       vorticity.dz_dt_filt2,
+    #                       vorticity.dz_dt2_filt2]
+    
+    # titles = [r"$ζ_{f}$",
+    #           r"$ζ_{fs}$",
+    #           r"$\frac{\partial ζ_{fs}}{\partial t}_s$",
+    #           r"$\frac{\partial^{2} ζ_{fs}}{\partial t^{2}}_s$"]
+    
+    # colors = ["#264653", "#2a9d8f", "#e76f51", "#f4a261"]
 
-        variables = [vorticity.zeta,
-                    vorticity.zeta,
-                    vorticity.dz_dt  * 0.25,
-                    vorticity.dz_dt2  * 0.025]
-        
-        filtered_variables = [vorticity.zeta_filt,
-                              vorticity.zeta_filt2,
-                              vorticity.dz_dt_filt2,
-                              vorticity.dz_dt2_filt2]
-        
-        compare_variables = [vorticity_Carol,
-                             vorticity_Carol,
-                             vorticity.dz_dt_filt,
-                             vorticity.dz_dt2_filt]
-        titles = [r"$ζ_{f}$",
-                  r"$ζ_{fs}$",
-                  r"$\frac{\partial ζ_{fs}}{\partial t}_s$",
-                  r"$\frac{\partial^{2} ζ_{fs}}{\partial t^{2}}_s$"]
-        
-        colors = ["#264653", "#2a9d8f", "#e76f51", "#f4a261"]
+    # for i, variable_fil in enumerate(filtered_variables):
 
-        for i, variable_fil in enumerate(filtered_variables):
+        # ax = fig1.add_subplot(2, 2, i + 1)
 
-            ax = fig1.add_subplot(2, 2, i + 1)
+        # plot_vorticity(ax, variable_fil, colors[i])
 
-            plot_vorticity(ax, variable_fil, colors[i])
+        # ax.plot(pd.to_datetime(vorticity.time), variables[i], c='k', alpha=0.8, lw=1)
+        # ax.set_title(titles[i], fontweight='bold', horizontalalignment='center')
 
-            ax.plot(pd.to_datetime(vorticity.time), variables[i], c='k', alpha=0.8, lw=1)
-            # ax.plot(pd.to_datetime(vorticity.time), compare_variables[i], c='#3a5a40', alpha=0.8)
-            ax.set_title(titles[i], fontweight='bold', horizontalalignment='center')
+        # date_format = mdates.DateFormatter("%d %HZ")
+        # ax.xaxis.set_major_formatter(date_format)
+        # ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))  # Adjust interval as needed
+        # plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
 
-            date_format = mdates.DateFormatter("%d %HZ")
-            ax.xaxis.set_major_formatter(date_format)
-            ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))  # Adjust interval as needed
-            plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+    # plt.subplots_adjust(hspace=0.5)
 
-        plt.subplots_adjust(hspace=0.5)
+    # fname = os.path.join(output_directory, f'{cyclone_id}.png')
+    # fig1.savefig(fname, bbox_inches='tight')
+    # print(f"{fname} created.")
 
-        fname = os.path.join(output_directory, f'test_filter_{window_length_lanczo}h.png')
-        fig1.savefig(fname, bbox_inches='tight')
-        print(f"{fname} created.")
+    # Determine the periods
+    try:
+        periods_dict, df = get_periods(vorticity)
+    except:
+        print(f'Error')
+        continue
 
-        # Determine the periods
-        try:
-            periods_dict, df = get_periods(vorticity)
-        except:
-            print(f'Error')
-            continue
-
-        # Create plots
-        plot_all_periods(periods_dict, df, ax=None, vorticity=vorticity.zeta,
-                        periods_outfile_path=f"{periods_outfile_path}_{window_length_lanczo}")
-        plot_didactic(df, vorticity, f"{periods_didatic_outfile_path}_{window_length_lanczo}")
-        # export_periods_to_csv(periods_dict, f"{periods_outfile_path}_{window_length}")
+    # Create plots
+    plot_all_periods(periods_dict, df, ax=None, vorticity=vorticity.zeta,
+                    periods_outfile_path=f"{periods_outfile_path}-{cyclone_id}")
+    plot_didactic(df, vorticity, f"{periods_didatic_outfile_path}-{cyclone_id}")
+    # export_periods_to_csv(periods_dict, f"{periods_outfile_path}_{window_length}")
