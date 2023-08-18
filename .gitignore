@@ -36,3 +36,6 @@ figures/periods/BY_RG-all
 figures/periods/BY_RG-all/*
 figures/periods_didactic/BY_RG-all/*
 figures/periods/BY_RG-all/*.png
+
+# Testing filters
+figures/tests_filter/test_*

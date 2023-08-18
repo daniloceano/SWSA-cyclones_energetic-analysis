@@ -17,36 +17,6 @@ import numpy as np
 
 from determine_periods import get_periods, plot_all_periods, plot_didactic, export_periods_to_csv
 
-def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
-    new_cmap = colors.LinearSegmentedColormap.from_list(
-        'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
-        cmap(np.linspace(minval, maxval, n)))
-    return new_cmap
-
-def low_pass_weights(window, cutoff):
-    """Calculate weights for a low pass Lanczos filter.
-
-    Args:
-
-    window: int
-        The length of the filter window.
-
-    cutoff: float
-        The cutoff frequency in inverse time steps.
-
-    """
-    order = ((window - 1) // 2 ) + 1
-    nwts = 2 * order + 1
-    w = np.zeros([nwts])
-    n = nwts // 2
-    w[n] = 2 * cutoff
-    k = np.arange(1., n)
-    sigma = np.sin(np.pi * k / n) * n / (np.pi * k)
-    firstfactor = np.sin(2. * np.pi * cutoff * k) / (np.pi * k)
-    w[n-1:0:-1] = firstfactor * sigma
-    w[n+1:-1] = firstfactor * sigma
-    return w[1:-1]
-
 def lanczos_filter(variable, window_lenght, frequency):
     # Define the cutoff frequency for the Lanczos filter (cycles per sample)
     cutoff_frequency = 1 / frequency  # 12 hours
@@ -62,7 +32,6 @@ def lanczos_filter(variable, window_lenght, frequency):
     filtered_zeta = lfilter(lanczos_filter, 1.0, variable)
 
     return filtered_zeta
-
 
 def find_peaks_valleys(series):
     """
@@ -94,7 +63,7 @@ def find_peaks_valleys(series):
 
     return result
 
-def array_vorticity(zeta_df, window_lenght, frequency):
+def array_vorticity(zeta_df, window_lenght_lanczo, frequency, window_length_savgol):
     """
     Calculate derivatives of the vorticity and filter the resulting series
 
@@ -108,16 +77,14 @@ def array_vorticity(zeta_df, window_lenght, frequency):
     da = zeta_df.to_xarray().copy()
 
     # Filter vorticity twice
-    zeta_filtred = xr.DataArray(lanczos_filter(da.zeta.copy(), window_lenght, frequency),
+    zeta_filtred = xr.DataArray(lanczos_filter(da.zeta.copy(), window_lenght_lanczo, frequency),
                               coords={'time':zeta_df.index})
     da = da.assign(variables={'zeta_filt': zeta_filtred})
 
-    savgol_window_lenght = (len(zeta_df) // 5) + 1
-    savgol_window_lenght_dz = (len(zeta_df) // 2) + 1
     savgol_polynomial = 3
    
     zeta_smoothed = xr.DataArray(
-        savgol_filter(zeta_filtred, savgol_window_lenght, savgol_polynomial, mode="nearest"),
+        savgol_filter(zeta_filtred, window_length_savgol, savgol_polynomial, mode="nearest"),
         coords={'time':zeta_df.index})
     da = da.assign(variables={'zeta_filt2': zeta_smoothed})
 
@@ -128,18 +95,25 @@ def array_vorticity(zeta_df, window_lenght, frequency):
     dzfilt_dt2 = dzfilt_dt.differentiate('time', datetime_unit='h')
     
     # Filter derivatives
+    dz_dt_filt = xr.DataArray(
+        savgol_filter(dzfilt_dt, window_length_savgol, savgol_polynomial, mode="nearest"),
+        coords={'time':zeta_df.index})
+    dz_dt2_filt = xr.DataArray(
+        savgol_filter(dzfilt_dt2, window_length_savgol, savgol_polynomial, mode="nearest"),
+        coords={'time':zeta_df.index})
+    
     dz_dt_filt2 = xr.DataArray(
-        savgol_filter(dzfilt_dt, savgol_window_lenght_dz, savgol_polynomial, mode="nearest"),
+        savgol_filter(dz_dt_filt, window_length_savgol, savgol_polynomial, mode="nearest"),
         coords={'time':zeta_df.index})
     dz_dt2_filt2 = xr.DataArray(
-        savgol_filter(dzfilt_dt2, savgol_window_lenght_dz, savgol_polynomial, mode="nearest"),
+        savgol_filter(dz_dt2_filt, window_length_savgol, savgol_polynomial, mode="nearest"),
         coords={'time':zeta_df.index})
 
     # Assign variables to xarray
     da = da.assign(variables={'dz_dt': dz_dt,
                               'dz_dt2': dz_dt2,
-                              #'dzfilt2_dt': dzfilt_dt,
-                              #'dzfilt2_dt2': dzfilt_dt2,
+                              'dz_dt_filt': dz_dt_filt,
+                              'dz_dt2_filt': dz_dt2_filt,
                               'dz_dt_filt2': dz_dt_filt2,
                               'dz_dt2_filt2': dz_dt2_filt2,
                               })
@@ -167,7 +141,11 @@ def plot_vorticity(ax, variable, color):
     
     return line
 
-for file in sorted(glob('../tracks_LEC-format/ALL/intense/*'))[:1]:
+tracks_Carol = pd.read_csv('../raw_data/ff_trs_SWSA_24h_1000km_1979-2020_mslp_spd850_intense.csv')
+tracks_Carol.columns = ['track_id', 'dt', 'date', 'lon vor','lat vor', 'vor42', 'lon mslp', 'lat mslp',
+                                       'mslp', 'lon 10spd', 'lat 10spd', '10spd']
+
+for file in sorted(glob('../tracks_LEC-format/ALL/intense/*')):
 
     print(file)
 
@@ -178,6 +156,9 @@ for file in sorted(glob('../tracks_LEC-format/ALL/intense/*'))[:1]:
 
     os.makedirs(output_directory, exist_ok=True)
 
+    track_Carol = tracks_Carol[tracks_Carol['track_id'] == int(cyclone_id)]
+    vorticity_Carol = track_Carol['vor42'] * -1e-5
+
     # Set the output file names
     periods_outfile_path = output_directory + 'periods'
     periods_didatic_outfile_path = output_directory + 'periods_didatic'
@@ -186,26 +167,18 @@ for file in sorted(glob('../tracks_LEC-format/ALL/intense/*'))[:1]:
     track = pd.read_csv(track_file, parse_dates=[0], delimiter=';', index_col=[0])
     zeta_df = pd.DataFrame(track['min_zeta_850'].rename('zeta'))    
 
-    #indexes = range(len(zeta_df))
     indexes = zeta_df.index
-
     lengh_zeta = len(zeta_df)
-    # min_value = round(lengh_zeta * 0.3)
-    # max_value = round(lengh_zeta * 0.6)
+    frequency = 48
+    window_length_savgol = lengh_zeta // 2 | 1
+    window_lengths_lanczo = [lengh_zeta // 20]
 
-    cmap = plt.get_cmap('coolwarm')
-    cmap = truncate_colormap(cmap, 0.1, 0.9, 5)
-
-    window_length = lengh_zeta * 0.1
-
-    frequencies = [12, 24]
-
-    for i, frequency in enumerate(frequencies):
+    for i, window_length_lanczo in enumerate(window_lengths_lanczo):
 
         print(f'Frequency: {frequency}')
         fig1 = plt.figure(figsize=(14, 8))
        
-        vorticity = array_vorticity(zeta_df.copy(), window_length, frequency)
+        vorticity = array_vorticity(zeta_df.copy(), window_length_lanczo, frequency, window_length_savgol)
 
         variables = [vorticity.zeta,
                     vorticity.zeta,
@@ -217,6 +190,10 @@ for file in sorted(glob('../tracks_LEC-format/ALL/intense/*'))[:1]:
                               vorticity.dz_dt_filt2,
                               vorticity.dz_dt2_filt2]
         
+        compare_variables = [vorticity_Carol,
+                             vorticity_Carol,
+                             vorticity.dz_dt_filt,
+                             vorticity.dz_dt2_filt]
         titles = [r"$ζ_{f}$",
                   r"$ζ_{fs}$",
                   r"$\frac{\partial ζ_{fs}}{\partial t}_s$",
@@ -231,6 +208,7 @@ for file in sorted(glob('../tracks_LEC-format/ALL/intense/*'))[:1]:
             plot_vorticity(ax, variable_fil, colors[i])
 
             ax.plot(pd.to_datetime(vorticity.time), variables[i], c='k', alpha=0.8, lw=1)
+            # ax.plot(pd.to_datetime(vorticity.time), compare_variables[i], c='#3a5a40', alpha=0.8)
             ax.set_title(titles[i], fontweight='bold', horizontalalignment='center')
 
             date_format = mdates.DateFormatter("%d %HZ")
@@ -240,7 +218,7 @@ for file in sorted(glob('../tracks_LEC-format/ALL/intense/*'))[:1]:
 
         plt.subplots_adjust(hspace=0.5)
 
-        fname = os.path.join(output_directory, f'test_filter_{frequency}h.png')
+        fname = os.path.join(output_directory, f'test_filter_{window_length_lanczo}h.png')
         fig1.savefig(fname, bbox_inches='tight')
         print(f"{fname} created.")
 
@@ -253,11 +231,6 @@ for file in sorted(glob('../tracks_LEC-format/ALL/intense/*'))[:1]:
 
         # Create plots
         plot_all_periods(periods_dict, df, ax=None, vorticity=vorticity.zeta,
-                        periods_outfile_path=f"{periods_outfile_path}_{frequency}")
-        plot_didactic(df, vorticity, f"{periods_didatic_outfile_path}_{frequency}")
-        # export_periods_to_csv(periods_dict, f"{periods_outfile_path}_{window_length}") 
-      
-
-    # Create a legend outside the figure on the right
-    # fig1.legend(handles, labels, loc='center right', bbox_to_anchor=(0.6, 0.5))
-    # fig1.subplots_adjust(right=0.8)  # Make space for the legend
+                        periods_outfile_path=f"{periods_outfile_path}_{window_length_lanczo}")
+        plot_didactic(df, vorticity, f"{periods_didatic_outfile_path}_{window_length_lanczo}")
+        # export_periods_to_csv(periods_dict, f"{periods_outfile_path}_{window_length}")
