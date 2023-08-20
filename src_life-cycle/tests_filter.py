@@ -15,7 +15,74 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 
-from determine_periods import get_periods, plot_all_periods, plot_didactic, export_periods_to_csv
+from determine_periods import get_periods, plot_didactic
+
+def plot_all_periods(periods_dict, vorticity, Carol_vorticity, periods_outfile_path=None):
+    colors_phases = {'incipient': '#65a1e6',
+                      'intensification': '#f7b538',
+                        'mature': '#d62828',
+                          'decay': '#9aa981',
+                          'residual': 'gray'}
+
+    # Create a new figure if ax is not provided
+    fig, ax = plt.subplots(figsize=(6.5, 5))
+
+    # Plot the vorticity data
+    ax.plot(vorticity.time, vorticity.zeta, linewidth=2.5, color='gray', label=r'ζ')
+
+    # Plot filtered vorticities
+    ax.plot(vorticity.time, vorticity.zeta_filt, linewidth=2, c='#606c38', label=r'$ζ_{f}$')
+    ax.plot(vorticity.time, vorticity.zeta_smoothed, linewidth=2, c='#1d3557', label=r'$ζ_{fs}$')
+    ax.plot(vorticity.time, vorticity.zeta_filt2, linewidth=2, c='#e63946', label=r'$ζ_{fs^{2}}$')
+
+    # Plot Carol's vorticity
+    ax.plot(pd.to_datetime(Carol_vorticity['date']), Carol_vorticity['vor42'] * -1e-5,
+             c='gray', linestyle='--',  linewidth=2, label=r'$ζ_{TRACK} \times -1^{-5}$')
+
+    legend_labels = set()  # To store unique legend labels
+
+    # Shade the areas between the beginning and end of each period
+    for phase, (start, end) in periods_dict.items():
+        # Extract the base phase name (without suffix)
+        base_phase = phase.split()[0]
+
+        # Access the color based on the base phase name
+        color = colors_phases[base_phase]
+
+        # Fill between the start and end indices with the corresponding color
+        ax.fill_between(vorticity.time, vorticity.zeta.values, where=(vorticity.time >= start) & (vorticity.time <= end),
+                        alpha=0.4, color=color, label=base_phase)
+
+        # Add the base phase name to the legend labels set
+        legend_labels.add(base_phase)
+
+    # Add legend labels for Vorticity and ζ
+    for label in [r'ζ', r'$ζ_{f}$', r'$ζ_{fs}$', r'$ζ_{TRACK} \times -1^{-5}$', r'$ζ_{fs^{2}}$']:
+        legend_labels.add(label)
+
+    # Set the title
+    ax.set_title('Vorticity Data with Periods')
+
+    if periods_outfile_path is not None:
+        # Remove duplicate labels from the legend
+        handles, labels = ax.get_legend_handles_labels()
+        unique_labels = []
+        for label in labels:
+            if label not in unique_labels and label in legend_labels:
+                unique_labels.append(label)
+
+        ax.legend(handles, unique_labels, loc='upper right', bbox_to_anchor=(1.5, 1))
+
+        ax.ticklabel_format(axis='y', style='sci', scilimits=(-3, 3))
+        date_format = mdates.DateFormatter("%Y-%m-%d")
+        ax.xaxis.set_major_formatter(date_format)
+        plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+
+        plt.tight_layout()
+
+        fname = f"{periods_outfile_path}.png"
+        plt.savefig(fname, dpi=500)
+        print(f"{fname} created.")
 
 def lanczos_filter(variable, window_lenght, frequency):
     # Define the cutoff frequency for the Lanczos filter (cycles per sample)
@@ -86,7 +153,12 @@ def array_vorticity(zeta_df, window_lenght_lanczo, frequency, window_length_savg
     zeta_smoothed = xr.DataArray(
         savgol_filter(zeta_filtred, window_length_savgol, savgol_polynomial, mode="nearest"),
         coords={'time':zeta_df.index})
-    da = da.assign(variables={'zeta_filt2': zeta_smoothed})
+    da = da.assign(variables={'zeta_smoothed': zeta_smoothed})
+
+    zeta_filt2 = xr.DataArray(
+        savgol_filter(zeta_smoothed, window_length_savgol/2, savgol_polynomial, mode="nearest"),
+        coords={'time':zeta_df.index})
+    da = da.assign(variables={'zeta_filt2': zeta_filt2})
 
     dz_dt = da.zeta.differentiate('time', datetime_unit='h')
     dz_dt2 = dz_dt.differentiate('time', datetime_unit='h')
@@ -141,6 +213,12 @@ def plot_vorticity(ax, variable, color):
     
     return line
 
+Carol_tracks_file = '../stats_tracks/BY_RG/tracks-RG1_q0.99.csv'
+Carol_tracks = pd.read_csv(Carol_tracks_file)
+Carol_tracks.columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42', 'lon mslp',
+                         'lat mslp', 'mslp', 'lon 10spd', 'lat 10spd', '10spd']
+
+
 for file in sorted(glob('../LEC_results-q0.99/*')):
 
     print(file)
@@ -152,6 +230,9 @@ for file in sorted(glob('../LEC_results-q0.99/*')):
     except:
         print('failed for',cyclone_id)
         continue
+
+    Carol_track_id = Carol_tracks[Carol_tracks['track_id'] == int(cyclone_id)]
+    Carol_vorticity = Carol_track_id[['date','vor42']]
     
     output_directory = f'../figures/tests_filter/0.99/'
 
@@ -171,57 +252,16 @@ for file in sorted(glob('../LEC_results-q0.99/*')):
     window_length_savgol = lengh_zeta // 2 | 1
     window_length_lanczo = lengh_zeta // 20
 
-    # print(f'Frequency: {frequency}')
-    # fig1 = plt.figure(figsize=(14, 8))
-    
     vorticity = array_vorticity(zeta_df.copy(), window_length_lanczo, frequency, window_length_savgol)
-
-    # variables = [vorticity.zeta,
-    #             vorticity.zeta,
-    #             vorticity.dz_dt  * 0.25,
-    #             vorticity.dz_dt2  * 0.025]
-    
-    # filtered_variables = [vorticity.zeta_filt,
-    #                       vorticity.zeta_filt2,
-    #                       vorticity.dz_dt_filt2,
-    #                       vorticity.dz_dt2_filt2]
-    
-    # titles = [r"$ζ_{f}$",
-    #           r"$ζ_{fs}$",
-    #           r"$\frac{\partial ζ_{fs}}{\partial t}_s$",
-    #           r"$\frac{\partial^{2} ζ_{fs}}{\partial t^{2}}_s$"]
-    
-    # colors = ["#264653", "#2a9d8f", "#e76f51", "#f4a261"]
-
-    # for i, variable_fil in enumerate(filtered_variables):
-
-        # ax = fig1.add_subplot(2, 2, i + 1)
-
-        # plot_vorticity(ax, variable_fil, colors[i])
-
-        # ax.plot(pd.to_datetime(vorticity.time), variables[i], c='k', alpha=0.8, lw=1)
-        # ax.set_title(titles[i], fontweight='bold', horizontalalignment='center')
-
-        # date_format = mdates.DateFormatter("%d %HZ")
-        # ax.xaxis.set_major_formatter(date_format)
-        # ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))  # Adjust interval as needed
-        # plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
-
-    # plt.subplots_adjust(hspace=0.5)
-
-    # fname = os.path.join(output_directory, f'{cyclone_id}.png')
-    # fig1.savefig(fname, bbox_inches='tight')
-    # print(f"{fname} created.")
 
     # Determine the periods
     try:
-        periods_dict, df = get_periods(vorticity)
+        periods_dict, df = get_periods(vorticity.copy())
     except:
         print(f'Error')
         continue
 
     # Create plots
-    plot_all_periods(periods_dict, df, ax=None, vorticity=vorticity.zeta,
+    plot_all_periods(periods_dict, vorticity, Carol_vorticity,
                     periods_outfile_path=f"{periods_outfile_path}-{cyclone_id}")
     plot_didactic(df, vorticity, f"{periods_didatic_outfile_path}-{cyclone_id}")
-    # export_periods_to_csv(periods_dict, f"{periods_outfile_path}_{window_length}")
