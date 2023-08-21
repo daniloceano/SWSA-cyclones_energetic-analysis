@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    determine_periods.py                               :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/05/19 19:06:47 by danilocs          #+#    #+#              #
-#    Updated: 2023/08/16 14:20:35 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/21 11:33:47 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -423,9 +423,10 @@ def plot_phase(df, phase, ax=None, show_title=True):
 
     # Iterate over the periods and fill the area
     for start, end in zip(phase_starts, phase_ends):
-        ax.fill_between(df_copy.index, df_copy['z'], where=(df_copy.index >= start) &
+        ax.fill_between(df_copy.index, df_copy['z_unfil'], where=(df_copy.index >= start) &
                         (df_copy.index <= end), alpha=0.7, color=colors_phases[phase])
 
+    ax.plot(df_copy.index, df_copy['z_unfil'], c='gray', lw=3, alpha=0.8)
     ax.plot(df_copy.index, df_copy['z'], c='k')
 
     if show_title:
@@ -613,6 +614,7 @@ def get_periods(vorticity):
     dz2 = vorticity.dz_dt2_filt2
 
     df = z.to_dataframe().rename(columns={'zeta_filt2':'z'})
+    df['z_unfil'] = vorticity.zeta.to_dataframe()
     df['dz'] = dz.to_dataframe()
     df['dz2'] = dz2.to_dataframe()
 
@@ -754,6 +756,6 @@ def determine_periods(track_file, output_directory):
 # Testing #
 if __name__ == "__main__":
 
-    track_file = '../inputs/track-test-periods'
+    track_file = '../../lorenz-cycle/inputs/track-test-periods'
     output_directory = './'
     determine_periods(track_file, output_directory)
