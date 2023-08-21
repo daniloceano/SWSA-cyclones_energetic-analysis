@@ -41,3 +41,5 @@ figures/periods/BY_RG-all/*.png
 figures/tests_filter/test_*
 figures/tests_filter/0.99_single_smooth
 figures/tests_filter/tests_filter_savgol_window
+figures/tests_filter/0.99_double_smooth
+figures/tests_filter/0.99_double_smooth_band_pass
