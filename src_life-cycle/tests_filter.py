@@ -1,6 +1,6 @@
 from scipy.signal import argrelextrema
 from scipy.signal import savgol_filter
-from scipy.signal import firwin, lfilter
+from scipy.signal import convolve
 
 from glob import glob
 
@@ -31,13 +31,16 @@ def plot_all_periods(periods_dict, vorticity, Carol_vorticity, periods_outfile_p
     ax.plot(vorticity.time, vorticity.zeta, linewidth=2.5, color='gray', label=r'ζ')
 
     # Plot filtered vorticities
-    ax.plot(vorticity.time, vorticity.zeta_filt, linewidth=2, c='#d68c45', label=r'$ζ_{f}$')
-    ax.plot(vorticity.time, vorticity.zeta_smoothed, linewidth=2, c='#1d3557', label=r'$ζ_{fs}$')
-    ax.plot(vorticity.time, vorticity.zeta_filt2, linewidth=2, c='#e63946', label=r'$ζ_{fs^{2}}$')
+    scaling_factor = np.max(vorticity.zeta) / np.max(vorticity.zeta_filt)
+    ax.plot(vorticity.time, vorticity.zeta_filt * scaling_factor, linewidth=2, c='#d68c45', label=r'$ζ_{f}$')
+    ax.plot(vorticity.time, vorticity.zeta_smoothed * scaling_factor, linewidth=2, c='#1d3557', label=r'$ζ_{fs}$')
+    ax.plot(vorticity.time, vorticity.zeta_filt2 * scaling_factor, linewidth=2, c='#e63946', label=r'$ζ_{fs^{2}}$')
 
     # Plot Carol's vorticity
-    ax.plot(pd.to_datetime(Carol_vorticity['date']), Carol_vorticity['vor42'] * -1e-5,
-             c='gray', linestyle='--',  linewidth=2, label=r'$ζ_{TRACK} \times -1^{-5}$')
+    scaling_factor = np.max(vorticity.zeta) / np.max(Carol_vorticity['vor42'])
+    ax.plot(pd.to_datetime(Carol_vorticity['date']),
+             Carol_vorticity['vor42'] * float(scaling_factor),
+             c='k', alpha=0.6, linestyle='--',  linewidth=2, label=r'$ζ_{TRACK} \times -1^{-5}$')
 
     legend_labels = set()  # To store unique legend labels
 
@@ -84,46 +87,34 @@ def plot_all_periods(periods_dict, vorticity, Carol_vorticity, periods_outfile_p
         plt.savefig(fname, dpi=500)
         print(f"{fname} created.")
 
-def lanczos_filter(variable, window_lenght, frequency):
-    # Define the cutoff frequency for the Lanczos filter (cycles per sample)
-    cutoff_frequency = 1 / frequency
 
-    # Generate the Lanczos filter coefficients
-    t = np.arange(-(window_lenght - 1) / 2, (window_lenght - 1) / 2 + 1)
-    lanczos_filter = np.sinc(2 * cutoff_frequency * t) * np.sinc(t / (window_lenght - 1))
+def pass_weights(window, cutoff):
+    """Calculate weights for a low pass Lanczos filter.
 
-    # Normalize the filter coefficients
-    lanczos_filter /= lanczos_filter.sum()
+    Args:
 
-    # Apply the Lanczos filter to the zeta data
-    filtered_zeta = lfilter(lanczos_filter, 1.0, variable)
+    window: int
+        The length of the filter window.
 
-    return filtered_zeta
+    cutoff: float
+        The cutoff frequency in inverse time steps.
 
-import numpy as np
-from scipy.signal import lfilter
+    """
+    order = ((window - 1) // 2) + 1
+    nwts = 2 * order + 1
+    w = np.zeros([nwts])
+    n = nwts // 2
+    w[n] = 2 * cutoff
+    k = np.arange(1.0, n)
+    sigma = np.sin(np.pi * k / n) * n / (np.pi * k)
+    firstfactor = np.sin(2.0 * np.pi * cutoff * k) / (np.pi * k)
+    w[n - 1 : 0 : -1] = firstfactor * sigma
+    w[n + 1 : -1] = firstfactor * sigma
+    return w[1:-1]
 
-def bandpass_lanczos_filter(variable, window_length, low_period, high_period):
-    # Convert periods to frequencies (cycles per sample)
-    low_frequency = 1 / low_period
-    high_frequency = 1 / high_period
-
-    # Generate the Lanczos filter coefficients for the high-frequency component
-    t = np.arange(-(window_length - 1) / 2, (window_length - 1) / 2 + 1)
-    highpass_lanczos_filter = np.sinc(2 * high_frequency * t) * np.sinc(t / (window_length - 1))
-
-    # Generate the Lanczos filter coefficients for the low-frequency component
-    lowpass_lanczos_filter = np.sinc(2 * low_frequency * t) * np.sinc(t / (window_length - 1))
-
-    # Create the band-pass filter by subtracting the low-pass from the high-pass
-    bandpass_lanczos_filter = highpass_lanczos_filter - lowpass_lanczos_filter
-
-    # Normalize the filter coefficients
-    bandpass_lanczos_filter /= bandpass_lanczos_filter.sum()
-
-    # Apply the band-pass Lanczos filter to the variable
-    filtered_variable = lfilter(bandpass_lanczos_filter, 1.0, variable)
-
+def lanczos_filter(variable, window_length_lanczo, frequency):
+    weights = pass_weights(window_length_lanczo, 1.0 / frequency)
+    filtered_variable = convolve(variable, weights, mode="same")
     return filtered_variable
 
 
@@ -157,7 +148,7 @@ def find_peaks_valleys(series):
 
     return result
 
-def array_vorticity(zeta_df, window_lenght_lanczo, low_period, high_period, window_length_savgol):
+def array_vorticity(zeta_df, window_length_lanczo, low_period, high_period, window_length_savgol):
     """
     Calculate derivatives of the vorticity and filter the resulting series
 
@@ -170,11 +161,17 @@ def array_vorticity(zeta_df, window_lenght_lanczo, low_period, high_period, wind
     # Convert dataframe to xarray
     da = zeta_df.to_xarray().copy()
 
-    # Filter vorticity twice
-    # zeta_filtred = xr.DataArray(lanczos_filter(da.zeta.copy(), window_lenght_lanczo, frequency),
-    #                           coords={'time':zeta_df.index})
-    zeta_filtred = xr.DataArray(bandpass_lanczos_filter(da.zeta.copy(), window_lenght_lanczo, low_period, high_period),
-                              coords={'time':zeta_df.index})
+    # # Filter vorticity for both periods
+    # zeta_filtred_high_pass = lanczos_filter(da.zeta.copy(), window_length_lanczo, high_period)
+    # zeta_filtred_high_pass = xr.DataArray(zeta_filtred_high_pass, coords={'time':zeta_df.index})
+    # zeta_filtred_low_pass = lanczos_filter(zeta_filtred_high_pass, window_length_lanczo, low_period)
+    # zeta_filtred = xr.DataArray(zeta_filtred_low_pass, coords={'time':zeta_df.index})
+
+    #
+    zeta_filtred_low_pass = lanczos_filter(da.zeta.copy(), window_length_savgol, high_period)
+    zeta_filtred = xr.DataArray(zeta_filtred_low_pass, coords={'time':zeta_df.index})
+
+
     da = da.assign(variables={'zeta_filt': zeta_filtred})
 
     savgol_polynomial = 3
@@ -248,7 +245,7 @@ Carol_tracks.columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42',
                          'lat mslp', 'mslp', 'lon 10spd', 'lat 10spd', '10spd']
 
 
-for file in sorted(glob('../LEC_results-q0.99/*')):
+for file in sorted(glob('../LEC_results-0.99/*'))[:5]:
 
     print(file)
 
@@ -278,10 +275,12 @@ for file in sorted(glob('../LEC_results-q0.99/*')):
     indexes = zeta_df.index
     lengh_zeta = len(zeta_df)
     # frequency = 48
-    low_period = 24
-    high_period = 120
+    high_period = 24
+    low_period = 120
     window_length_savgol = lengh_zeta // 2 | 1
     window_length_lanczo = lengh_zeta // 20
+    # indow_length_lanczo = lengh_zeta // 4
+    sampling_frequency = int((zeta_df.index[1] - zeta_df.index[0]).total_seconds() / 3600)
 
     vorticity = array_vorticity(zeta_df.copy(), window_length_lanczo, low_period, high_period, window_length_savgol)
 
