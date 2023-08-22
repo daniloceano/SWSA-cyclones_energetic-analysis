@@ -118,6 +118,7 @@ def lanczos_filter(variable, window_length_lanczo, frequency):
     return filtered_variable
 
 
+
 def find_peaks_valleys(series):
     """
     Find peaks, valleys, and zero locations in a pandas series
@@ -148,7 +149,7 @@ def find_peaks_valleys(series):
 
     return result
 
-def array_vorticity(zeta_df, window_length_lanczo, low_period, high_period, window_length_savgol):
+def array_vorticity(zeta_df, window_length_lanczo, frequency, window_length_savgol):
     """
     Calculate derivatives of the vorticity and filter the resulting series
 
@@ -162,14 +163,8 @@ def array_vorticity(zeta_df, window_length_lanczo, low_period, high_period, wind
     da = zeta_df.to_xarray().copy()
 
     # # Filter vorticity for both periods
-    # zeta_filtred_high_pass = lanczos_filter(da.zeta.copy(), window_length_lanczo, high_period)
-    # zeta_filtred_high_pass = xr.DataArray(zeta_filtred_high_pass, coords={'time':zeta_df.index})
-    # zeta_filtred_low_pass = lanczos_filter(zeta_filtred_high_pass, window_length_lanczo, low_period)
-    # zeta_filtred = xr.DataArray(zeta_filtred_low_pass, coords={'time':zeta_df.index})
-
-    #
-    zeta_filtred_low_pass = lanczos_filter(da.zeta.copy(), window_length_savgol, high_period)
-    zeta_filtred = xr.DataArray(zeta_filtred_low_pass, coords={'time':zeta_df.index})
+    zeta_filtred = lanczos_filter(da.zeta.copy(), window_length_lanczo, frequency)
+    zeta_filtred = xr.DataArray(zeta_filtred, coords={'time':zeta_df.index})
 
 
     da = da.assign(variables={'zeta_filt': zeta_filtred})
@@ -181,9 +176,13 @@ def array_vorticity(zeta_df, window_length_lanczo, low_period, high_period, wind
         coords={'time':zeta_df.index})
     da = da.assign(variables={'zeta_smoothed': zeta_smoothed})
 
+    window_length_savgol_2nd = window_length_savgol // 2 | 1
+    if window_length_savgol_2nd < savgol_polynomial:
+        window_length_savgol_2nd = 3
+
     zeta_filt2 = xr.DataArray(
-        savgol_filter(zeta_smoothed, window_length_savgol, savgol_polynomial, mode="nearest"),
-        coords={'time':zeta_df.index})
+        savgol_filter(zeta_smoothed, window_length_savgol_2nd, savgol_polynomial, mode="nearest"),
+                        coords={'time':zeta_df.index})
     da = da.assign(variables={'zeta_filt2': zeta_filt2})
 
     dz_dt = da.zeta.differentiate('time', datetime_unit='h')
@@ -245,11 +244,12 @@ Carol_tracks.columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42',
                          'lat mslp', 'mslp', 'lon 10spd', 'lat 10spd', '10spd']
 
 
-for file in sorted(glob('../LEC_results-0.99/*'))[:5]:
+for file in sorted(glob('../LEC_results-q0.99/*')):
 
     print(file)
 
     cyclone_id = os.path.basename(file).split('_')[0].split('-')[2]
+    RG =  os.path.basename(file).split('-')[0]
 
     try:
         track_file = glob(f'{file}/*track')[0]
@@ -275,14 +275,13 @@ for file in sorted(glob('../LEC_results-0.99/*'))[:5]:
     indexes = zeta_df.index
     lengh_zeta = len(zeta_df)
     # frequency = 48
-    high_period = 24
-    low_period = 120
+    high_frequency = 24
     window_length_savgol = lengh_zeta // 2 | 1
     window_length_lanczo = lengh_zeta // 20
-    # indow_length_lanczo = lengh_zeta // 4
     sampling_frequency = int((zeta_df.index[1] - zeta_df.index[0]).total_seconds() / 3600)
 
-    vorticity = array_vorticity(zeta_df.copy(), window_length_lanczo, low_period, high_period, window_length_savgol)
+
+    vorticity = array_vorticity(zeta_df.copy(), window_length_lanczo, high_frequency, window_length_savgol)
 
     # Determine the periods
     try:
@@ -293,5 +292,5 @@ for file in sorted(glob('../LEC_results-0.99/*'))[:5]:
 
     # Create plots
     plot_all_periods(periods_dict, vorticity, Carol_vorticity,
-                    periods_outfile_path=f"{periods_outfile_path}-{cyclone_id}")
-    plot_didactic(df, vorticity, f"{periods_didatic_outfile_path}-{cyclone_id}")
+                    periods_outfile_path=f"{periods_outfile_path}_{RG}-0.99-{cyclone_id}")
+    plot_didactic(df, vorticity, f"{periods_didatic_outfile_path}_{RG}-0.99-{cyclone_id}")

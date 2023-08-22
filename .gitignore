@@ -43,3 +43,4 @@ figures/tests_filter/0.99_single_smooth
 figures/tests_filter/tests_filter_savgol_window
 figures/tests_filter/0.99_double_smooth
 figures/tests_filter/0.99_double_smooth_band_pass
+figures/tests_filter/0.99/
