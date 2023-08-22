@@ -15,7 +15,7 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 
-from determine_periods import get_periods, plot_didactic
+from determine_periods import get_periods, plot_didactic, array_vorticity
 
 def plot_all_periods(periods_dict, vorticity, Carol_vorticity, periods_outfile_path=None):
     colors_phases = {'incipient': '#65a1e6',
@@ -34,7 +34,7 @@ def plot_all_periods(periods_dict, vorticity, Carol_vorticity, periods_outfile_p
     scaling_factor = np.max(vorticity.zeta) / np.max(vorticity.zeta_filt)
     ax.plot(vorticity.time, vorticity.zeta_filt * scaling_factor, linewidth=2, c='#d68c45', label=r'$ζ_{f}$')
     ax.plot(vorticity.time, vorticity.zeta_smoothed * scaling_factor, linewidth=2, c='#1d3557', label=r'$ζ_{fs}$')
-    ax.plot(vorticity.time, vorticity.zeta_filt2 * scaling_factor, linewidth=2, c='#e63946', label=r'$ζ_{fs^{2}}$')
+    ax.plot(vorticity.time, vorticity.zeta_smoothed2 * scaling_factor, linewidth=2, c='#e63946', label=r'$ζ_{fs^{2}}$')
 
     # Plot Carol's vorticity
     scaling_factor = np.max(vorticity.zeta) / np.max(Carol_vorticity['vor42'])
@@ -88,163 +88,13 @@ def plot_all_periods(periods_dict, vorticity, Carol_vorticity, periods_outfile_p
         print(f"{fname} created.")
 
 
-def pass_weights(window, cutoff):
-    """Calculate weights for a low pass Lanczos filter.
-
-    Args:
-
-    window: int
-        The length of the filter window.
-
-    cutoff: float
-        The cutoff frequency in inverse time steps.
-
-    """
-    order = ((window - 1) // 2) + 1
-    nwts = 2 * order + 1
-    w = np.zeros([nwts])
-    n = nwts // 2
-    w[n] = 2 * cutoff
-    k = np.arange(1.0, n)
-    sigma = np.sin(np.pi * k / n) * n / (np.pi * k)
-    firstfactor = np.sin(2.0 * np.pi * cutoff * k) / (np.pi * k)
-    w[n - 1 : 0 : -1] = firstfactor * sigma
-    w[n + 1 : -1] = firstfactor * sigma
-    return w[1:-1]
-
-def lanczos_filter(variable, window_length_lanczo, frequency):
-    weights = pass_weights(window_length_lanczo, 1.0 / frequency)
-    filtered_variable = convolve(variable, weights, mode="same")
-    return filtered_variable
-
-
-
-def find_peaks_valleys(series):
-    """
-    Find peaks, valleys, and zero locations in a pandas series
-
-    Args:
-    series: pandas Series
-
-    Returns:
-    result: pandas Series with nans, "peak", "valley", and 0 in their respective positions
-    """
-    # Extract the values of the series
-    data = series.values
-
-    # Find peaks, valleys, and zero locations
-    peaks = argrelextrema(data, np.greater_equal)[0]
-    valleys = argrelextrema(data, np.less_equal)[0]
-    zeros = np.where(data == 0)[0]
-
-    # Create a series of NaNs
-    
-    result = pd.Series(index=series.time, dtype=object)
-    result[:] = np.nan
-
-    # Label the peaks, valleys, and zero locations
-    result.iloc[peaks] = 'peak'
-    result.iloc[valleys] = 'valley'
-    result.iloc[zeros] = 0
-
-    return result
-
-def array_vorticity(zeta_df, window_length_lanczo, frequency, window_length_savgol):
-    """
-    Calculate derivatives of the vorticity and filter the resulting series
-
-    Args:
-    df: pandas DataFrame
-
-    Returns:
-    xarray DataArray
-    """
-    # Convert dataframe to xarray
-    da = zeta_df.to_xarray().copy()
-
-    # # Filter vorticity for both periods
-    zeta_filtred = lanczos_filter(da.zeta.copy(), window_length_lanczo, frequency)
-    zeta_filtred = xr.DataArray(zeta_filtred, coords={'time':zeta_df.index})
-
-
-    da = da.assign(variables={'zeta_filt': zeta_filtred})
-
-    savgol_polynomial = 3
-   
-    zeta_smoothed = xr.DataArray(
-        savgol_filter(zeta_filtred, window_length_savgol, savgol_polynomial, mode="nearest"),
-        coords={'time':zeta_df.index})
-    da = da.assign(variables={'zeta_smoothed': zeta_smoothed})
-
-    window_length_savgol_2nd = window_length_savgol // 2 | 1
-    if window_length_savgol_2nd < savgol_polynomial:
-        window_length_savgol_2nd = 3
-
-    zeta_filt2 = xr.DataArray(
-        savgol_filter(zeta_smoothed, window_length_savgol_2nd, savgol_polynomial, mode="nearest"),
-                        coords={'time':zeta_df.index})
-    da = da.assign(variables={'zeta_filt2': zeta_filt2})
-
-    dz_dt = da.zeta.differentiate('time', datetime_unit='h')
-    dz_dt2 = dz_dt.differentiate('time', datetime_unit='h')
-    
-    dzfilt_dt = zeta_filt2.differentiate('time', datetime_unit='h')
-    dzfilt_dt2 = dzfilt_dt.differentiate('time', datetime_unit='h')
-    
-    # Filter derivatives
-    dz_dt_filt = xr.DataArray(
-        savgol_filter(dzfilt_dt, window_length_savgol, savgol_polynomial, mode="nearest"),
-        coords={'time':zeta_df.index})
-    dz_dt2_filt = xr.DataArray(
-        savgol_filter(dzfilt_dt2, window_length_savgol, savgol_polynomial, mode="nearest"),
-        coords={'time':zeta_df.index})
-    
-    dz_dt_filt2 = xr.DataArray(
-        savgol_filter(dz_dt_filt, window_length_savgol, savgol_polynomial, mode="nearest"),
-        coords={'time':zeta_df.index})
-    dz_dt2_filt2 = xr.DataArray(
-        savgol_filter(dz_dt2_filt, window_length_savgol, savgol_polynomial, mode="nearest"),
-        coords={'time':zeta_df.index})
-
-    # Assign variables to xarray
-    da = da.assign(variables={'dz_dt': dz_dt,
-                              'dz_dt2': dz_dt2,
-                              'dz_dt_filt': dz_dt_filt,
-                              'dz_dt2_filt': dz_dt2_filt,
-                              'dz_dt_filt2': dz_dt_filt2,
-                              'dz_dt2_filt2': dz_dt2_filt2,
-                              })
-
-    return da
-
-def plot_vorticity(ax, variable, color):
-    """
-    Plot the vorticity series and the filtered vorticity series with peaks and valleys marked
-
-    Args:
-    vorticity: xarray DataArray
-    frequency: int
-    """
-    # Find peaks and valleys in the filtered vorticity series
-    peaks_valleys = find_peaks_valleys(variable)
-
-    # Extract peak and valley indices
-    peaks = peaks_valleys[peaks_valleys == 'peak'].index
-    valleys = peaks_valleys[peaks_valleys == 'valley'].index
-
-    line = ax.plot(indexes, variable, color=color)
-    ax.scatter(peaks, variable.loc[peaks], color=color, marker='o')
-    ax.scatter(valleys, variable.loc[valleys], color=color, marker='o', facecolors='none')
-    
-    return line
-
 Carol_tracks_file = '../stats_tracks/BY_RG/tracks-RG1_q0.99.csv'
 Carol_tracks = pd.read_csv(Carol_tracks_file)
 Carol_tracks.columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42', 'lon mslp',
                          'lat mslp', 'mslp', 'lon 10spd', 'lat 10spd', '10spd']
 
 
-for file in sorted(glob('../LEC_results-q0.99/*')):
+for file in sorted(glob('../LEC_results-0.99/*')):
 
     print(file)
 
@@ -273,15 +123,8 @@ for file in sorted(glob('../LEC_results-q0.99/*')):
     zeta_df = pd.DataFrame(track['min_zeta_850'].rename('zeta'))    
 
     indexes = zeta_df.index
-    lengh_zeta = len(zeta_df)
-    # frequency = 48
-    high_frequency = 24
-    window_length_savgol = lengh_zeta // 2 | 1
-    window_length_lanczo = lengh_zeta // 20
-    sampling_frequency = int((zeta_df.index[1] - zeta_df.index[0]).total_seconds() / 3600)
 
-
-    vorticity = array_vorticity(zeta_df.copy(), window_length_lanczo, high_frequency, window_length_savgol)
+    vorticity = array_vorticity(zeta_df.copy())
 
     # Determine the periods
     try:
