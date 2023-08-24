@@ -94,7 +94,7 @@ Carol_tracks.columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42',
                          'lat mslp', 'mslp', 'lon 10spd', 'lat 10spd', '10spd']
 
 
-for file in sorted(glob('../LEC_results-0.99/*')):
+for file in sorted(glob('../LEC_results-q0.99/*')):
 
     print(file)
 
@@ -127,11 +127,7 @@ for file in sorted(glob('../LEC_results-0.99/*')):
     vorticity = array_vorticity(zeta_df.copy())
 
     # Determine the periods
-    try:
-        periods_dict, df = get_periods(vorticity.copy())
-    except:
-        print(f'Error')
-        continue
+    periods_dict, df = get_periods(vorticity.copy())
 
     # Create plots
     plot_all_periods(periods_dict, vorticity, Carol_vorticity,
