@@ -273,3 +273,85 @@ Error message: index -1 is out of bounds for axis 0 with size 0
 Error processing cyclone: 20110381 - RG: RG3 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/ff_trs_neg_ExSAt_201106_joint_mslp_10spd_GenRG3.csv
 Error message: index -1 is out of bounds for axis 0 with size 0
 
+Error processing cyclone: 19800056 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198001_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800090 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198002_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800103 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198002_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800130 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198002_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Empty track file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198003_joint_mslp_10spd_GenRG1.csv - Skipping processing.
+Error processing cyclone: 19800232 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198004_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800329 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198005_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800358 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198006_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800410 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198006_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800408 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198006_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800441 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198007_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800512 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198007_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800446 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198007_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800567 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198008_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800561 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198008_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800575 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198008_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800613 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198009_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800632 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198009_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800670 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198010_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800710 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198010_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800726 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198010_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800730 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198010_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800760 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198011_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800751 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198011_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800786 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198011_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800801 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198012_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800828 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198012_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+
+Error processing cyclone: 19800822 - RG: RG1 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/ff_trs_neg_ExSAt_198012_joint_mslp_10spd_GenRG1.csv
+Error message: 'min_zeta_850'
+

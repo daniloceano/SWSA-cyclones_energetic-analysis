@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_periods.py                                  :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/15 23:57:11 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/30 12:58:55 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,9 +18,10 @@ for each cyclone
 
 import glob
 import pandas as pd
-import determine_periods as det
+from cyclophaser import determine_periods
 import matplotlib.pyplot as plt
 import multiprocessing
+import os
 
 def process_cyclone(args):
     id_cyclone, track_file, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG = args
@@ -31,32 +32,25 @@ def process_cyclone(args):
     periods_outfile = f"{periods_outfile_path}{RG}_{id_cyclone}"
     periods_didatic_outfile = f"{periods_didatic_outfile_path}{RG}_{id_cyclone}"
 
+    # Create temporary files for cyclophaser function
+    tracks = pd.read_csv(track_file)
+    tracks.columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42', 'lon mslp', 'lat mslp', 'mslp', 'lon 10spd', 'lat 10spd', '10spd']
+    track = tracks[tracks['track_id']==id_cyclone][['date','vor42']]
+    track = track.rename(columns={"date":"time"})
+    tmp_name = (f"tmp_{RG}-{id_cyclone}.csv")
+    track.to_csv(tmp_name, index=False, sep=';')
+
+    tmp = pd.read_csv(tmp_name, parse_dates=[0], delimiter=';', index_col=[0])
+
+    args = {'use_filter':None}
+
     try:
-        # Read the track file and extract the vorticity data
-        tracks = pd.read_csv(track_file)
-        tracks.columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42', 'lon mslp', 'lat mslp', 'mslp', 'lon 10spd', 'lat 10spd', '10spd']
-            
-        if 'RG1' in track_file:
-            RG = 'RG1'
-        elif 'RG2' in track_file:
-            RG = 'RG2'
-        elif 'RG3' in track_file:
-            RG = 'RG3'
-
-        track = tracks[tracks['track_id'] == id_cyclone]
-        zeta_df = -pd.DataFrame(track['vor42'].rename('zeta'))/1e5  
-        zeta_df.index = pd.to_datetime(track['date'].rename('time'))
-        vorticity = det.array_vorticity(zeta_df)
-
-        # Determine the periods
-        periods_dict, df = det.get_periods(vorticity)
-
-        pd.DataFrame(periods_dict).to_csv(periods_csv_outfile, index=False)
-        print(f'{periods_csv_outfile} written.')
-
-        # Create plots
-        det.plot_all_periods(periods_dict, df, ax=None, vorticity=vorticity.zeta, periods_outfile_path=periods_outfile)
-        det.plot_didactic(df, vorticity, periods_didatic_outfile)
+        determine_periods(tmp_name,
+                          vorticity_column='vor42',
+                          plot=periods_outfile,
+                          plot_steps=periods_didatic_outfile,
+                          export_dict=periods_csv_outfile,
+                          array_vorticity_args=args)
 
     except Exception as e:
         error_msg = str(e)
@@ -83,20 +77,19 @@ results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_
                        '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/']
 
 # For testing 
-# results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/']
-####
+results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/']
 
-det.check_create_folder(periods_outfile_path)
-det.check_create_folder(periods_didatic_outfile_path)
-det.check_create_folder(periods_csv_outfile_path)
+os.makedirs(periods_outfile_path, exist_ok=True)
+os.makedirs(periods_didatic_outfile_path, exist_ok=True)
+os.makedirs(periods_csv_outfile_path, exist_ok=True)
 
 if __name__ == '__main__':
     for results_dir in results_directories:
         for track_file in sorted(glob.glob(f'{results_dir}/*')):
 
             # For testing
-            # if '1980' not in track_file:
-            #    continue
+            if '1980' not in track_file:
+               continue
 
             # Check if the track_file is empty
             try:
