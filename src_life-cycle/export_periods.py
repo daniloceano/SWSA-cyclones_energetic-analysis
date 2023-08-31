@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_periods.py                                  :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
+#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/30 12:58:55 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/30 16:53:08 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -28,7 +28,7 @@ def process_cyclone(args):
     plt.close('all') # save memory
 
     # Set the output file names
-    periods_csv_outfile = f"{periods_csv_outfile_path}{RG}_{id_cyclone}.csv"
+    periods_csv_outfile = f"{periods_csv_outfile_path}{RG}_{id_cyclone}"
     periods_outfile = f"{periods_outfile_path}{RG}_{id_cyclone}"
     periods_didatic_outfile = f"{periods_didatic_outfile_path}{RG}_{id_cyclone}"
 
@@ -37,59 +37,62 @@ def process_cyclone(args):
     tracks.columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42', 'lon mslp', 'lat mslp', 'mslp', 'lon 10spd', 'lat 10spd', '10spd']
     track = tracks[tracks['track_id']==id_cyclone][['date','vor42']]
     track = track.rename(columns={"date":"time"})
-    tmp_name = (f"tmp_{RG}-{id_cyclone}.csv")
-    track.to_csv(tmp_name, index=False, sep=';')
+    tmp_file = (f"tmp_{RG}-{id_cyclone}.csv")
+    track.to_csv(tmp_file, index=False, sep=';')
 
-    tmp = pd.read_csv(tmp_name, parse_dates=[0], delimiter=';', index_col=[0])
+    options = {
+        "vorticity_column":'vor42',
+        "plot": periods_outfile,
+        "plot_steps": periods_didatic_outfile,
+        "export_dict": periods_csv_outfile,
+        "array_vorticity_args": {
+            "use_filter": False,
+            "use_smoothing_twice": len(track)//4 | 1}
+    }
 
-    args = {'use_filter':None}
+    # try:
+    df = determine_periods(tmp_file, **options)
+                
+    # except Exception as e:
+        # error_msg = str(e)
+        # with open("error_log.txt", "a") as file:
+        #     file.write(f"Error processing cyclone: {id_cyclone} - RG: {RG} in track_file: {track_file}\n")
+        #     file.write(f"Error message: {error_msg}\n\n")
 
-    try:
-        determine_periods(tmp_name,
-                          vorticity_column='vor42',
-                          plot=periods_outfile,
-                          plot_steps=periods_didatic_outfile,
-                          export_dict=periods_csv_outfile,
-                          array_vorticity_args=args)
-
-    except Exception as e:
-        error_msg = str(e)
-        with open("error_log.txt", "a") as file:
-            file.write(f"Error processing cyclone: {id_cyclone} - RG: {RG} in track_file: {track_file}\n")
-            file.write(f"Error message: {error_msg}\n\n")
-
-testing = False
-
-if testing == True:
-    output_directory = './'
-    periods_outfile_path = output_directory + './'    
-    periods_didatic_outfile_path = output_directory + './'
-    periods_csv_outfile_path = './'
-
-else:
-    output_directory = '../figures/'
-    periods_outfile_path = output_directory + 'periods/BY_RG-all/'    
-    periods_didatic_outfile_path = output_directory + 'periods_didactic/BY_RG-all/'
-    periods_csv_outfile_path = '../periods-energetics/BY_RG-all/'
-
-results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/',
-                       '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG2_csv/',
-                       '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/']
-
-# For testing 
-results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/']
-
-os.makedirs(periods_outfile_path, exist_ok=True)
-os.makedirs(periods_didatic_outfile_path, exist_ok=True)
-os.makedirs(periods_csv_outfile_path, exist_ok=True)
+    os.remove(tmp_file)
 
 if __name__ == '__main__':
+
+
+    testing = False
+
+    if testing == True:
+        output_directory = './'
+        periods_outfile_path = output_directory + './'    
+        periods_didatic_outfile_path = output_directory + './'
+        periods_csv_outfile_path = './'
+        results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/']
+
+    else:
+        output_directory = '../figures/'
+        periods_outfile_path = output_directory + 'periods/BY_RG-all/'    
+        periods_didatic_outfile_path = output_directory + 'periods_didactic/BY_RG-all/'
+        periods_csv_outfile_path = '../periods-energetics/BY_RG-all/'
+
+        results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/',
+                        '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG2_csv/',
+                        '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/']
+
+    os.makedirs(periods_outfile_path, exist_ok=True)
+    os.makedirs(periods_didatic_outfile_path, exist_ok=True)
+    os.makedirs(periods_csv_outfile_path, exist_ok=True)
+
     for results_dir in results_directories:
         for track_file in sorted(glob.glob(f'{results_dir}/*')):
 
-            # For testing
-            if '1980' not in track_file:
-               continue
+            if testing:
+                if '1980' not in track_file:
+                    continue
 
             # Check if the track_file is empty
             try:
