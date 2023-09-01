@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_density.py                                  :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/15 17:02:15 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/01 10:23:59 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -68,14 +68,16 @@ def process_track(cyclone_id, tracks, periods_directory, filter_residual=False):
     track['lon vor'] = (track['lon vor'] + 180) % 360 - 180
 
     periods = pd.read_csv(glob(f'{periods_directory}*{cyclone_id}*')[0])
+    periods.columns = ['period', 'start', 'end']
+    periods = periods.set_index('period')
     
     dt = track['date'].iloc[1] - track['date'].iloc[0]
 
     # Convert period timestamps to datetime objects
     corresponding_periods = pd.DataFrame([], columns=['period'], index=track['date'])
-    for phase in list(periods.columns):
-        periods[phase] = pd.to_datetime(periods[phase])
-        period_dates = pd.date_range(start=periods[phase][0], end=periods[phase][1], freq=dt)
+    for phase in list(periods.index):
+        periods.loc[phase] = pd.to_datetime(periods.loc[phase])
+        period_dates = pd.date_range(start=periods.loc[phase][0], end=periods.loc[phase][1], freq=dt)
 
         corresponding_periods['period'].loc[period_dates] = phase
 
