@@ -1,9 +1,10 @@
 Type of System
-"decay, intensification"
-"incipient, intensification, mature, decay, residual"
-"decay, residual"
 "incipient, intensification, mature, decay"
-decay
-"incipient, decay, intensification"
-"decay, intensification, decay 2, intensification 2"
+"incipient, intensification, mature, decay, residual"
+"incipient, intensification, mature, decay, intensification 2, mature 2, decay 2"
+"intensification, mature, decay, intensification 2, mature 2, decay 2"
+"intensification, mature, decay"
+intensification
 "intensification, mature, decay, residual"
+"incipient, intensification, mature, incipient 2, intensification 2, mature 2, decay"
+"incipient, intensification, mature, intensification 2, mature 2, decay"

@@ -660,3 +660,35 @@ Empty track file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG
 Empty track file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG2_csv/ff_trs_neg_ExSAt_200502_joint_mslp_10spd_GenRG2.csv - Skipping processing.
 Empty track file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG2_csv/ff_trs_neg_ExSAt_201203_joint_mslp_10spd_GenRG2.csv - Skipping processing.
 Empty track file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG2_csv/ff_trs_neg_ExSAt_201303_joint_mslp_10spd_GenRG2.csv - Skipping processing.
+Error processing cyclone: 20170413 - RG: RG2 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG2_csv/ff_trs_neg_ExSAt_201706_joint_mslp_10spd_GenRG2.csv
+Error message: index -1 is out of bounds for axis 0 with size 0
+
+Empty track file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG2_csv/ff_trs_neg_ExSAt_201809_joint_mslp_10spd_GenRG2.csv - Skipping processing.
+Error processing cyclone: 19830444 - RG: RG3 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/ff_trs_neg_ExSAt_198307_joint_mslp_10spd_GenRG3.csv
+Error message: index -1 is out of bounds for axis 0 with size 0
+
+Error processing cyclone: 19870510 - RG: RG3 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/ff_trs_neg_ExSAt_198708_joint_mslp_10spd_GenRG3.csv
+Error message: index -1 is out of bounds for axis 0 with size 0
+
+Error processing cyclone: 19890749 - RG: RG3 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/ff_trs_neg_ExSAt_198911_joint_mslp_10spd_GenRG3.csv
+Error message: index -1 is out of bounds for axis 0 with size 0
+
+Error processing cyclone: 19900292 - RG: RG3 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/ff_trs_neg_ExSAt_199005_joint_mslp_10spd_GenRG3.csv
+Error message: index -1 is out of bounds for axis 0 with size 0
+
+Empty track file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/ff_trs_neg_ExSAt_199106_joint_mslp_10spd_GenRG3.csv - Skipping processing.
+Error processing cyclone: 19970741 - RG: RG3 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/ff_trs_neg_ExSAt_199711_joint_mslp_10spd_GenRG3.csv
+Error message: index -1 is out of bounds for axis 0 with size 0
+
+Error processing cyclone: 20000010 - RG: RG3 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/ff_trs_neg_ExSAt_200001_joint_mslp_10spd_GenRG3.csv
+Error message: index -1 is out of bounds for axis 0 with size 0
+
+Error processing cyclone: 20040732 - RG: RG3 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/ff_trs_neg_ExSAt_200410_joint_mslp_10spd_GenRG3.csv
+Error message: index -1 is out of bounds for axis 0 with size 0
+
+Error processing cyclone: 20060028 - RG: RG3 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/ff_trs_neg_ExSAt_200601_joint_mslp_10spd_GenRG3.csv
+Error message: index -1 is out of bounds for axis 0 with size 0
+
+Error processing cyclone: 20100793 - RG: RG3 in track_file: ../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/ff_trs_neg_ExSAt_201011_joint_mslp_10spd_GenRG3.csv
+Error message: index -1 is out of bounds for axis 0 with size 0
+
