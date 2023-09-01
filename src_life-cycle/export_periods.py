@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_periods.py                                  :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/30 16:53:08 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/31 19:44:27 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -37,27 +37,32 @@ def process_cyclone(args):
     tracks.columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42', 'lon mslp', 'lat mslp', 'mslp', 'lon 10spd', 'lat 10spd', '10spd']
     track = tracks[tracks['track_id']==id_cyclone][['date','vor42']]
     track = track.rename(columns={"date":"time"})
+    track['vor42'] = - track['vor42'] * 1e-5
     tmp_file = (f"tmp_{RG}-{id_cyclone}.csv")
     track.to_csv(tmp_file, index=False, sep=';')
 
-    options = {
-        "vorticity_column":'vor42',
-        "plot": periods_outfile,
-        "plot_steps": periods_didatic_outfile,
-        "export_dict": periods_csv_outfile,
-        "array_vorticity_args": {
-            "use_filter": False,
-            "use_smoothing_twice": len(track)//4 | 1}
-    }
+    # Check if periods_outfile already exists
+    periods_outfile_exists = os.path.exists(periods_outfile)
 
-    # try:
-    df = determine_periods(tmp_file, **options)
+    if not periods_outfile_exists:
+        options = {
+            "vorticity_column": 'vor42',
+            "plot": periods_outfile,
+            "plot_steps": periods_didatic_outfile,
+            "export_dict": periods_csv_outfile,
+            "array_vorticity_args": {
+                "use_filter": False,
+                "use_smoothing_twice": len(track)//4 | 1}
+        }
+
+        try:
+            df = determine_periods(tmp_file, **options)
                 
-    # except Exception as e:
-        # error_msg = str(e)
-        # with open("error_log.txt", "a") as file:
-        #     file.write(f"Error processing cyclone: {id_cyclone} - RG: {RG} in track_file: {track_file}\n")
-        #     file.write(f"Error message: {error_msg}\n\n")
+        except Exception as e:
+            error_msg = str(e)
+            with open("error_log.txt", "a") as file:
+                file.write(f"Error processing cyclone: {id_cyclone} - RG: {RG} in track_file: {track_file}\n")
+                file.write(f"Error message: {error_msg}\n\n")
 
     os.remove(tmp_file)
 

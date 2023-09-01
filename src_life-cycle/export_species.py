@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_species.py                                  :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 14:07:51 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/15 17:07:48 by Danilo           ###   ########.fr        #
+#    Updated: 2023/08/31 11:08:01 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -34,11 +34,11 @@ month_season_map = {
 total_systems = 0
 
 for csv_file in csv_files:
-    df = pd.read_csv(csv_file)
+    df = pd.read_csv(csv_file, index_col=[0])
     for residual_phase in ['residual', 'residual 2']:
         if residual_phase in df.columns:
             df = df.drop([residual_phase], axis=1)
-    phases = list(df.columns)
+    phases = list(df.index)
     phase_arrangement = ', '.join(phases)
     phase_counts[phase_arrangement] = phase_counts.get(phase_arrangement, 0) + 1
 
