@@ -1,8 +1,8 @@
 import pandas as pd
 from glob import glob
 
-input = "RG1-19800232"
-desired_id = 19800232
+input = "RG1-19810690"
+desired_id = 19810690
 year = str(desired_id)[:4]
 
 results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/',

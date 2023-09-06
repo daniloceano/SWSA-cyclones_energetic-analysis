@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/01 19:07:22 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/06 18:13:09 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -52,7 +52,7 @@ def process_cyclone(args):
         "export_dict": periods_csv_outfile,
         "process_vorticity_args": {
             "use_filter": False,
-            "use_smoothing_twice": len(track)//4 | 1}
+            "use_smoothing_twice": "auto"}
     }
 
     try:
@@ -69,7 +69,7 @@ def process_cyclone(args):
 if __name__ == '__main__':
 
 
-    testing = False
+    testing = True
 
     if testing == True:
         output_directory = './'
