@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/06 18:13:09 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/12 19:18:01 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -69,7 +69,7 @@ def process_cyclone(args):
 if __name__ == '__main__':
 
 
-    testing = True
+    testing = False
 
     if testing == True:
         output_directory = './'
