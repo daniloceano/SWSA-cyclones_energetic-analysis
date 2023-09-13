@@ -44,8 +44,15 @@ for intensity in intensities:
         periods_outfile = f"{periods_outfile_path}{id_cyclone}"
         periods_didatic_outfile = f"{periods_didatic_outfile_path}{id_cyclone}"
 
+        options = {
+        "vorticity_column": 'min_zeta_850',
+        "plot": periods_outfile,
+        "plot_steps": periods_didatic_outfile,
+        "export_dict": False,
+        "process_vorticity_args": {
+            "use_filter": False,
+            "use_smoothing_twice": "auto"}
+        }
+
         # Determine the periods
-        df = determine_periods(track_file,
-                                plot=periods_outfile,
-                                plot_steps=periods_didatic_outfile,
-                                export_dict=False)
+        df = determine_periods(track_file, **options)

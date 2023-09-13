@@ -15,17 +15,25 @@ def adjust_labels(ax):
     plt.setp(ax.get_yticklabels(), fontsize=12)
 
 def plot_label(ax, label):
-    ax.text(0.05, 0.9, label, fontsize=16, fontweight='bold', ha='center',
+    ax.text(0.95, 0.05, label, fontsize=16, fontweight='bold', ha='center',
              va='center', transform=ax.transAxes)
 
 def plot_vorticity(df, ax=None, vorticity=None, fig_dir=None):
 
     ax.plot(vorticity.time, vorticity.zeta, linewidth=3, color='gray', label=r'ζ')
-    ax.plot(vorticity.time, vorticity.filtered_vorticity, linewidth=3, c='#f25c54', label=r'$ζ_{f}$')
-    ax.plot(vorticity.time, vorticity.vorticity_smoothed, linewidth=3, c='#5fa8d3', label=r'$ζ_{fs}$')
-    ax.plot(vorticity.time, vorticity.vorticity_smoothed2, linewidth=3, c='k', label=r'$ζ_{fs^{2}}$')
 
-    ax.legend(loc= 'center left', bbox_to_anchor=(-0.4, 0.5), ncol=1, fontsize=18)
+    ax2 = ax.twinx()
+    ax2.axis('off')
+
+    ax2.plot(vorticity.time, vorticity.filtered_vorticity, linewidth=3, c='#f25c54', label=r'$ζ_{f}$')
+    ax2.plot(vorticity.time, vorticity.vorticity_smoothed, linewidth=3, c='#5fa8d3', label=r'$ζ_{fs}$')
+    ax2.plot(vorticity.time, vorticity.vorticity_smoothed2, linewidth=3, c='k', label=r'$ζ_{fs^{2}}$')
+
+    # Combine the legends from both axes into a single legend
+    lines, labels = ax.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax.legend(lines + lines2, labels + labels2, loc='upper left',
+               fontsize=18, bbox_to_anchor=(-0.45, 0.8))
 
     plot_label(ax, "A)")
     adjust_labels(ax)
@@ -55,7 +63,11 @@ def plot_phase(df, phase, label, ax=None):
                         (df_copy.index <= end), alpha=0.7, color=colors_phases[phase])
 
     ax.plot(df_copy.index, zeta, c='gray', lw=3)
-    ax.plot(df_copy.index, vorticity_smoothed, lw=3, c='k')
+
+    ax2 = ax.twinx()
+    ax2.axis('off')
+
+    ax2.plot(df_copy.index, vorticity_smoothed, lw=3, c='k')
 
     plot_label(ax, label)
 
@@ -67,6 +79,9 @@ def plot_specific_peaks_valleys(df, ax, *kwargs):
     marker_sizes = {'z': 190, 'dz': 120, 'dz2': 50}
 
     zeta = df['z']
+
+    ax2 = ax.twinx()
+    ax2.axis('off')
 
     for key in kwargs:
         key_name = key.split('_')[0]
@@ -81,18 +96,21 @@ def plot_specific_peaks_valleys(df, ax, *kwargs):
         mask_peaks = peaks_valleys_series == 'peak'
 
         # Plot peaks
-        ax.scatter(df.index[mask_notna & mask_peaks],
+        ax2.scatter(df.index[mask_notna & mask_peaks],
                    zeta[mask_notna & mask_peaks],
                    marker='o', color=color, s=marker_size, zorder=zorder)
 
         # Plot valleys
-        ax.scatter(df.index[mask_notna & ~mask_peaks],
+        ax2.scatter(df.index[mask_notna & ~mask_peaks],
                    zeta[mask_notna & ~mask_peaks],
                    marker='o', edgecolors=color, facecolors='none',
                    s=marker_size, linewidth=2, zorder=zorder)
 
-# Sample data from cycllone RG3-0.99-20080518
-track_file = '/home/daniloceano/Documents/Programs_and_scripts/SWSA-cyclones_energetic-analysis/LEC_results-0.99/RG3-0.99-20080518_ERA5_track-15x15/RG3-0.99-20080518_ERA5_track-15x15_track'
+# Sample data
+source_dir = '/home/daniloceano/Documents/Programs_and_scripts/SWSA-cyclones_energetic-analysis/LEC_results-0.99/'
+RG = 3
+cyclone_id = '20080518'
+track_file = os.path.join(source_dir, f'RG{RG}-0.99-{cyclone_id}_ERA5_track-15x15/RG{RG}-0.99-{cyclone_id}_ERA5_track-15x15_track')
 track = pd.read_csv(track_file, parse_dates=[0], delimiter=';', index_col=[0])
 zeta_df = pd.DataFrame(track["min_zeta_850"].rename('zeta'))
 
@@ -107,12 +125,12 @@ options = {
         "plot_steps": False,
         "export_dict": False,
         "process_vorticity_args": {
-            "use_filter": "auto",
-            "use_smoothing_twice": "auto"}
+            "use_filter": len(zeta_df) // 10 | 1,
+            "use_smoothing_twice": len(zeta_df) // 4 | 1}
     }
 
 df = determine_periods(track_file, **options)
-vorticity = process_vorticity(zeta_df, **options['process_vorticity_args'])
+vorticity = process_vorticity(zeta_df.copy(), **options['process_vorticity_args'])
 
 fig = plt.figure(figsize=(6.5*3, 5*2))
 ax = fig.add_subplot(231)
@@ -122,7 +140,27 @@ plot_vorticity(df, ax=ax, vorticity=vorticity, fig_dir=None)
 ax2 = fig.add_subplot(232)
 df_int = find.find_intensification_period(df.copy())
 plot_phase(df_int, "intensification", "B)", ax2)
-plot_specific_peaks_valleys(df, ax2, "z_peaks", "z_valleys")
+plot_specific_peaks_valleys(df_int, ax2, "z_peaks", "z_valleys")
+
+ax3 = fig.add_subplot(233)
+df_decay = find.find_decay_period(df.copy())
+plot_phase(df_decay, "decay", "C)", ax3)
+plot_specific_peaks_valleys(df_decay, ax3, "z_peaks", "z_valleys")
+
+ax4 = fig.add_subplot(234)
+df_mature = find.find_mature_stage(df.copy())
+plot_phase(df_mature, "mature", "D)", ax4)
+plot_specific_peaks_valleys(df_mature, ax4, "z_peaks", "z_valleys")
+
+ax5 = fig.add_subplot(235)
+df_residual = find.find_residual_period(df.copy())
+plot_phase(df_residual, "residual", "E)", ax5)
+#plot_specific_peaks_valleys(df_residual, ax5, "z_peaks", "z_valleys")
+
+ax6 = fig.add_subplot(236)
+df_incipient = find.find_mature_stage(df.copy())
+plot_phase(df_incipient, "incipient", "F)", ax6)
+plot_specific_peaks_valleys(df_incipient, ax6, "z_peaks", "z_valleys")
 
 fname = os.path.join(fig_dir, "methodology.png")
 plt.savefig(fname, dpi=500)
