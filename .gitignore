@@ -1,6 +1,5 @@
 .DS_Store
 ./src/.DS_Store
-*.nc
 met_data/
 met_data_old/
 periods-energetics/intense/PCA/Pc2_3p.csv
