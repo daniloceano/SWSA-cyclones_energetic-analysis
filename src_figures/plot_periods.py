@@ -26,14 +26,17 @@ for intensity in intensities:
 
     print('Processing intensity %s' % intensity)
 
-    results_dir = f'../LEC_results-{intensity}/*ERA5*'
+    results_dir = f'../LEC_results-q{intensity}/*ERA5*'
 
     for result in glob.glob(results_dir):  
         
         plt.close('all') # save memory
         fname = result.split('/')[-1].split('.nc')[0] 
         id_cyclone = fname.split('_')[0]
-        track_file = glob.glob(f"{results_dir}/{fname}_track")[0]
+        try:
+            track_file = glob.glob(f"{results_dir}/{fname}_track")[0]
+        except:
+            continue
         print('Cyclone ID:',id_cyclone)
         print('Track file:',track_file) 
 
@@ -50,7 +53,7 @@ for intensity in intensities:
         "plot_steps": periods_didatic_outfile,
         "export_dict": False,
         "process_vorticity_args": {
-            "use_filter": False,
+            "use_filter": "auto",
             "use_smoothing_twice": "auto"}
         }
 
