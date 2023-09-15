@@ -97,7 +97,7 @@ filtered_df = process_df(df, filter_df=True, exclude_residual=False)
 # df for phases with more than 1% and exluding residual phases
 filtered_df_exclude_residual = process_df(df, filter_df=True, exclude_residual=True)
 # export csv for further analysis
-filtered_df.to_csv('./total_count_of_systems_filtered.csv')
+filtered_df_exclude_residual.to_csv('./total_count_of_systems_filtered.csv')
 
 # Combine the four bar plots into one figure
 plot_combined_barplots(df, df_excluded_residual, output_directory, 'total')
