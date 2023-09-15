@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    phases_density.py                                  :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/08 20:33:08 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/14 20:23:03 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/15 12:09:33 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -37,20 +37,16 @@ def plot_density(ax, i, density, label):
 
     lon, lat = density.lon, density.lat
 
-    if i < 4:
-        levels = np.linspace(0, 50, 21)
-    else:
-        levels = np.linspace(0, 3, 21)
+    levels = np.linspace(0, round(float(np.amax(density))), 21)
 
     cf = plt.contourf(lon, lat, density, cmap=cmap, levels=levels, extend='max')
 
-    if i == 0:
-        # Create a separate axis for the colorbar
-        cax = fig.add_axes([0.92, 0.52, 0.02, 0.35]) 
-        plt.colorbar(cf, cax=cax, ticks=levels)
-    if i == 4:
-        cax = fig.add_axes([0.92, 0.12, 0.02, 0.35]) 
-        plt.colorbar(cf, cax=cax, ticks=levels)
+    cax = fig.add_axes([ax.get_position().x1 + 0.02,
+                        ax.get_position().y0, 0.02,
+                        ax.get_position().height]) 
+    # Define the ticks for the colorbar with every 2nd value
+    ticks = np.round(levels[::3], decimals=2)
+    plt.colorbar(cf, cax=cax, ticks=ticks)
 
     props = dict(boxstyle='round', facecolor='white')
     ax.text(160, -18, label, ha='left', va='bottom', fontsize=16, fontweight='bold', bbox=props)
@@ -73,6 +69,8 @@ phases = ['incipient', 'intensification', 'mature', 'decay',
             'intensification 2', 'mature 2', 'decay 2', 'residual']
 
 letters = ['A)', 'B)', 'C)', 'D)', 'E)', 'F)', 'G)', 'H)']
+
+plt.subplots_adjust(wspace=0.35)
 
 for i, phase in enumerate(phases):
     
