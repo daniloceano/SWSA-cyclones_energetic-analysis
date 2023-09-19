@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 14:07:51 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/19 08:35:32 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/19 08:38:12 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -60,6 +60,7 @@ for csv_file in csv_files:
     total_systems += 1
 
 outdir = '../periods_species_statistics'
+os.makedirs(outdir, exist_ok=True)
 
 # Export total count and relative percentages to CSV
 total_df = pd.DataFrame(list(phase_counts.items()), columns=['Type of System', 'Total Count'])
