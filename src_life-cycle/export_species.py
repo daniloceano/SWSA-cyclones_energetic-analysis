@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_species.py                                  :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
+#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 14:07:51 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/19 09:20:05 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/19 16:11:15 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,7 +22,6 @@ that fits in one of each category of the life cycle.
 csv_directory = '../periods-energetics/BY_RG-all/'
 csv_files = glob.glob(f'{csv_directory}/*')
 
-phase_counts = {}
 seasonal_phase_counts = {season: {} for season in ['DJF', 'MAM', 'JJA', 'SON']}
 
 month_season_map = {
@@ -32,9 +31,11 @@ month_season_map = {
     9: 'SON', 10: 'SON', 11: 'SON'
 }
 
+total_systems = len(csv_files)
+
 for RG in ['RG1', 'RG2', 'RG3', '']:
 
-    total_systems = 0
+    phase_counts = {}
 
     for csv_file in csv_files:
         if RG in csv_file:
@@ -63,12 +64,13 @@ for RG in ['RG1', 'RG2', 'RG3', '']:
         seasonal_phase_counts[corresponding_season].setdefault(phase_arrangement, 0)
         seasonal_phase_counts[corresponding_season][phase_arrangement] += 1
 
-        total_systems += 1
-
     outdir = '../periods_species_statistics'
     os.makedirs(outdir, exist_ok=True)
 
     suffix = RG if RG != '' else 'all_RG'
+
+    if suffix == 'all_RG':
+        print()
 
     # Export total count and relative percentages to CSV
     total_df = pd.DataFrame(list(phase_counts.items()), columns=['Type of System', 'Total Count'])

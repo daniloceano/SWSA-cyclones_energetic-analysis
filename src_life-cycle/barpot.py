@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    barpot.py                                          :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
+#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:44:54 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/19 09:39:33 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/19 14:51:18 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,6 +19,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+import glob
 
 def process_df(df, percentage_threshold=1, filter_df=False, exclude_residual=False):
 
