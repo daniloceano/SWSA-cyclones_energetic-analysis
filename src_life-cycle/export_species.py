@@ -6,12 +6,13 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 14:07:51 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/31 11:08:01 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/19 08:35:32 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 import pandas as pd
 import glob
+import os 
 
 """ 
 This script reads the tracks processed by export_periods.py and counts the number of systems
@@ -58,13 +59,19 @@ for csv_file in csv_files:
 
     total_systems += 1
 
+outdir = '../periods_species_statistics'
+
 # Export total count and relative percentages to CSV
 total_df = pd.DataFrame(list(phase_counts.items()), columns=['Type of System', 'Total Count'])
 total_df['Percentage'] = total_df['Total Count'] / total_systems * 100
-total_df.to_csv('total_count_of_systems.csv', index=False)
+csv_name = os.path.join(outdir, 'total_count_of_systems.csv')
+total_df.to_csv(csv_name, index=False)
+print(f'{csv_name} saved.')
 
 # Export seasonal counts and relative percentages to separate CSV files
 for season in seasonal_phase_counts.keys():
     season_df = pd.DataFrame(list(seasonal_phase_counts[season].items()), columns=['Type of System', 'Total Count'])
     season_df['Percentage'] = season_df['Total Count'] / total_systems * 100
-    season_df.to_csv(f'{season}_count_of_systems.csv', index=False)
+    csv_name = os.path.join(outdir, f'{season}_count_of_systems.csv')
+    season_df.to_csv(csv_name, index=False)
+    print(f'{csv_name} saved.')
