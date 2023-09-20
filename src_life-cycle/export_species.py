@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 14:07:51 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/19 16:11:15 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/19 22:17:51 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -32,6 +32,7 @@ month_season_map = {
 }
 
 total_systems = len(csv_files)
+total_systems_season = {'DJF': 0, 'MAM': 0, 'JJA': 0, 'SON': 0}
 
 for RG in ['RG1', 'RG2', 'RG3', '']:
 
@@ -60,11 +61,13 @@ for RG in ['RG1', 'RG2', 'RG3', '']:
         # Find the corresponding season in the month_season_map
         corresponding_season = month_season_map[system_month]
 
+        total_systems_season[corresponding_season] += 1
+
         # Count the seasonal occurrences of the current type beginning on the first day of the event
         seasonal_phase_counts[corresponding_season].setdefault(phase_arrangement, 0)
         seasonal_phase_counts[corresponding_season][phase_arrangement] += 1
 
-    outdir = '../periods_species_statistics'
+    outdir = '../periods_species_statistics/count_systems_raw/'
     os.makedirs(outdir, exist_ok=True)
 
     suffix = RG if RG != '' else 'all_RG'
@@ -82,7 +85,7 @@ for RG in ['RG1', 'RG2', 'RG3', '']:
     # Export seasonal counts and relative percentages to separate CSV files
     for season in seasonal_phase_counts.keys():
         season_df = pd.DataFrame(list(seasonal_phase_counts[season].items()), columns=['Type of System', 'Total Count'])
-        season_df['Percentage'] = season_df['Total Count'] / total_systems * 100
+        season_df['Percentage'] = season_df['Total Count'] / total_systems_season[season] * 100
         csv_name = os.path.join(outdir, f'{season}_count_of_systems_{suffix}.csv')
         season_df.to_csv(csv_name, index=False)
         print(f'{csv_name} saved.')

@@ -1,0 +1,32 @@
+Type of System,Total Count,Percentage
+"incipient, intensification, mature, decay",322,56.09756097560976
+"intensification, mature, decay",17,2.961672473867596
+"incipient, intensification, mature, decay, intensification 2, mature 2, decay 2",48,8.362369337979095
+"incipient, decay, intensification, mature, decay 2",22,3.8327526132404177
+"incipient, intensification, mature, decay, residual",56,9.75609756097561
+"intensification, mature, decay, intensification 2, mature 2, decay 2",25,4.355400696864112
+intensification,18,3.1358885017421603
+decay,5,0.8710801393728222
+"intensification, mature, decay, residual",11,1.9163763066202089
+"incipient, intensification, decay, intensification 2, mature, decay 2",1,0.17421602787456447
+"decay, intensification, mature, decay 2",18,3.1358885017421603
+"intensification, residual",3,0.5226480836236934
+"decay, intensification",5,0.8710801393728222
+"incipient, decay, incipient 2, intensification, mature, decay 2",1,0.17421602787456447
+"incipient, decay, intensification, mature, decay 2, intensification 2, mature 2",2,0.34843205574912894
+"incipient, intensification, decay, intensification 2, decay 2",1,0.17421602787456447
+"incipient, intensification, decay, intensification 2, mature, decay 2, residual",1,0.17421602787456447
+"incipient, decay, intensification, decay 2, residual",1,0.17421602787456447
+"decay, intensification, residual",1,0.17421602787456447
+"incipient, intensification",2,0.34843205574912894
+"decay, intensification, decay 2, intensification 2",1,0.17421602787456447
+"incipient, decay",1,0.17421602787456447
+"incipient, decay, intensification",3,0.5226480836236934
+"intensification, mature, decay, intensification 2, mature 2, decay 2, residual",1,0.17421602787456447
+"decay, intensification, mature, decay 2, residual",2,0.34843205574912894
+"incipient, intensification, decay, intensification 2",1,0.17421602787456447
+"incipient, intensification, decay, intensification 2, residual",1,0.17421602787456447
+"decay, intensification, residual, intensification 2",1,0.17421602787456447
+"decay, intensification, decay 2",1,0.17421602787456447
+"incipient, decay, intensification, mature, decay 2, residual",1,0.17421602787456447
+"incipient, decay, intensification, decay 2, intensification 2",1,0.17421602787456447
