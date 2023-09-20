@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:44:54 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/19 22:18:56 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/20 12:42:02 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -107,20 +107,22 @@ def plot_barplot(df, title, fname):
 
     # Create a bar plot using Seaborn
     plt.figure(figsize=(12, 6))
-    sns.barplot(x='Total Count', y='Type of System', data=df, orient='h', ci=None, palette='pastel', edgecolor='grey')
+    sns.barplot(y='Total Count', x='Type of System', data=df, orient='v', ci=None, palette='pastel', edgecolor='grey')
     plt.title(f'{title} ({total_count} - {total_percentage:.1f}%)', fontweight='bold')
     
     # Add text annotations for total count and percentage on the right side of each bar
     for index, value in enumerate(df['Total Count']):
         percentage = df.loc[df.index[index], 'Percentage']
-        plt.text(value + 20, index, f"{value} ({percentage:.2f}%)", va='center', color='black', fontweight='bold')
+        plt.text(index, value + 30, f"{value} ({percentage:.2f}%)", ha='center', color='black', fontweight='bold')
 
     # Set y-axis limit to start at 0
-    plt.ylim(-0.5, len(df) - 0.5)
+    plt.xlim(-0.5, len(df) - 0.5)
 
     # Hide axis titles
     plt.xlabel(None)
     plt.ylabel(None)
+
+    sns.despine(fig=None, ax=None, top=True, right=True, left=False, bottom=False, offset=None, trim=False)
 
     plt.tight_layout()
 
