@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/08 20:33:08 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/16 17:05:37 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/21 17:24:30 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -33,7 +33,7 @@ def gridlines(ax):
     gl.bottom_labels = None
     gl.right_labels = None
 
-def plot_density(density, fname):
+def plot_density(density, fname, output_directory_RG):
 
     lon, lat = density.lon, density.lat
 
@@ -51,10 +51,11 @@ def plot_density(density, fname):
     gridlines(ax)
     plt.tight_layout()
 
-    plt.savefig(os.path.join(output_directory, fname), bbox_inches='tight')
-    print(f'Density map saved in {os.path.join(output_directory, fname)}')
+    plt.savefig(os.path.join(output_directory_RG, fname), bbox_inches='tight')
+    print(f'Density map saved in {os.path.join(output_directory_RG, fname)}')
 
 output_directory = '../figures/periods_statistics/density_maps/'
+infile_directory = '../periods_species_statistics/track_density/'
 
 #####################################
 
@@ -64,20 +65,28 @@ cmap = mcolors.LinearSegmentedColormap.from_list("", colors)
 
 for RG in ['1', '2', '3', 'all']:
 
-    for phase in ['incipient', 'intensification', 'mature', 'decay', 'residual',
-                  'intensification 2', 'mature 2', 'decay 2']:
-        
-        RG_str = f'RG{RG}' if RG != 'all' else 'all'
+    for season in ['DJF', 'MAM', 'JJA', 'SON', False]:
 
-        fig = plt.figure(figsize=(15, 10))
-        datacrs = ccrs.PlateCarree()
-        ax = fig.add_axes([-0.01, -0.05, 0.9, 0.7], projection=datacrs, frameon=True)
-        ax.set_extent([-90, 180, 0, -90], crs=datacrs)
+        for phase in ['incipient', 'intensification', 'mature', 'decay', 'residual',
+                    'intensification 2', 'mature 2', 'decay 2']:
+            
+            RG_str = f'RG{RG}' if RG != 'all' else 'all-RG'
+            season_str = f'_{season}' if season else ''
 
-        ds = xr.open_dataset(f'./track_density_RG{RG}.nc')
+            fig = plt.figure(figsize=(15, 10))
+            datacrs = ccrs.PlateCarree()
+            ax = fig.add_axes([-0.01, -0.05, 0.9, 0.7], projection=datacrs, frameon=True)
+            ax.set_extent([-90, 180, 0, -90], crs=datacrs)
 
-        density = ds[phase]
-        fname = f'density_map_{RG_str}_{phase}.png'
 
-        plot_density(density, fname)
+            infile = f'{infile_directory}/track_density_{RG_str}{season_str}.nc'
+            ds = xr.open_dataset(infile)
+
+            output_directory_RG = output_directory + RG_str
+            os.makedirs(output_directory_RG, exist_ok=True)
+
+            density = ds[phase]
+            fname = f'density_map_{RG_str}{season_str}_{phase}.png'
+
+            plot_density(density, fname, output_directory_RG)
 
