@@ -63,6 +63,9 @@ def plot_barplot(df, label, ax, filter=False):
 
     ax.set_xlabel(None)
     ax.set_ylabel(None)
+
+    sns.despine(fig=None, ax=None, top=True, right=True, left=False, bottom=False, offset=None, trim=False)
+
     
 def plot_combined_barplots(df1, df2, output_directory, suffix):
     fig, axes = plt.subplots(1, 2, figsize=(16, 6))
@@ -83,7 +86,7 @@ output_directory = '../figures/manuscript_life-cycle/'
 os.makedirs(output_directory, exist_ok=True)
 
 # Read data from CSV file
-df = pd.read_csv('../src_life-cycle/total_count_of_systems.csv')
+df = pd.read_csv('../periods_species_statistics/count_systems_raw/total_count_of_systems_all_RG.csv')
 
 # df with all possible phases
 df = df.sort_values(by='Total Count', ascending=False)
