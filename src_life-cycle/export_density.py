@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_density.py                                  :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
+#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/01 10:23:59 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/21 16:20:16 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -25,9 +25,19 @@ from scipy.ndimage.filters import gaussian_filter
 from glob import glob
 import xarray as xr
 
-def get_tracks(RG):
+def get_tracks(RG, season=False):
 
-    print('Merging tracks for RG:', RG)
+    if season:
+        print('Merging tracks for RG:', RG, 'and season:', season)
+    else:
+        print('Merging tracks for RG:', RG)
+
+    month_season_map = {
+    12: 'DJF', 1: 'DJF', 2: 'DJF',
+    3: 'MAM', 4: 'MAM', 5: 'MAM',
+    6: 'JJA', 7: 'JJA', 8: 'JJA',
+    9: 'SON', 10: 'SON', 11: 'SON'
+}
 
     if RG != 'all':
         str_RG = f'RG{RG}'
@@ -43,15 +53,27 @@ def get_tracks(RG):
                                     'lat 10spd', '10spd']
 
     tracks = pd.DataFrame(columns = columns)
+
     for results_directory in results_directories:  
                 files = glob(f'{results_directory}*')
+
                 for file in files:  
                     try:
                         tmp = pd.read_csv(file)
                     except:
                         continue
+
                     tmp.columns = columns
-                    tracks = pd.concat([tracks,tmp])
+
+                    # Check season, if season is given
+                    if season:
+                        system_end = pd.to_datetime(tmp['date'].iloc[-1])
+                        system_month = system_end.month
+                        corresponding_season = month_season_map[system_month]
+                        if corresponding_season == season:
+                            tracks = pd.concat([tracks,tmp])
+                    else:
+                        tracks = pd.concat([tracks,tmp])
                     
     x = tracks['lon vor'].values 
     tracks['lon vor'] = np.where(x > 180, x - 360, x)
@@ -138,7 +160,7 @@ def compute_density(tracks_with_periods, num_time):
 
 def main():
     periods_directory = '../periods-energetics/BY_RG-all/'
-    output_directory = '../figures/periods_statistics/heatmaps/'
+    output_directory = '../periods_species_statistics/track_density'
     os.makedirs(output_directory, exist_ok=True)
 
     initial_year, final_year = 1979, 2020
@@ -147,32 +169,38 @@ def main():
 
     for RG in ['1', '2', '3', 'all']:
 
-        tracks, cyclone_ids = get_tracks(RG)
+        for season in ['DJF', 'MAM', 'JJA', 'SON', False]:
 
-        tracks_with_periods = pd.DataFrame(columns = tracks.columns)
-        for cyclone_id in cyclone_ids:
-            tmp = process_track(cyclone_id, tracks, periods_directory, filter_residual=False)
-            tracks_with_periods = pd.concat([tracks_with_periods, tmp])
-        tracks_with_periods.reset_index(drop=True, inplace=True)
+            tracks, cyclone_ids = get_tracks(RG, season)
 
-        # Initialize an empty dictionary to hold the DataArrays
-        data_dict = {}
+            tracks_with_periods = pd.DataFrame(columns = tracks.columns)
+            for cyclone_id in cyclone_ids:
+                tmp = process_track(cyclone_id, tracks, periods_directory, filter_residual=False)
+                tracks_with_periods = pd.concat([tracks_with_periods, tmp])
+            tracks_with_periods.reset_index(drop=True, inplace=True)
 
-        for phase in tracks_with_periods['period'].unique():
-            if str(phase) == 'nan':
-                continue
-            print(f'Computing density for {phase}...')
-            density, lon, lat = compute_density(tracks_with_periods[tracks_with_periods['period'] == phase], num_time)
+            # Initialize an empty dictionary to hold the DataArrays
+            data_dict = {}
+
+            for phase in tracks_with_periods['period'].unique():
+                if str(phase) == 'nan':
+                    continue
+                print(f'Computing density for {phase}...')
+                density, lon, lat = compute_density(tracks_with_periods[tracks_with_periods['period'] == phase], num_time)
+                
+                # Create DataArray
+                data = xr.DataArray(density, coords={'lon': lon, 'lat': lat}, dims=['lat', 'lon'])
+                
+                # Add the DataArray to the dictionary with the phase as the key
+                data_dict[phase] = data
+
+            dataset = xr.Dataset(data_dict)
+
+            fname = f'{output_directory}/track_density_RG{RG}' if RG != 'all' else f'{output_directory}/track_density_all-RG'
+            fname += f'_{season}.nc' if season else '.nc'
             
-            # Create DataArray
-            data = xr.DataArray(density, coords={'lon': lon, 'lat': lat}, dims=['lat', 'lon'])
-            
-            # Add the DataArray to the dictionary with the phase as the key
-            data_dict[phase] = data
-
-        # Convert the dictionary to a Dataset
-        dataset = xr.Dataset(data_dict)
-        dataset.to_netcdf(f'./track_density_RG{RG}.nc')
+            dataset.to_netcdf(fname)
+            print(f'Wrote {fname}')
 
 if __name__ == '__main__':
     main()
