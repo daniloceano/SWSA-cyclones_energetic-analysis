@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_density.py                                  :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/21 16:20:16 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/25 14:09:23 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -165,11 +165,12 @@ def main():
 
     initial_year, final_year = 1979, 2020
     num_years = final_year - initial_year
-    num_time = 12 * num_years
 
     for RG in ['1', '2', '3', 'all']:
 
         for season in ['DJF', 'MAM', 'JJA', 'SON', False]:
+
+            num_time = 3 * num_years if season else 12
 
             tracks, cyclone_ids = get_tracks(RG, season)
 
