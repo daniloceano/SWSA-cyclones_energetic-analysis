@@ -6,14 +6,13 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/26 15:02:10 by Danilo            #+#    #+#              #
-#    Updated: 2023/08/07 13:04:38 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/26 16:22:40 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 import pandas as pd
 import glob
-from determine_periods import check_create_folder
-
+import os
 
 qauntile = 0.99
 
@@ -21,7 +20,7 @@ for RG in range(1,4):
 
     results = glob.glob(f'../LEC_results-{qauntile}/RG{RG}-{qauntile}*ERA5*')
     outdir = f'../periods-energetics/{qauntile}/RG{RG}'
-    check_create_folder(outdir) 
+    os.makedirs(outdir, exist_ok=True) 
 
     for result in results:
 
