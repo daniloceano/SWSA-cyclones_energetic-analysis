@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/26 15:02:10 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/26 19:30:41 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/26 19:34:55 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,12 +14,15 @@ import pandas as pd
 import glob
 import os
 
+from cyclophaser import determine_periods
+
 qauntile = 0.99
 
 figures_outdir = f'../figures/periods/quantile/{qauntile}'
 didatic_outdir = f'../figures/periods_didactic/quantile/{qauntile}'
 csv_outdir = f'../periods-energetics/{qauntile}/'
 os.makedirs(figures_outdir, exist_ok=True)
+os.makedirs(didatic_outdir, exist_ok=True)
 os.makedirs(csv_outdir, exist_ok=True)
 
 for RG in range(1,4):
@@ -28,7 +31,7 @@ for RG in range(1,4):
 
     for result in results:
 
-        cyclone_id = result.split('/')[-1].split('_')[0]
+        cyclone_id = result.split('/')[-1].split('_')[0].split('-')[-1]
 
         track_file = glob.glob(result+'/*track')[0]
 
@@ -47,6 +50,8 @@ for RG in range(1,4):
             "use_filter": "auto",
             "use_smoothing_twice": "auto"}
         }
+
+        df = determine_periods(track_file, **options)
 
         # periods_file = result+'/periods.csv'
         # try:
