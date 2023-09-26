@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
         for PC in range(1,3):
     
-                files = glob.glob(f'..//periods-energetics/{intensity}/RG3/PCA/*PC{PC}*.csv')
+                files = glob.glob(f'..//periods-energetics/quantile/{intensity}/PCA/*PC{PC}*.csv')
 
                 LPS_type = 'mixed'
 
