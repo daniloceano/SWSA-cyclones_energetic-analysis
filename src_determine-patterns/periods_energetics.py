@@ -7,8 +7,7 @@ Created on Fri Apr 28 17:31:00 2023
 """
 import pandas as pd
 import glob
-from determine_periods import check_create_folder
-
+import os
 
 intensities = ['10MostIntense', 'moda']
 
@@ -16,7 +15,7 @@ for intensity in intensities:
 
     results = glob.glob(f'../LEC_results-{intensity}/*ERA5*')
     outdir = f'../periods-energetics/{intensity}/'
-    check_create_folder(outdir) 
+    os.makedirs(outdir, exist_ok=True) 
 
     for result in results:
 

@@ -1,1 +1,0 @@
-../../lorenz-cycle/src/determine_periods.py
