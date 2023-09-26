@@ -13,14 +13,13 @@ percentile = '0.99'
 region = 'RG3'
 
 # Directory where the files are saved
-path = f'../periods-energetics/{percentile}/{region}/'
+path = f'../periods-energetics/quantile/{percentile}/'
 
 # Getting all files in the directory
 files_output = os.listdir(path)
 
 # Selecting only the files with cyclone phases
-files_use = [file for file in files_output if "_ERA5.csv" in file]
-
+files_use = [file for file in files_output if region in file]
 
 
 # Creating a list to save all dataframes
@@ -32,7 +31,6 @@ for case in files_use:
   dfcyc = pd.read_csv(path+case,header=0,index_col=0)
   dfcyc = dfcyc[columns_to_read]
   cyclist1.append(dfcyc)
-
 
 for i, df in enumerate(cyclist1):
     fases_presentes = list(df.index)
@@ -51,7 +49,6 @@ for i, df in enumerate(cyclist1):
             cyclist1[i] = df
 
 
-
 fases_possiveis = ['incipient', 'intensification', 'mature', 'decay','intensification 2', 'mature 2', 'decay 2', 'residual']
 grupos = {}
 
@@ -65,12 +62,6 @@ for df in cyclist1:
         grupos[chave_grupo] = [df]
     else:
         grupos[chave_grupo].append(df)
-
-
-
-
-
-    
 
 # Getting all cyclone parameters (columns names)
 parameters = cyclist1[0].keys()
