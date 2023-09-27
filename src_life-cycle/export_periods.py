@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/12 19:18:01 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/27 17:04:43 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -34,7 +34,7 @@ def process_cyclone(args):
 
     # Create temporary files for cyclophaser function
     tracks = pd.read_csv(track_file)
-    tracks.columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42', 'lon mslp', 'lat mslp', 'mslp', 'lon 10spd', 'lat 10spd', '10spd']
+    tracks.columns = track_columns
     track = tracks[tracks['track_id']==id_cyclone][['date','vor42']]
     track = track.rename(columns={"date":"time"})
     track['vor42'] = - track['vor42'] * 1e-5
@@ -70,6 +70,10 @@ if __name__ == '__main__':
 
 
     testing = False
+    # analysis_type = 'BY_RG-all'
+    analysis_type = 'all'
+
+    print("Initializing periods analysis for: ", analysis_type) if not testing else print("Testing")
 
     if testing == True:
         output_directory = './'
@@ -80,13 +84,20 @@ if __name__ == '__main__':
 
     else:
         output_directory = '../figures/'
-        periods_outfile_path = output_directory + 'periods/BY_RG-all/'    
-        periods_didatic_outfile_path = output_directory + 'periods_didactic/BY_RG-all/'
-        periods_csv_outfile_path = '../periods-energetics/BY_RG-all/'
+        periods_outfile_path = output_directory + f'periods/{analysis_type}/'    
+        periods_didatic_outfile_path = output_directory + f'periods_didactic/{analysis_type}/'
+        periods_csv_outfile_path = f'../periods-energetics/{analysis_type}/'
 
-        results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/',
-                        '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG2_csv/',
-                        '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/']
+        if analysis_type == 'BY_RG-all':
+            track_columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42', 'lon mslp', 'lat mslp', 'mslp', 'lon 10spd', 'lat 10spd', '10spd']
+            results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/',
+                            '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG2_csv/',
+                            '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/']
+        
+        elif analysis_type == 'all':
+            track_columns = ['track_id', 'date', 'lon vor', 'lat vor', 'vor42']
+            results_directories = ['../raw_data/SAt/']
+
 
     os.makedirs(periods_outfile_path, exist_ok=True)
     os.makedirs(periods_didatic_outfile_path, exist_ok=True)
@@ -113,14 +124,17 @@ if __name__ == '__main__':
                     file.write(f"Skipping track file: {track_file} - Contains '40W'.\n")
                 continue
             
-            tracks.columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42', 'lon mslp', 'lat mslp', 'mslp', 'lon 10spd', 'lat 10spd', '10spd']
-            
-            if 'RG1' in track_file:
-                RG = 'RG1'
-            elif 'RG2' in track_file:
-                RG = 'RG2'
-            elif 'RG3' in track_file:
-                RG = 'RG3'
+            tracks.columns = track_columns
+
+            if analysis_type == 'BY_RG-all':
+                if 'RG1' in track_file:
+                    RG = 'RG1'
+                elif 'RG2' in track_file:
+                    RG = 'RG2'
+                elif 'RG3' in track_file:
+                    RG = 'RG3'
+            elif analysis_type == 'all':
+                RG = 'SAt'
 
             id_cyclones = tracks['track_id'].unique()
 
