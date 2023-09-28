@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:44:54 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/20 12:42:02 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/28 18:40:52 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -130,27 +130,40 @@ def plot_barplot(df, title, fname):
     plt.savefig(fname)
     print(f'{fname} saved.')
 
-fig_output_directory = '../figures/periods_statistics/barplots/'
-csv_directory = '../periods_species_statistics/count_systems_raw/'
-csv_directory_processed = '../periods_species_statistics/count_systems_processed/'
+# mode = 'BY_RG-all'
+mode = 'all'
 
+# Set output directories
+fig_output_directory = f'../figures/periods_statistics/{mode}/barplots/'
+csv_directory = f'../periods_species_statistics/{mode}/count_systems_raw/'
+csv_directory_processed = f'../periods_species_statistics/{mode}/count_systems_processed/'
 os.makedirs(fig_output_directory, exist_ok=True)
 os.makedirs(csv_directory_processed, exist_ok=True)
 
-for RG in ['RG1', 'RG2', 'RG3', 'all_RG']:
+# List of season names
+seasons = ['JJA', 'MAM', 'SON', 'DJF', 'total']
 
-    print(f'---------------------------\n RG: {RG}')
+# List of RGs
+RGs = ['RG1', 'RG2', 'RG3', 'all_RG'] if mode == 'BY_RG-all' else ['']
 
-    # List of season names
-    seasons = ['JJA', 'MAM', 'SON', 'DJF', 'total']
+for RG in RGs:
+    print(f'---------------------------\n RG: {RG}') if mode == 'BY_RG-all' else print(f'---------------------------')
 
-    seasonal_df = pd.DataFrame(columns=['Type of System', 'Season', 'RG', 'Total Count', 'Percentage'])
+    # Suffix for creating files
+    if mode == 'BY_RG-all':
+        suffix = f'_{RG}'
+    else:
+        suffix = '' 
 
+    if mode == 'BY_RG-all':
+        seasonal_df = pd.DataFrame(columns=['Type of System', 'Season', 'RG', 'Total Count', 'Percentage'])
+    else:
+        seasonal_df = pd.DataFrame(columns=['Type of System', 'Season', 'Total Count', 'Percentage'])
+    
     for season in seasons:
-
         print(f'\n Season: {season}')
-        
-        df = pd.read_csv(f'{csv_directory}/{season}_count_of_systems_{RG}.csv')
+
+        df = pd.read_csv(f'{csv_directory}/{season}_count_of_systems{suffix}.csv')
         df = df.sort_values(by='Total Count', ascending=False)
 
         # df excluding residual phases
@@ -163,25 +176,25 @@ for RG in ['RG1', 'RG2', 'RG3', 'all_RG']:
         filtered_df_exclude_residual = process_df(df, filter_df=True, exclude_residual=True)
 
         # export csv
-        csv_name = f'{csv_directory_processed}/{season}_count_of_systems_processed_{RG}.csv'
+        csv_name = f'{csv_directory_processed}/{season}_count_of_systems_processed{suffix}.csv'
         filtered_df_exclude_residual.to_csv(csv_name)
         print(f'{csv_name} saved.')
 
         print(filtered_df_exclude_residual)
 
         if season == 'total':
-            fname = f'{fig_output_directory}/{season}_processed_{RG}.png'
-            plot_barplot(filtered_df_exclude_residual, f'{RG} - {season}', fname)
+            fname = f'{fig_output_directory}/{season}_processed{suffix}.png'
+            title = f'{RG} - {season}' if mode == 'BY_RG-all' else f'{season}'
+            plot_barplot(filtered_df_exclude_residual, title, fname)
         
         else:
             tmp = filtered_df_exclude_residual.copy()
             tmp['Season'] = season
-            tmp['RG'] = RG
+            if mode == 'BY_RG-all':
+                tmp['RG'] = RG
             seasonal_df = pd.concat([seasonal_df, tmp], ignore_index=True)
 
-    # if RG == 'RG3':
-    #     print(seasonal_df)
-
     # Plot combined barplot for counts and percentages
-    combined_fname = f'{fig_output_directory}/combined_{RG}.png'
+    combined_fname = f'{fig_output_directory}/combined{suffix}.png'
+    title = f'{RG}' if mode == 'BY_RG-all' else 'all'
     plot_combined_barplot(seasonal_df, RG, combined_fname)
