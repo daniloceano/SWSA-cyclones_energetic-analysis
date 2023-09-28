@@ -127,7 +127,7 @@ for chave_gp in variaveis.keys():
             df_PC1[tr] = pc1
             df_PC2[tr] = pc2
 
-            PCA_DIR = os.path.join(path, 'PCA')
+            PCA_DIR = os.path.join(path, 'PCA_all-species')
 
             if not os.path.exists(PCA_DIR):
                 os.makedirs(PCA_DIR)

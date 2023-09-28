@@ -16,15 +16,15 @@ region = 'all'
 if region == 'all':
     regions = ['RG1', 'RG2', 'RG3']
 
-path_save = os.path.join('..', 'periods-energetics', percentile)
+path_save = os.path.join('..', 'periods-energetics/quantile/', percentile)
 
 all_files = []
 
 # Iterar através de cada região e adicionar arquivos à lista
 for region in regions:
-    path = os.path.join('..', 'periods-energetics', percentile, region)
+    path = os.path.join('..', 'periods-energetics/quantile/', percentile)
     # Usando glob para obter todos os arquivos .csv
-    files = glob.glob(os.path.join(path, "*_ERA5.csv"))
+    files = glob.glob(os.path.join(path, "*.csv"))
     all_files.extend(files)
 
 # Creating a list to save all dataframes
@@ -102,7 +102,7 @@ for tr in variaveis.keys():
   df_PC1[tr] = pc1
   df_PC2[tr] = pc2
 
-PCA_DIR = os.path.join(path_save, 'PCA')
+PCA_DIR = os.path.join(path_save, 'PCA_IntMatureDecay')
 
 if not os.path.exists(PCA_DIR):
     os.makedirs(PCA_DIR)
