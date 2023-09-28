@@ -40,6 +40,8 @@ figures/periods/all
 figures/periods/all/*
 figures/periods_didactic/all/*
 figures/periods/all/*.png
+periods-energetics/all/*csv
+periods-energetics/all
 
 # Testing filters
 figures/tests_filter/test_*
