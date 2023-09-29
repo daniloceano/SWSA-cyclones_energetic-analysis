@@ -57,9 +57,9 @@ def plot_barplot(df, label, ax, filter=False):
     for index, value in enumerate(df['Total Count']):
         percentage = df.loc[df.index[index], 'Percentage']
         if orient == 'h':
-            ax.text(value + 20, index, f"{value} ({percentage:.2f}%)", va='center', color='black', fontweight='bold')
+            ax.text(value + 100, index, f"{value} ({percentage:.2f}%)", va='center', color='black', fontweight='bold')
         else:
-            ax.text(index, value + 20, f"{value} ({percentage:.2f}%)", ha='center', color='black', fontweight='bold')
+            ax.text(index, value + 100, f"{value} ({percentage:.2f}%)", ha='center', color='black', fontweight='bold')
 
     ax.set_xlabel(None)
     ax.set_ylabel(None)
@@ -86,7 +86,7 @@ output_directory = '../figures/manuscript_life-cycle/'
 os.makedirs(output_directory, exist_ok=True)
 
 # Read data from CSV file
-df = pd.read_csv('../periods_species_statistics/count_systems_raw/total_count_of_systems_all_RG.csv')
+df = pd.read_csv('../periods_species_statistics/all/count_systems_raw/total_count_of_systems.csv')
 
 # df with all possible phases
 df = df.sort_values(by='Total Count', ascending=False)
