@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_density.py                                  :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
+#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/25 14:09:23 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/28 19:57:56 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -38,21 +38,22 @@ def get_tracks(RG, season=False):
     6: 'JJA', 7: 'JJA', 8: 'JJA',
     9: 'SON', 10: 'SON', 11: 'SON'
 }
-
-    if RG != 'all':
-        str_RG = f'RG{RG}'
-        results_directories = [f'../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG{RG}_csv/']
+    if mode == 'BY_RG-all':
+        track_columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42', 'lon mslp', 'lat mslp', 'mslp', 'lon 10spd', 'lat 10spd', '10spd']
+        if RG != 'all':
+            str_RG = f'RG{RG}'
+            results_directories = [f'../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG{RG}_csv/']
+        else:
+            str_RG = 'all RGs'
+            results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/',
+                                '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG2_csv/',
+                                '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/']
     else:
-        str_RG = 'all RGs'
-        results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/',
-                            '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG2_csv/',
-                            '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/']
+        track_columns = ['track_id', 'date', 'lon vor', 'lat vor', 'vor42']
+        str_RG = 'all systems'
+        results_directories = ['../raw_data/SAt/']
 
-    columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor',
-                                    'vor42', 'lon mslp', 'lat mslp', 'mslp', 'lon 10spd',
-                                    'lat 10spd', '10spd']
-
-    tracks = pd.DataFrame(columns = columns)
+    tracks = pd.DataFrame(columns = track_columns)
 
     for results_directory in results_directories:  
                 files = glob(f'{results_directory}*')
@@ -63,7 +64,7 @@ def get_tracks(RG, season=False):
                     except:
                         continue
 
-                    tmp.columns = columns
+                    tmp.columns = track_columns
 
                     # Check season, if season is given
                     if season:
@@ -158,51 +159,60 @@ def compute_density(tracks_with_periods, num_time):
 
     return density, longrd, latgrd
 
-def main():
-    periods_directory = '../periods-energetics/BY_RG-all/'
-    output_directory = '../periods_species_statistics/track_density'
-    os.makedirs(output_directory, exist_ok=True)
+# mode = 'BY_RG-all'
+mode = 'all'
 
-    initial_year, final_year = 1979, 2020
-    num_years = final_year - initial_year
+# Set up direcotries
+periods_directory = f'../periods-energetics/{mode}/'
+output_directory = f'../periods_species_statistics/{mode}/track_density'
+os.makedirs(output_directory, exist_ok=True)
 
-    for RG in ['1', '2', '3', 'all']:
+initial_year, final_year = 1979, 2020
+num_years = final_year - initial_year
 
-        for season in ['DJF', 'MAM', 'JJA', 'SON', False]:
+# List of season names
+seasons = ['JJA', 'MAM', 'SON', 'DJF', False]
 
-            num_time = 3 * num_years if season else 12
+# List of RGs
+RGs = ['1', '2', '3', 'all'] if mode == 'BY_RG-all' else ['all']
 
-            tracks, cyclone_ids = get_tracks(RG, season)
+for RG in RGs:
 
-            tracks_with_periods = pd.DataFrame(columns = tracks.columns)
-            for cyclone_id in cyclone_ids:
-                tmp = process_track(cyclone_id, tracks, periods_directory, filter_residual=False)
-                tracks_with_periods = pd.concat([tracks_with_periods, tmp])
-            tracks_with_periods.reset_index(drop=True, inplace=True)
+    for season in seasons:
 
-            # Initialize an empty dictionary to hold the DataArrays
-            data_dict = {}
+        num_time = 3 * num_years if season else 12
 
-            for phase in tracks_with_periods['period'].unique():
-                if str(phase) == 'nan':
-                    continue
-                print(f'Computing density for {phase}...')
-                density, lon, lat = compute_density(tracks_with_periods[tracks_with_periods['period'] == phase], num_time)
-                
-                # Create DataArray
-                data = xr.DataArray(density, coords={'lon': lon, 'lat': lat}, dims=['lat', 'lon'])
-                
-                # Add the DataArray to the dictionary with the phase as the key
-                data_dict[phase] = data
+        tracks, cyclone_ids = get_tracks(RG, season)
 
-            dataset = xr.Dataset(data_dict)
+        tracks_with_periods = pd.DataFrame(columns = tracks.columns)
+        for cyclone_id in cyclone_ids:
+            tmp = process_track(cyclone_id, tracks, periods_directory, filter_residual=False)
+            tracks_with_periods = pd.concat([tracks_with_periods, tmp])
+        tracks_with_periods.reset_index(drop=True, inplace=True)
 
-            fname = f'{output_directory}/track_density_RG{RG}' if RG != 'all' else f'{output_directory}/track_density_all-RG'
-            fname += f'_{season}.nc' if season else '.nc'
+        # Initialize an empty dictionary to hold the DataArrays
+        data_dict = {}
+
+        for phase in tracks_with_periods['period'].unique():
+            if str(phase) == 'nan':
+                continue
+            print(f'Computing density for {phase}...')
+            density, lon, lat = compute_density(tracks_with_periods[tracks_with_periods['period'] == phase], num_time)
             
-            dataset.to_netcdf(fname)
-            print(f'Wrote {fname}')
+            # Create DataArray
+            data = xr.DataArray(density, coords={'lon': lon, 'lat': lat}, dims=['lat', 'lon'])
+            
+            # Add the DataArray to the dictionary with the phase as the key
+            data_dict[phase] = data
 
-if __name__ == '__main__':
-    main()
+        dataset = xr.Dataset(data_dict)
+
+        if mode == 'BY_RG-all':
+            fname = f'{output_directory}/track_density_RG{RG}' if RG != 'all' else f'{output_directory}/track_density_all-RG'
+        else:
+            fname = f'{output_directory}/track_density'
+        fname += f'_{season}.nc' if season else '.nc'
+        
+        dataset.to_netcdf(fname)
+        print(f'Wrote {fname}')
 
