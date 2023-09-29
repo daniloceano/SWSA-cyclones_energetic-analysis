@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    map_density.py                                     :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
+#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/08 20:33:08 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/25 10:08:49 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/29 16:27:05 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -57,30 +57,46 @@ def plot_density(ax, density, phase):
 
 #####################################    
 
-output_directory = '../figures/periods_statistics/density_maps/'
-infile_directory = '../periods_species_statistics/track_density/'
+# mode = 'BY_RG-all'
+mode = 'all'
+
+output_directory = f'../figures/periods_statistics/{mode}/density_maps/'
+infile_directory = f'../periods_species_statistics/{mode}/track_density/'
 
 phases = ['incipient', 'intensification', 'mature', 'decay', 'residual',
                     'intensification 2', 'mature 2', 'decay 2']
 
+# List of season names
+seasons = ['JJA', 'MAM', 'SON', 'DJF', False]
+
+# List of RGs
+RGs = ['1', '2', '3', 'all'] if mode == 'BY_RG-all' else ['all']
+
+# Colormap for plotting
 colors = ['white', '#F1F5F9', '#AFC4DA', '#4471B2', '#B1DFA3', '#EFF9A6', 
             '#FEEC9F', '#FDB567', '#F06744',  '#C1274A']
 cmap = mcolors.LinearSegmentedColormap.from_list("", colors)
 
 os.makedirs(output_directory, exist_ok=True)
 
-for RG in ['1', '2', '3', 'all']:
-    RG_str = f'RG{RG}' if RG != 'all' else 'all-RG'
+for RG in RGs:
+    if mode == 'BY_RG-all':
+        RG_str = f'_RG{RG}' if RG != 'all' else '_all-RG'
+    else:
+        RG_str = ''
     print(f'RG: {RG}...')
 
-    for season in ['DJF', 'MAM', 'JJA', 'SON', False]:
+    for season in seasons:
         season_str = f'_{season}' if season else ''
         print(f'season: {season}') if season else print('all seasons') 
 
-        infile = f'{infile_directory}/track_density_{RG_str}{season_str}.nc'
+        infile = f'{infile_directory}/track_density{RG_str}{season_str}.nc'
         ds = xr.open_dataset(infile)
 
-        fname = os.path.join(output_directory, RG_str+season_str)
+        if mode == 'BY_RG-all':
+            fname = os.path.join(output_directory, RG_str+season_str)
+        else:
+            fname = os.path.join(output_directory, 'all'+season_str)
 
         fig = plt.figure(figsize=(15, 10))
         datacrs = ccrs.PlateCarree()
