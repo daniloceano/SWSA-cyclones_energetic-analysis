@@ -14,6 +14,10 @@ This directory contains scripts for analyzing cyclone periods. The workflow invo
 
 4. **export_density.py**: This script, adapted from Carolina B. Gramcianinov (cbgramcianinov@gmail.com), is designed for generating density maps of cyclone system tracks on a 2.5-degree global grid. It takes raw tracks and processed periods data as input and produces NetCDF files containing the density maps for different cyclone phases.
 
+5. **map_density.py**: This script, adapted from Carolina B. Gramcianinov (cbgramcianinov@gmail.com) in February 2021, is designed for plotting cyclone density maps using the Kernel Density Estimation (KDE) method from the sklearn package.
+
+6. **calculate_phase_time.py**: This script calculates and visualizes the distribution of the duration of different phases within cyclone systems, such as incipient, intensification, mature, decay, and others.
+
 ## File Structure
 
 Make sure the following directory structure is in place:
