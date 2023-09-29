@@ -12,6 +12,8 @@ This directory contains scripts for analyzing cyclone periods. The workflow invo
 
 3. **barplot.py**: This script generates bar plots for visualizing cyclone system statistics. It reads CSV files containing the count and percentage of each type of system, as produced by `export_species.py`, and creates informative bar plots.
 
+4. **export_density.py**: This script, adapted from Carolina B. Gramcianinov (cbgramcianinov@gmail.com), is designed for generating density maps of cyclone system tracks on a 2.5-degree global grid. It takes raw tracks and processed periods data as input and produces NetCDF files containing the density maps for different cyclone phases.
+
 ## File Structure
 
 Make sure the following directory structure is in place:
