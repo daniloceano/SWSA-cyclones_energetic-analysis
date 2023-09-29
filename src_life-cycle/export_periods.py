@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/27 17:04:43 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/29 19:46:58 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -41,9 +41,6 @@ def process_cyclone(args):
     tmp_file = (f"tmp_{RG}-{id_cyclone}.csv")
     track.to_csv(tmp_file, index=False, sep=';')
 
-    # Check if periods_outfile already exists
-    periods_outfile_exists = os.path.exists(periods_outfile)
-
     # if not periods_outfile_exists:
     options = {
         "vorticity_column": 'vor42',
@@ -71,7 +68,8 @@ if __name__ == '__main__':
 
     testing = False
     # analysis_type = 'BY_RG-all'
-    analysis_type = 'all'
+    # analysis_type = 'all'
+    analysis_type = '70W'    
 
     print("Initializing periods analysis for: ", analysis_type) if not testing else print("Testing")
 
@@ -94,7 +92,7 @@ if __name__ == '__main__':
                             '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG2_csv/',
                             '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/']
         
-        elif analysis_type == 'all':
+        else:
             track_columns = ['track_id', 'date', 'lon vor', 'lat vor', 'vor42']
             results_directories = ['../raw_data/SAt/']
 
@@ -135,8 +133,15 @@ if __name__ == '__main__':
                     RG = 'RG3'
             elif analysis_type == 'all':
                 RG = 'SAt'
+            elif analysis_type == '71W':
+                RG = 'SAt-70W'
+                ids_west_70 = tracks[tracks['lon vor'] < -70]['track_id'].unique()
+                tracks = tracks[~tracks['track_id'].isin(ids_west_70)]
 
             id_cyclones = tracks['track_id'].unique()
+
+            for idc in id_cyclones:
+                print(tracks[tracks['track_id'] == idc]['lon vor'].min())
 
             # Create a list of arguments for the process_cyclone function
             arguments_list = [(id_cyclone, track_file, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG) for id_cyclone in id_cyclones]
