@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_periods.py                                  :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/29 19:46:58 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/29 23:34:12 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -63,89 +63,112 @@ def process_cyclone(args):
 
     os.remove(tmp_file)
 
-if __name__ == '__main__':
+def filter_tracks(tracks, analysis_type):
+    # Filter the 'tracks' DataFrame to keep only the systems that are west of 70W
+    if '70W' in analysis_type:
+        RG = 'SAt-70W'
+        ids_west_70 = tracks[tracks['lon vor'] < -70]['track_id'].unique()
+        tracks = tracks[~tracks['track_id'].isin(ids_west_70)]
 
+    # Filter the 'tracks' DataFrame to keep only the systems that have a duration of at least 48 hours
+    if '48h' in analysis_type:
+        RG = 'SAt-70W'
+        tracks['date'] = pd.to_datetime(tracks['date'])
+        grouped = tracks.groupby('track_id')
 
-    testing = False
-    # analysis_type = 'BY_RG-all'
-    # analysis_type = 'all'
-    analysis_type = '70W'    
+        # Calculate the duration of each system in hours
+        system_durations = grouped['date'].max() - grouped['date'].min()
+        system_durations = system_durations.dt.total_seconds() / 3600  # Convert to hours
 
-    print("Initializing periods analysis for: ", analysis_type) if not testing else print("Testing")
+        # Select only systems with a duration of at least 48 hours
+        min_duration_hours = 48
+        valid_track_ids = system_durations[system_durations >= min_duration_hours].index
 
-    if testing == True:
-        output_directory = './'
-        periods_outfile_path = output_directory + './'    
-        periods_didatic_outfile_path = output_directory + './'
-        periods_csv_outfile_path = './'
-        results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/']
+        # Filter the 'tracks' DataFrame to keep only the systems that meet the duration criteria
+        tracks = tracks[tracks['track_id'].isin(valid_track_ids)]
+    
+    return tracks, RG
 
+testing = False
+# analysis_type = 'BY_RG-all'
+# analysis_type = 'all'
+# analysis_type = '70W' 
+#analysis_type = '48h'
+analysis_type = '70W-48h'
+
+print("Initializing periods analysis for: ", analysis_type) if not testing else print("Testing")
+
+if testing == True:
+    output_directory = './'
+    periods_outfile_path = output_directory + './'    
+    periods_didatic_outfile_path = output_directory + './'
+    periods_csv_outfile_path = './'
+    results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/']
+
+else:
+    output_directory = '../figures/'
+    periods_outfile_path = output_directory + f'periods/{analysis_type}/'    
+    periods_didatic_outfile_path = output_directory + f'periods_didactic/{analysis_type}/'
+    periods_csv_outfile_path = f'../periods-energetics/{analysis_type}/'
+
+    if analysis_type == 'BY_RG-all':
+        track_columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42', 'lon mslp', 'lat mslp', 'mslp', 'lon 10spd', 'lat 10spd', '10spd']
+        results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/',
+                        '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG2_csv/',
+                        '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/']
+    
     else:
-        output_directory = '../figures/'
-        periods_outfile_path = output_directory + f'periods/{analysis_type}/'    
-        periods_didatic_outfile_path = output_directory + f'periods_didactic/{analysis_type}/'
-        periods_csv_outfile_path = f'../periods-energetics/{analysis_type}/'
+        track_columns = ['track_id', 'date', 'lon vor', 'lat vor', 'vor42']
+        results_directories = ['../raw_data/SAt/']
 
-        if analysis_type == 'BY_RG-all':
-            track_columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42', 'lon mslp', 'lat mslp', 'mslp', 'lon 10spd', 'lat 10spd', '10spd']
-            results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/',
-                            '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG2_csv/',
-                            '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/']
+
+os.makedirs(periods_outfile_path, exist_ok=True)
+os.makedirs(periods_didatic_outfile_path, exist_ok=True)
+os.makedirs(periods_csv_outfile_path, exist_ok=True)
+
+for results_dir in results_directories:
+    for track_file in sorted(glob.glob(f'{results_dir}/*')):
+
+        if testing:
+            if '1980' not in track_file:
+                continue
+
+        # Check if the track_file is empty
+        try:
+            tracks = pd.read_csv(track_file)
+        except pd.errors.EmptyDataError:
+            with open("error_log.txt", "a") as file:
+                file.write(f"Empty track file: {track_file} - Skipping processing.\n")
+            continue
+
+        # Check if track_file contains "40W" and skip processing if it does
+        if "40W" in track_file:
+            with open("error_log.txt", "a") as file:
+                file.write(f"Skipping track file: {track_file} - Contains '40W'.\n")
+            continue
         
+        tracks.columns = track_columns
+
+        # Parameters for each type of analysis
+        if analysis_type == 'BY_RG-all':
+            if 'RG1' in track_file:
+                RG = 'RG1'
+            elif 'RG2' in track_file:
+                RG = 'RG2'
+            elif 'RG3' in track_file:
+                RG = 'RG3'
+
+        elif analysis_type == 'all':
+            RG = 'SAt'
+
         else:
-            track_columns = ['track_id', 'date', 'lon vor', 'lat vor', 'vor42']
-            results_directories = ['../raw_data/SAt/']
+            tracks, RG = filter_tracks(tracks, analysis_type)
 
+        id_cyclones = tracks['track_id'].unique()
 
-    os.makedirs(periods_outfile_path, exist_ok=True)
-    os.makedirs(periods_didatic_outfile_path, exist_ok=True)
-    os.makedirs(periods_csv_outfile_path, exist_ok=True)
+        # Create a list of arguments for the process_cyclone function
+        arguments_list = [(id_cyclone, track_file, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG) for id_cyclone in id_cyclones]
 
-    for results_dir in results_directories:
-        for track_file in sorted(glob.glob(f'{results_dir}/*')):
-
-            if testing:
-                if '1980' not in track_file:
-                    continue
-
-            # Check if the track_file is empty
-            try:
-                tracks = pd.read_csv(track_file)
-            except pd.errors.EmptyDataError:
-                with open("error_log.txt", "a") as file:
-                    file.write(f"Empty track file: {track_file} - Skipping processing.\n")
-                continue
-
-            # Check if track_file contains "40W" and skip processing if it does
-            if "40W" in track_file:
-                with open("error_log.txt", "a") as file:
-                    file.write(f"Skipping track file: {track_file} - Contains '40W'.\n")
-                continue
-            
-            tracks.columns = track_columns
-
-            if analysis_type == 'BY_RG-all':
-                if 'RG1' in track_file:
-                    RG = 'RG1'
-                elif 'RG2' in track_file:
-                    RG = 'RG2'
-                elif 'RG3' in track_file:
-                    RG = 'RG3'
-            elif analysis_type == 'all':
-                RG = 'SAt'
-            elif analysis_type == '71W':
-                RG = 'SAt-70W'
-                ids_west_70 = tracks[tracks['lon vor'] < -70]['track_id'].unique()
-                tracks = tracks[~tracks['track_id'].isin(ids_west_70)]
-
-            id_cyclones = tracks['track_id'].unique()
-
-            for idc in id_cyclones:
-                print(tracks[tracks['track_id'] == idc]['lon vor'].min())
-
-            # Create a list of arguments for the process_cyclone function
-            arguments_list = [(id_cyclone, track_file, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG) for id_cyclone in id_cyclones]
-
-            # Use multiprocessing Pool to execute the function in parallel
-            with multiprocessing.Pool() as pool:
-                pool.map(process_cyclone, arguments_list)
+        # Use multiprocessing Pool to execute the function in parallel
+        with multiprocessing.Pool() as pool:
+            pool.map(process_cyclone, arguments_list)
