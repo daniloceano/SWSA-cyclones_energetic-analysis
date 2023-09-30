@@ -40,6 +40,8 @@ figures/periods/all
 figures/periods/all/*
 figures/periods_didactic/all/*
 figures/periods/all/*.png
+figures/periods/70W/
+figures/periods_didactic/70W/
 
 # Testing filters
 figures/tests_filter/test_*
