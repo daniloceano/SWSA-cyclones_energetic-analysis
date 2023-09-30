@@ -42,6 +42,8 @@ figures/periods_didactic/all/*
 figures/periods/all/*.png
 figures/periods/70W/
 figures/periods_didactic/70W/
+figures/periods/48h/
+figures/periods_didactic/48h/
 
 # Testing filters
 figures/tests_filter/test_*
