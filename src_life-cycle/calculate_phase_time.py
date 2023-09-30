@@ -7,22 +7,23 @@ import numpy as np
 import os
 from scipy.stats import norm 
 
-# mode = 'BY_RG-all'
-mode = 'all'
+# analysis_type = 'BY_RG-all'
+# analysis_type = 'all'
+analysis_type = '70W'
 
-data_path = f'../periods-energetics/{mode}/'
-figure_path = f'../figures/periods_statistics/{mode}/phase_time/'
+data_path = f'../periods-energetics/{analysis_type}/'
+figure_path = f'../figures/periods_statistics/{analysis_type}/phase_time/'
 
 if not os.path.exists(figure_path):
     os.makedirs(figure_path)
 
 
 # List of RGs
-RGs = ['1', '2', '3', 'all'] if mode == 'BY_RG-all' else ['all']
+RGs = ['1', '2', '3', 'all'] if analysis_type == 'BY_RG-all' else ['all']
 
 for RG in RGs:
     
-    if mode == 'BY_RG-all':
+    if analysis_type == 'BY_RG-all':
         arquivos_csv = glob.glob(f'{data_path}/RG{RG}_*.csv')
         figure_path_RG = figure_path + f'RG{RG}/'
         if not os.path.exists(figure_path_RG):

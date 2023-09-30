@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_density.py                                  :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/28 19:57:56 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/30 09:55:47 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -38,7 +38,7 @@ def get_tracks(RG, season=False):
     6: 'JJA', 7: 'JJA', 8: 'JJA',
     9: 'SON', 10: 'SON', 11: 'SON'
 }
-    if mode == 'BY_RG-all':
+    if analysis_type == 'BY_RG-all':
         track_columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42', 'lon mslp', 'lat mslp', 'mslp', 'lon 10spd', 'lat 10spd', '10spd']
         if RG != 'all':
             str_RG = f'RG{RG}'
@@ -159,12 +159,13 @@ def compute_density(tracks_with_periods, num_time):
 
     return density, longrd, latgrd
 
-# mode = 'BY_RG-all'
-mode = 'all'
+# analysis_type = 'BY_RG-all'
+# analysis_type = 'all'
+analysis_type = '70W'
 
 # Set up direcotries
-periods_directory = f'../periods-energetics/{mode}/'
-output_directory = f'../periods_species_statistics/{mode}/track_density'
+periods_directory = f'../periods-energetics/{analysis_type}/'
+output_directory = f'../periods_species_statistics/{analysis_type}/track_density'
 os.makedirs(output_directory, exist_ok=True)
 
 initial_year, final_year = 1979, 2020
@@ -174,7 +175,7 @@ num_years = final_year - initial_year
 seasons = ['JJA', 'MAM', 'SON', 'DJF', False]
 
 # List of RGs
-RGs = ['1', '2', '3', 'all'] if mode == 'BY_RG-all' else ['all']
+RGs = ['1', '2', '3', 'all'] if analysis_type == 'BY_RG-all' else ['all']
 
 for RG in RGs:
 
@@ -207,7 +208,7 @@ for RG in RGs:
 
         dataset = xr.Dataset(data_dict)
 
-        if mode == 'BY_RG-all':
+        if analysis_type == 'BY_RG-all':
             fname = f'{output_directory}/track_density_RG{RG}' if RG != 'all' else f'{output_directory}/track_density_all-RG'
         else:
             fname = f'{output_directory}/track_density'

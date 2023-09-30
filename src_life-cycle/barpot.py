@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    barpot.py                                          :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:44:54 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/28 18:40:52 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/30 09:53:48 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -130,13 +130,14 @@ def plot_barplot(df, title, fname):
     plt.savefig(fname)
     print(f'{fname} saved.')
 
-# mode = 'BY_RG-all'
-mode = 'all'
+# analysis_type = 'BY_RG-all'
+# analysis_type = 'all'
+analysis_type = '70W'
 
 # Set output directories
-fig_output_directory = f'../figures/periods_statistics/{mode}/barplots/'
-csv_directory = f'../periods_species_statistics/{mode}/count_systems_raw/'
-csv_directory_processed = f'../periods_species_statistics/{mode}/count_systems_processed/'
+fig_output_directory = f'../figures/periods_statistics/{analysis_type}/barplots/'
+csv_directory = f'../periods_species_statistics/{analysis_type}/count_systems_raw/'
+csv_directory_processed = f'../periods_species_statistics/{analysis_type}/count_systems_processed/'
 os.makedirs(fig_output_directory, exist_ok=True)
 os.makedirs(csv_directory_processed, exist_ok=True)
 
@@ -144,18 +145,18 @@ os.makedirs(csv_directory_processed, exist_ok=True)
 seasons = ['JJA', 'MAM', 'SON', 'DJF', 'total']
 
 # List of RGs
-RGs = ['RG1', 'RG2', 'RG3', 'all_RG'] if mode == 'BY_RG-all' else ['']
+RGs = ['RG1', 'RG2', 'RG3', 'all_RG'] if analysis_type == 'BY_RG-all' else ['']
 
 for RG in RGs:
-    print(f'---------------------------\n RG: {RG}') if mode == 'BY_RG-all' else print(f'---------------------------')
+    print(f'---------------------------\n RG: {RG}') if analysis_type == 'BY_RG-all' else print(f'---------------------------')
 
     # Suffix for creating files
-    if mode == 'BY_RG-all':
+    if analysis_type == 'BY_RG-all':
         suffix = f'_{RG}'
     else:
         suffix = '' 
 
-    if mode == 'BY_RG-all':
+    if analysis_type == 'BY_RG-all':
         seasonal_df = pd.DataFrame(columns=['Type of System', 'Season', 'RG', 'Total Count', 'Percentage'])
     else:
         seasonal_df = pd.DataFrame(columns=['Type of System', 'Season', 'Total Count', 'Percentage'])
@@ -184,17 +185,17 @@ for RG in RGs:
 
         if season == 'total':
             fname = f'{fig_output_directory}/{season}_processed{suffix}.png'
-            title = f'{RG} - {season}' if mode == 'BY_RG-all' else f'{season}'
+            title = f'{RG} - {season}' if analysis_type == 'BY_RG-all' else f'{season}'
             plot_barplot(filtered_df_exclude_residual, title, fname)
         
         else:
             tmp = filtered_df_exclude_residual.copy()
             tmp['Season'] = season
-            if mode == 'BY_RG-all':
+            if analysis_type == 'BY_RG-all':
                 tmp['RG'] = RG
             seasonal_df = pd.concat([seasonal_df, tmp], ignore_index=True)
 
     # Plot combined barplot for counts and percentages
     combined_fname = f'{fig_output_directory}/combined{suffix}.png'
-    title = f'{RG}' if mode == 'BY_RG-all' else 'all'
+    title = f'{RG}' if analysis_type == 'BY_RG-all' else 'all'
     plot_combined_barplot(seasonal_df, RG, combined_fname)
