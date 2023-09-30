@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_species.py                                  :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 14:07:51 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/28 18:09:03 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/30 09:49:52 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,10 +19,11 @@ This script reads the tracks processed by export_periods.py and counts the numbe
 that fits in one of each category of the life cycle.
 """
 
-#mode = 'BY_RG-all'
-mode = 'all'
+#analysis_type = 'BY_RG-all'
+# analysis_type = 'all'
+analysis_type = '70W'
 
-csv_directory = f'../periods-energetics/{mode}/'
+csv_directory = f'../periods-energetics/{analysis_type}/'
 csv_files = glob.glob(f'{csv_directory}/*')
 
 seasonal_phase_counts = {season: {} for season in ['DJF', 'MAM', 'JJA', 'SON']}
@@ -37,7 +38,7 @@ month_season_map = {
 total_systems = len(csv_files)
 total_systems_season = {'DJF': 0, 'MAM': 0, 'JJA': 0, 'SON': 0}
 
-RGs = ['RG1', 'RG2', 'RG3'] if mode == 'BY_RG-all' else ['']
+RGs = ['RG1', 'RG2', 'RG3'] if analysis_type == 'BY_RG-all' else ['']
 
 for RG in RGs:
 
@@ -45,7 +46,7 @@ for RG in RGs:
 
     ## Open data
     for csv_file in csv_files:
-        if mode == 'BY_RG-all':
+        if analysis_type == 'BY_RG-all':
             if RG in csv_file:
                 df = pd.read_csv(csv_file, index_col=[0])
             else:
@@ -77,10 +78,10 @@ for RG in RGs:
         seasonal_phase_counts[corresponding_season].setdefault(phase_arrangement, 0)
         seasonal_phase_counts[corresponding_season][phase_arrangement] += 1
 
-    outdir = f'../periods_species_statistics/{mode}/count_systems_raw/'
+    outdir = f'../periods_species_statistics/{analysis_type}/count_systems_raw/'
     os.makedirs(outdir, exist_ok=True)
 
-    if mode == 'BY_RG-all':
+    if analysis_type == 'BY_RG-all':
         suffix = f'_{RG}' if RG != '' else '_all_RG'
     else:
         suffix = ''
