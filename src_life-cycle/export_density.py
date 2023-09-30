@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/30 09:55:47 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/30 10:11:13 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,6 +24,7 @@ from sklearn.neighbors import KernelDensity
 from scipy.ndimage.filters import gaussian_filter
 from glob import glob
 import xarray as xr
+from export_periods import filter_tracks
 
 def get_tracks(RG, season=False):
 
@@ -50,7 +51,7 @@ def get_tracks(RG, season=False):
                                 '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/']
     else:
         track_columns = ['track_id', 'date', 'lon vor', 'lat vor', 'vor42']
-        str_RG = 'all systems'
+        str_RG = f'{analysis_type} systems'
         results_directories = ['../raw_data/SAt/']
 
     tracks = pd.DataFrame(columns = track_columns)
@@ -184,6 +185,8 @@ for RG in RGs:
         num_time = 3 * num_years if season else 12
 
         tracks, cyclone_ids = get_tracks(RG, season)
+
+        tracks, _ = filter_tracks(tracks, analysis_type)
 
         tracks_with_periods = pd.DataFrame(columns = tracks.columns)
         for cyclone_id in cyclone_ids:
