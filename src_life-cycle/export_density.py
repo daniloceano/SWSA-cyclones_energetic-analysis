@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/01 19:28:44 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/01 19:47:12 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -166,8 +166,8 @@ def compute_density(tracks_with_periods, num_time):
 # analysis_type = 'all'
 # analysis_type = '70W'
 # analysis_type = '48h'
-analysis_type = '70W-48h'
-# analysis_type = '70W-1000km'
+# analysis_type = '70W-48h'
+analysis_type = '70W-1000km'
 
 # Set up direcotries
 periods_directory = f'../periods-energetics/{analysis_type}/'
