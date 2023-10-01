@@ -1,12 +1,12 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    barpot.py                                          :+:      :+:    :+:    #
+#    barplot.py                                         :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:44:54 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/30 09:53:48 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/30 23:45:37 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -132,7 +132,9 @@ def plot_barplot(df, title, fname):
 
 # analysis_type = 'BY_RG-all'
 # analysis_type = 'all'
-analysis_type = '70W'
+# analysis_type = '70W'
+analysis_type = '48h'
+# analysis_type = '70W-48h'
 
 # Set output directories
 fig_output_directory = f'../figures/periods_statistics/{analysis_type}/barplots/'
