@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/01 00:07:49 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/01 11:50:47 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -25,6 +25,17 @@ from scipy.ndimage.filters import gaussian_filter
 from glob import glob
 import xarray as xr
 from export_periods import filter_tracks
+
+earth_radius_km = 6371.0
+
+def haversine(lon1, lat1, lon2, lat2):
+    lon1, lat1, lon2, lat2 = np.radians([lon1, lat1, lon2, lat2])
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
+    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+    distance = earth_radius_km * c
+    return distance
 
 def get_tracks(RG, season=False):
 
@@ -167,6 +178,7 @@ def compute_density(tracks_with_periods, num_time):
 # analysis_type = '70W'
 # analysis_type = '48h'
 analysis_type = '70W-48h'
+# analysis_type = '70W-1000km'
 
 # Set up direcotries
 periods_directory = f'../periods-energetics/{analysis_type}/'
