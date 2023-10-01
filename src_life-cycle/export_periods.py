@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/01 19:45:21 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/01 20:19:51 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -103,6 +103,7 @@ def filter_tracks(tracks, analysis_type):
         tracks = tracks[tracks['track_id'].isin(valid_track_ids)]
 
     if 'km' in analysis_type:
+        minimum_allowed_distance = float(analysis_type.split('-')[-1].split('km')[0])
         # Calculating distance that cyclone traveled
         tracks['distance'] = np.nan
 
@@ -111,6 +112,15 @@ def filter_tracks(tracks, analysis_type):
             track['date'] = pd.to_datetime(track['date'])
             track['distance'] = haversine(track['lon vor'].shift(), track['lat vor'].shift(), track['lon vor'], track['lat vor'])
             tracks['distance'].loc[tracks['track_id'] == cyclone_id] = track['distance']
+        
+        # Calculate total distance for each system
+        total_distance = tracks.groupby('track_id')['distance'].sum()
+
+        # Filter out systems with total distance greater than 1000 km
+        filtered_track_ids = total_distance[total_distance >= minimum_allowed_distance].index
+
+        # Apply the filter to the original DataFrame
+        tracks = tracks[tracks['track_id'].isin(filtered_track_ids)]
     
     return tracks, RG
 
@@ -118,8 +128,9 @@ testing = False
 # analysis_type = 'BY_RG-all'
 # analysis_type = 'all'
 # analysis_type = '70W' 
-#analysis_type = '48h'
-analysis_type = '70W-48h'
+# analysis_type = '48h'
+# analysis_type = '70W-48h'
+analysis_type = '70W-1000km'
 
 print("Initializing periods analysis for: ", analysis_type) if not testing else print("Testing")
 
