@@ -96,6 +96,18 @@ def get_tracks(RG, season=False):
     cyclone_ids = tracks['track_id'].unique()
     print(f"Number of cyclones for {str_RG}: {len(cyclone_ids)}")
 
+    # Calculating distance that cyclone traveled 
+    tracks['distance'] = np.nan
+
+    #for cyclone_id in cyclone_ids[0:1]:
+    for cyclone_id in cyclone_ids:
+        track = tracks[tracks['track_id'] == cyclone_id].copy()
+        track['date'] = pd.to_datetime(track['date'])
+        track['distance'] = haversine(track['lon vor'].shift(), track['lat vor'].shift(), track['lon vor'], track['lat vor'])
+        tracks['distance'].loc[tracks['track_id'] == cyclone_id] = track['distance']
+
+
+
     return tracks, cyclone_ids
 
 def process_track(cyclone_id, tracks, periods_directory, filter_residual=False):
