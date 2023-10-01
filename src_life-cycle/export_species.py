@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 14:07:51 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/30 23:41:17 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/30 23:45:06 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,7 +19,7 @@ This script reads the tracks processed by export_periods.py and counts the numbe
 that fits in one of each category of the life cycle.
 """
 
-#analysis_type = 'BY_RG-all'
+# analysis_type = 'BY_RG-all'
 # analysis_type = 'all'
 # analysis_type = '70W'
 # analysis_type = '48h'
