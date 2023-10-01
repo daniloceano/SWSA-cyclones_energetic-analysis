@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/08 20:33:08 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/30 09:57:37 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/01 10:49:54 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -59,7 +59,8 @@ def plot_density(ax, density, phase):
 
 # analysis_type = 'BY_RG-all'
 # analysis_type = 'all'
-analysis_type = '70W'
+# analysis_type = '70W'
+analysis_type = '48h'
 
 output_directory = f'../figures/periods_statistics/{analysis_type}/density_maps/'
 infile_directory = f'../periods_species_statistics/{analysis_type}/track_density/'
