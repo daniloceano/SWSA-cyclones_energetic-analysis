@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/30 10:11:13 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/01 00:07:49 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -79,6 +79,8 @@ def get_tracks(RG, season=False):
                     
     x = tracks['lon vor'].values 
     tracks['lon vor'] = np.where(x > 180, x - 360, x)
+
+    tracks, _ = filter_tracks(tracks, analysis_type)
 
     cyclone_ids = tracks['track_id'].unique()
     print(f"Number of cyclones for {str_RG}: {len(cyclone_ids)}")
