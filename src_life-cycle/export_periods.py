@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/29 23:34:12 by Danilo           ###   ########.fr        #
+#    Updated: 2023/09/30 23:58:10 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -126,49 +126,51 @@ os.makedirs(periods_outfile_path, exist_ok=True)
 os.makedirs(periods_didatic_outfile_path, exist_ok=True)
 os.makedirs(periods_csv_outfile_path, exist_ok=True)
 
-for results_dir in results_directories:
-    for track_file in sorted(glob.glob(f'{results_dir}/*')):
+if __name__ == '__main__':
 
-        if testing:
-            if '1980' not in track_file:
+    for results_dir in results_directories:
+        for track_file in sorted(glob.glob(f'{results_dir}/*')):
+
+            if testing:
+                if '1980' not in track_file:
+                    continue
+
+            # Check if the track_file is empty
+            try:
+                tracks = pd.read_csv(track_file)
+            except pd.errors.EmptyDataError:
+                with open("error_log.txt", "a") as file:
+                    file.write(f"Empty track file: {track_file} - Skipping processing.\n")
                 continue
 
-        # Check if the track_file is empty
-        try:
-            tracks = pd.read_csv(track_file)
-        except pd.errors.EmptyDataError:
-            with open("error_log.txt", "a") as file:
-                file.write(f"Empty track file: {track_file} - Skipping processing.\n")
-            continue
+            # Check if track_file contains "40W" and skip processing if it does
+            if "40W" in track_file:
+                with open("error_log.txt", "a") as file:
+                    file.write(f"Skipping track file: {track_file} - Contains '40W'.\n")
+                continue
+            
+            tracks.columns = track_columns
 
-        # Check if track_file contains "40W" and skip processing if it does
-        if "40W" in track_file:
-            with open("error_log.txt", "a") as file:
-                file.write(f"Skipping track file: {track_file} - Contains '40W'.\n")
-            continue
-        
-        tracks.columns = track_columns
+            # Parameters for each type of analysis
+            if analysis_type == 'BY_RG-all':
+                if 'RG1' in track_file:
+                    RG = 'RG1'
+                elif 'RG2' in track_file:
+                    RG = 'RG2'
+                elif 'RG3' in track_file:
+                    RG = 'RG3'
 
-        # Parameters for each type of analysis
-        if analysis_type == 'BY_RG-all':
-            if 'RG1' in track_file:
-                RG = 'RG1'
-            elif 'RG2' in track_file:
-                RG = 'RG2'
-            elif 'RG3' in track_file:
-                RG = 'RG3'
+            elif analysis_type == 'all':
+                RG = 'SAt'
 
-        elif analysis_type == 'all':
-            RG = 'SAt'
+            else:
+                tracks, RG = filter_tracks(tracks, analysis_type)
 
-        else:
-            tracks, RG = filter_tracks(tracks, analysis_type)
+            id_cyclones = tracks['track_id'].unique()
 
-        id_cyclones = tracks['track_id'].unique()
+            # Create a list of arguments for the process_cyclone function
+            arguments_list = [(id_cyclone, track_file, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG) for id_cyclone in id_cyclones]
 
-        # Create a list of arguments for the process_cyclone function
-        arguments_list = [(id_cyclone, track_file, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG) for id_cyclone in id_cyclones]
-
-        # Use multiprocessing Pool to execute the function in parallel
-        with multiprocessing.Pool() as pool:
-            pool.map(process_cyclone, arguments_list)
+            # Use multiprocessing Pool to execute the function in parallel
+            with multiprocessing.Pool() as pool:
+                pool.map(process_cyclone, arguments_list)
