@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/01 11:50:47 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/01 19:28:44 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -25,17 +25,6 @@ from scipy.ndimage.filters import gaussian_filter
 from glob import glob
 import xarray as xr
 from export_periods import filter_tracks
-
-earth_radius_km = 6371.0
-
-def haversine(lon1, lat1, lon2, lat2):
-    lon1, lat1, lon2, lat2 = np.radians([lon1, lat1, lon2, lat2])
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
-    a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
-    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
-    distance = earth_radius_km * c
-    return distance
 
 def get_tracks(RG, season=False):
 
@@ -95,19 +84,7 @@ def get_tracks(RG, season=False):
 
     cyclone_ids = tracks['track_id'].unique()
     print(f"Number of cyclones for {str_RG}: {len(cyclone_ids)}")
-
-    # Calculating distance that cyclone traveled 
-    tracks['distance'] = np.nan
-
-    #for cyclone_id in cyclone_ids[0:1]:
-    for cyclone_id in cyclone_ids:
-        track = tracks[tracks['track_id'] == cyclone_id].copy()
-        track['date'] = pd.to_datetime(track['date'])
-        track['distance'] = haversine(track['lon vor'].shift(), track['lat vor'].shift(), track['lon vor'], track['lat vor'])
-        tracks['distance'].loc[tracks['track_id'] == cyclone_id] = track['distance']
-
-
-
+    
     return tracks, cyclone_ids
 
 def process_track(cyclone_id, tracks, periods_directory, filter_residual=False):

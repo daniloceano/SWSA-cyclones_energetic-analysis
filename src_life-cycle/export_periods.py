@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/01 00:07:25 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/01 19:45:21 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,11 +17,26 @@ for each cyclone
 """
 
 import glob
-import pandas as pd
-from cyclophaser import determine_periods
-import matplotlib.pyplot as plt
 import multiprocessing
 import os
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+from cyclophaser import determine_periods
+
+
+def haversine(lon1, lat1, lon2, lat2):
+    earth_radius_km = 6371.0
+
+    lon1, lat1, lon2, lat2 = np.radians([lon1, lat1, lon2, lat2])
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
+    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+    distance = earth_radius_km * c
+    return distance
 
 def process_cyclone(args):
     id_cyclone, track_file, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG = args
@@ -86,6 +101,16 @@ def filter_tracks(tracks, analysis_type):
 
         # Filter the 'tracks' DataFrame to keep only the systems that meet the duration criteria
         tracks = tracks[tracks['track_id'].isin(valid_track_ids)]
+
+    if 'km' in analysis_type:
+        # Calculating distance that cyclone traveled
+        tracks['distance'] = np.nan
+
+        for cyclone_id in tracks['track_id'].unique():
+            track = tracks[tracks['track_id'] == cyclone_id].copy()
+            track['date'] = pd.to_datetime(track['date'])
+            track['distance'] = haversine(track['lon vor'].shift(), track['lat vor'].shift(), track['lon vor'], track['lat vor'])
+            tracks['distance'].loc[tracks['track_id'] == cyclone_id] = track['distance']
     
     return tracks, RG
 
