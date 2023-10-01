@@ -164,7 +164,9 @@ def compute_density(tracks_with_periods, num_time):
 
 # analysis_type = 'BY_RG-all'
 # analysis_type = 'all'
-analysis_type = '70W'
+# analysis_type = '70W'
+# analysis_type = '48h'
+analysis_type = '70W-48h'
 
 # Set up direcotries
 periods_directory = f'../periods-energetics/{analysis_type}/'
