@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/02 10:39:06 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/02 10:49:05 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -37,6 +37,12 @@ def haversine(lon1, lat1, lon2, lat2):
     c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
     distance = earth_radius_km * c
     return distance
+
+def calculate_distance(cyclone_id, track_data):
+    track = track_data[track_data['track_id'] == cyclone_id].copy()
+    track['date'] = pd.to_datetime(track['date'])
+    track['distance'] = haversine(track['lon vor'].shift(), track['lat vor'].shift(), track['lon vor'], track['lat vor'])
+    return track
 
 def process_cyclone(args):
     id_cyclone, track_file, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG = args
@@ -107,11 +113,23 @@ def filter_tracks(tracks, analysis_type):
         # Calculating distance that cyclone traveled
         tracks['distance'] = np.nan
 
-        for cyclone_id in tracks['track_id'].unique():
-            track = tracks[tracks['track_id'] == cyclone_id].copy()
-            track['date'] = pd.to_datetime(track['date'])
-            track['distance'] = haversine(track['lon vor'].shift(), track['lat vor'].shift(), track['lon vor'], track['lat vor'])
-            tracks.loc[tracks['track_id'] == cyclone_id, 'distance'] = track['distance']
+        # for cyclone_id in tracks['track_id'].unique():
+        #     track = tracks[tracks['track_id'] == cyclone_id].copy()
+        #     track['date'] = pd.to_datetime(track['date'])
+        #     track['distance'] = haversine(track['lon vor'].shift(), track['lat vor'].shift(), track['lon vor'], track['lat vor'])
+        #     tracks.loc[tracks['track_id'] == cyclone_id, 'distance'] = track['distance']
+
+        id_cyclones = tracks['track_id'].unique()
+
+        # Create a list of arguments for the calculate_distance function
+        arguments_list = [(id_cyclone, tracks) for id_cyclone in id_cyclones]
+
+        # Use multiprocessing Pool to execute the function in parallel
+        with multiprocessing.Pool() as pool:
+            result_tracks = pool.starmap(calculate_distance, arguments_list)
+
+        # Combine the results into a single DataFrame
+        tracks = pd.concat(result_tracks, ignore_index=True)
         
         # Calculate total distance for each system
         total_distance = tracks.groupby('track_id')['distance'].sum()
