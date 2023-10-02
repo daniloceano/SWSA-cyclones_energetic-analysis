@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/02 10:55:18 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/02 10:56:48 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -111,7 +111,7 @@ def filter_tracks(tracks, analysis_type):
     if 'km' in analysis_type:
         minimum_allowed_distance = float(analysis_type.split('-')[-1].split('km')[0])
         # Calculating distance that cyclone traveled
-        tracks.loc[:, 'distance'] = np.nan
+        tracks = tracks.assign(distance=np.nan)
 
         id_cyclones = tracks['track_id'].unique()
 
