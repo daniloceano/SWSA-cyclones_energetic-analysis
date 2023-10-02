@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_periods.py                                  :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
+#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/02 10:56:48 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/02 14:41:27 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -65,8 +65,8 @@ def process_cyclone(args):
     # if not periods_outfile_exists:
     options = {
         "vorticity_column": 'vor42',
-        "plot": periods_outfile,
-        "plot_steps": periods_didatic_outfile,
+        "plot": False,
+        "plot_steps": False,
         "export_dict": periods_csv_outfile,
         "process_vorticity_args": {
             "use_filter": False,
@@ -142,8 +142,8 @@ testing = False
 # analysis_type = '70W' 
 # analysis_type = '48h'
 # analysis_type = '70W-48h'
-# analysis_type = '70W-1000km'
-analysis_type = '70W-1500km'
+analysis_type = '70W-1000km'
+# analysis_type = '70W-1500km'
 
 print("Initializing periods analysis for: ", analysis_type) if not testing else print("Testing")
 
