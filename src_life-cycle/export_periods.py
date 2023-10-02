@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/01 20:19:51 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/02 10:39:06 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -111,7 +111,7 @@ def filter_tracks(tracks, analysis_type):
             track = tracks[tracks['track_id'] == cyclone_id].copy()
             track['date'] = pd.to_datetime(track['date'])
             track['distance'] = haversine(track['lon vor'].shift(), track['lat vor'].shift(), track['lon vor'], track['lat vor'])
-            tracks['distance'].loc[tracks['track_id'] == cyclone_id] = track['distance']
+            tracks.loc[tracks['track_id'] == cyclone_id, 'distance'] = track['distance']
         
         # Calculate total distance for each system
         total_distance = tracks.groupby('track_id')['distance'].sum()
