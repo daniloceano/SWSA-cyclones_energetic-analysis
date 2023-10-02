@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/02 10:15:02 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/02 10:34:53 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,9 +24,10 @@ from sklearn.neighbors import KernelDensity
 from scipy.ndimage.filters import gaussian_filter
 from glob import glob
 import xarray as xr
-from export_periods import filter_tracks
-import multiprocessing
+import concurrent.futures  # Added for multiprocessing
+import sys  # Added for progress reporting
 
+from export_periods import filter_tracks
 
 def get_tracks(RG, season=False):
 
@@ -90,8 +91,7 @@ def get_tracks(RG, season=False):
     return tracks, cyclone_ids
 
 def process_track(cyclone_id, tracks, periods_directory, filter_residual=False):
-
-    track = tracks[tracks['track_id'] == cyclone_id].copy()
+    track = tracks[tracks['track_id'] == cyclone_id].copy() 
     track['date'] = pd.to_datetime(track['date'])
     track['lon vor'] = (track['lon vor'] + 180) % 360 - 180
 
@@ -164,57 +164,6 @@ def compute_density(tracks_with_periods, num_time):
 
     return density, longrd, latgrd
 
-# Define a function to compute density for a specific phase
-def compute_density_for_phase(phase, tracks_with_periods, num_time):
-    # Existing code to compute density for the specified phase
-    density, lon, lat = compute_density(tracks_with_periods[tracks_with_periods['period'] == phase], num_time)
-    return phase, density, lon, lat
-
-# Main function for processing cyclone tracks and computing density
-def process_and_compute_density(cyclone_id, tracks, periods_directory, num_time):
-    # Process the cyclone track
-    track = process_track(cyclone_id, tracks, periods_directory, filter_residual=False)
-
-    # Compute density for this cyclone track
-    density, lon, lat = compute_density(track, num_time)
-
-    return track, density, lon, lat
-
-# Main function for processing cyclone tracks and computing density
-def main(RG, season):
-    # Existing code for getting tracks, processing, and saving the dataset
-    tracks, cyclone_ids = get_tracks(RG, season)
-    tracks, _ = filter_tracks(tracks, analysis_type)
-
-    # Initialize an empty dictionary to hold the DataArrays
-    data_dict = {}
-
-    # List of phases to compute density for
-    phases_to_compute = [phase for phase in tracks['period'].unique() if str(phase) != 'nan']
-
-    # Use multiprocessing to process and compute density in parallel
-    with multiprocessing.Pool() as pool:
-        results = pool.map(
-            lambda cyclone_id: process_and_compute_density(cyclone_id, tracks, periods_directory, num_time),
-            cyclone_ids
-        )
-
-    # Extract results from the pool
-    for track, density, lon, lat in results:
-        data = xr.DataArray(density, coords={'lon': lon, 'lat': lat}, dims=['lat', 'lon'])
-        data_dict[track['period'].values[0]] = data
-
-    # Continue with saving the dataset to a NetCDF file as in the original script
-    if analysis_type == 'BY_RG-all':
-        fname = f'{output_directory}/track_density_RG{RG}' if RG != 'all' else f'{output_directory}/track_density_all-RG'
-    else:
-        fname = f'{output_directory}/track_density'
-    fname += f'_{season}.nc' if season else '.nc'
-    dataset = xr.Dataset(data_dict)
-    dataset.to_netcdf(fname)
-    print(f'Wrote {fname}')
-
-# Define the analysis type
 # analysis_type = 'BY_RG-all'
 # analysis_type = 'all'
 # analysis_type = '70W'
@@ -222,12 +171,11 @@ def main(RG, season):
 # analysis_type = '70W-48h'
 analysis_type = '70W-1000km'
 
-# Set up directories and create output directory
+# Set up direcotries
 periods_directory = f'../periods-energetics/{analysis_type}/'
 output_directory = f'../periods_species_statistics/{analysis_type}/track_density'
 os.makedirs(output_directory, exist_ok=True)
 
-# Define the range of years
 initial_year, final_year = 1979, 2020
 num_years = final_year - initial_year
 
@@ -235,10 +183,58 @@ num_years = final_year - initial_year
 seasons = ['JJA', 'MAM', 'SON', 'DJF', False]
 
 # List of RGs
-RGs = ['1', '2', '3', 'all'] if analysis_type == 'BY_RG-all' else [analysis_type]
+RGs = ['1', '2', '3', 'all'] if analysis_type == 'BY_RG-all' else ['all']
 
-# Iterate through RGs and seasons and compute density
 for RG in RGs:
+
     for season in seasons:
+
         num_time = 3 * num_years if season else 12
-        main(RG, season)
+
+        tracks, cyclone_ids = get_tracks(RG, season)
+
+        tracks, _ = filter_tracks(tracks, analysis_type)
+
+        tracks_with_periods = pd.DataFrame(columns = tracks.columns)
+
+        processed_cyclones = 0
+        for cyclone_id in cyclone_ids:
+            tmp = process_track(cyclone_id, tracks, periods_directory, filter_residual=False)
+            tracks_with_periods = pd.concat([tracks_with_periods, tmp])
+    
+            # Increment the processed_cyclones count
+            processed_cyclones += 1
+            
+            # Print the progress on the same line with a carriage return
+            sys.stdout.write(f'\rProcessed: {processed_cyclones}/{len(cyclone_ids)}')
+            sys.stdout.flush()
+        
+        # Reset the index and inplace
+        tracks_with_periods.reset_index(drop=True, inplace=True)
+
+        # Initialize an empty dictionary to hold the DataArrays
+        data_dict = {}
+
+        for phase in tracks_with_periods['period'].unique():
+            if str(phase) == 'nan':
+                continue
+            print(f'Computing density for {phase}...')
+            density, lon, lat = compute_density(tracks_with_periods[tracks_with_periods['period'] == phase], num_time)
+            
+            # Create DataArray
+            data = xr.DataArray(density, coords={'lon': lon, 'lat': lat}, dims=['lat', 'lon'])
+            
+            # Add the DataArray to the dictionary with the phase as the key
+            data_dict[phase] = data
+
+        dataset = xr.Dataset(data_dict)
+
+        if analysis_type == 'BY_RG-all':
+            fname = f'{output_directory}/track_density_RG{RG}' if RG != 'all' else f'{output_directory}/track_density_all-RG'
+        else:
+            fname = f'{output_directory}/track_density'
+        fname += f'_{season}.nc' if season else '.nc'
+        
+        dataset.to_netcdf(fname)
+        print(f'Wrote {fname}')
+
