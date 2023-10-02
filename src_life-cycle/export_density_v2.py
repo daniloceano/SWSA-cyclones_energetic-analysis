@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/02 10:06:10 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/02 10:15:02 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -171,29 +171,38 @@ def compute_density_for_phase(phase, tracks_with_periods, num_time):
     return phase, density, lon, lat
 
 # Main function for processing cyclone tracks and computing density
+def process_and_compute_density(cyclone_id, tracks, periods_directory, num_time):
+    # Process the cyclone track
+    track = process_track(cyclone_id, tracks, periods_directory, filter_residual=False)
+
+    # Compute density for this cyclone track
+    density, lon, lat = compute_density(track, num_time)
+
+    return track, density, lon, lat
+
+# Main function for processing cyclone tracks and computing density
 def main(RG, season):
+    # Existing code for getting tracks, processing, and saving the dataset
     tracks, cyclone_ids = get_tracks(RG, season)
     tracks, _ = filter_tracks(tracks, analysis_type)
-    tracks_with_periods = pd.DataFrame(columns=tracks.columns)
-    for cyclone_id in cyclone_ids:
-        tmp = process_track(cyclone_id, tracks, periods_directory, filter_residual=False)
-        tracks_with_periods = pd.concat([tracks_with_periods, tmp])
-    tracks_with_periods.reset_index(drop=True, inplace=True)
 
     # Initialize an empty dictionary to hold the DataArrays
     data_dict = {}
 
     # List of phases to compute density for
-    phases_to_compute = [phase for phase in tracks_with_periods['period'].unique() if str(phase) != 'nan']
+    phases_to_compute = [phase for phase in tracks['period'].unique() if str(phase) != 'nan']
 
-    # Use multiprocessing to compute density in parallel
+    # Use multiprocessing to process and compute density in parallel
     with multiprocessing.Pool() as pool:
-        results = pool.map(compute_density_for_phase, phases_to_compute)
+        results = pool.map(
+            lambda cyclone_id: process_and_compute_density(cyclone_id, tracks, periods_directory, num_time),
+            cyclone_ids
+        )
 
-    # Add the computed DataArrays to the dictionary
-    for phase, density, lon, lat in results:
+    # Extract results from the pool
+    for track, density, lon, lat in results:
         data = xr.DataArray(density, coords={'lon': lon, 'lat': lat}, dims=['lat', 'lon'])
-        data_dict[phase] = data
+        data_dict[track['period'].values[0]] = data
 
     # Continue with saving the dataset to a NetCDF file as in the original script
     if analysis_type == 'BY_RG-all':
