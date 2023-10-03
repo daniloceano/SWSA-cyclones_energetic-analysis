@@ -205,7 +205,8 @@ def main():
     # analysis_type = '48h'
     # analysis_type = '70W-48h'
     # analysis_type = '70W-1000km'
-    analysis_type = '70W-1500km'
+    # analysis_type = '70W-1500km'
+    analysis_type = '70W-decayC'
 
     # Set up direcotries
     periods_directory = f'../periods-energetics/{analysis_type}/'
