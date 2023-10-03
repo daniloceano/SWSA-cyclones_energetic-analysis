@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_periods.py                                  :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/02 17:52:09 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/03 10:37:11 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,6 +23,7 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import geopandas as gpd 
 
 from cyclophaser import determine_periods
 
@@ -142,6 +143,36 @@ def filter_tracks(tracks, analysis_type):
         tracks = tracks[tracks['track_id'].isin(filtered_track_ids)]
         filter_message += f" Removed systems with less than {minimum_allowed_distance} km total distance."
 
+    if 'decayC' in analysis_type:
+        # Load a shapefile or GeoDataFrame representing the continent boundaries
+        continent_shapefile = "ne_50m_land/ne_50m_land.shp"
+        continent_gdf = gpd.read_file(continent_shapefile)
+
+        # Iterate through unique cyclone track IDs
+        valid_track_ids = []
+        for cyclone_id in tracks['track_id'].unique():
+            # Extract the cyclone's track data
+            cyclone_track = tracks[tracks['track_id'] == cyclone_id]
+            
+            # Check if the last position of the cyclone is on the continent
+            last_position = cyclone_track.tail(1)  # Get the last row
+            last_position_on_continent = gpd.points_from_xy(last_position['lon vor'], last_position['lat vor'])
+            last_position_on_continent = gpd.GeoSeries(last_position_on_continent, crs=continent_gdf.crs)
+            last_position_on_continent = last_position_on_continent.within(continent_gdf.unary_union)
+            
+            if not last_position_on_continent.all():
+                valid_track_ids.append(cyclone_id)
+
+        # Filter the 'tracks' DataFrame to keep only cyclones not ending on the continent
+        tracks = tracks[tracks['track_id'].isin(valid_track_ids)]
+        filter_message += "Removed cyclones with their last positions on the continent."
+
+
+        # Filter the 'tracks' DataFrame to keep only cyclones not on the continent
+        tracks = tracks[tracks['track_id'].isin(valid_track_ids)]
+        filter_message += "Removed cyclones with positions on the continent."
+
+
     # Print the final filter message
     print(filter_message)
     
@@ -154,7 +185,8 @@ testing = False
 # analysis_type = '48h'
 # analysis_type = '70W-48h'
 # analysis_type = '70W-1000km'
-analysis_type = '70W-1500km'
+# analysis_type = '70W-1500km'
+analysis_type = '70-decayC'
 
 print("Initializing periods analysis for: ", analysis_type) if not testing else print("Testing")
 
