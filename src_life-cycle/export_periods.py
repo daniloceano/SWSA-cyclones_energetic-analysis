@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/03 10:37:11 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/03 11:11:28 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -100,7 +100,7 @@ def filter_tracks(tracks, analysis_type):
 
     # Filter the 'tracks' DataFrame to keep only the systems that have a duration of at least 48 hours
     if '48h' in analysis_type:
-        RG = 'SAt-70W'
+        RG += '-48h' if RG else '48h'
         tracks['date'] = pd.to_datetime(tracks['date'])
         grouped = tracks.groupby('track_id')
 
@@ -118,6 +118,7 @@ def filter_tracks(tracks, analysis_type):
 
     if 'km' in analysis_type:
         minimum_allowed_distance = float(analysis_type.split('-')[-1].split('km')[0])
+        RG += f'-{minimum_allowed_distance}' if RG else str(minimum_allowed_distance)
         # Calculating distance that cyclone traveled
         tracks = tracks.assign(distance=np.nan)
 
@@ -144,6 +145,7 @@ def filter_tracks(tracks, analysis_type):
         filter_message += f" Removed systems with less than {minimum_allowed_distance} km total distance."
 
     if 'decayC' in analysis_type:
+        RG += '-decayC' if RG else 'decayC'
         # Load a shapefile or GeoDataFrame representing the continent boundaries
         continent_shapefile = "ne_50m_land/ne_50m_land.shp"
         continent_gdf = gpd.read_file(continent_shapefile)
