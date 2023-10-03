@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/03 14:54:59 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/03 14:58:31 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -223,7 +223,7 @@ testing = False
 # analysis_type = '70W-1000km'
 # analysis_type = '70W-1500km'
 # analysis_type = '70W-decayC'
-analysis_type = '70W-no-continent'
+analysis_type = '70W-no-continental'
 
 print("Initializing periods analysis for: ", analysis_type) if not testing else print("Testing")
 
