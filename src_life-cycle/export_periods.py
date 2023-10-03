@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/03 11:31:07 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/03 14:54:59 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -52,6 +52,23 @@ def check_last_position_on_continent(cyclone_id, tracks, continent_gdf):
     last_position_on_continent = gpd.GeoSeries(last_position_on_continent, crs=continent_gdf.crs)
     last_position_on_continent = last_position_on_continent.within(continent_gdf.unary_union)
     return cyclone_id, not last_position_on_continent.all()
+
+def check_on_continent_percentage(cyclone_id, tracks, continent_gdf, threshold_percentage):
+    cyclone_track = tracks[tracks['track_id'] == cyclone_id]
+    
+    # Calculate the number of time steps where the cyclone is on the continent
+    positions_on_continent = gpd.points_from_xy(cyclone_track['lon vor'], cyclone_track['lat vor'])
+    positions_on_continent = gpd.GeoSeries(positions_on_continent, crs=continent_gdf.crs)
+    positions_on_continent = positions_on_continent.within(continent_gdf.unary_union)
+    on_continent_count = positions_on_continent.sum()
+    
+    # Calculate the total number of time steps in the cyclone's lifetime
+    total_time_steps = len(cyclone_track)
+    
+    # Calculate the percentage of time on the continent
+    percentage_on_continent = (on_continent_count / total_time_steps) * 100
+    
+    return cyclone_id, percentage_on_continent < threshold_percentage
 
 def process_cyclone(args):
     id_cyclone, track_file, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG = args
@@ -170,6 +187,28 @@ def filter_tracks(tracks, analysis_type):
         tracks = tracks[tracks['track_id'].isin(valid_track_ids)]
         filter_message += "Removed cyclones with their last positions on the continent."
 
+    if  'no-continental' in analysis_type:
+        # Load a shapefile or GeoDataFrame representing the continent boundaries
+        continent_shapefile = "path_to_continent_shapefile.shp"
+        continent_gdf = gpd.read_file(continent_shapefile)
+
+        # Calculate the threshold percentage (80%)
+        threshold_percentage = 80
+
+        # Create a list of unique cyclone IDs
+        unique_cyclone_ids = tracks['track_id'].unique()
+
+        # Create a pool for multiprocessing
+        with multiprocessing.Pool() as pool:
+            results = pool.starmap(check_on_continent_percentage, [(cyclone_id, tracks, continent_gdf, threshold_percentage) for cyclone_id in unique_cyclone_ids])
+
+        # Extract valid cyclone IDs from the results
+        valid_track_ids = [cyclone_id for cyclone_id, is_valid in results if is_valid]
+
+        # Filter the 'tracks' DataFrame to keep only cyclones not exceeding the threshold percentage on the continent
+        tracks = tracks[tracks['track_id'].isin(valid_track_ids)]
+        filter_message += f"Removed cyclones on the continent for {threshold_percentage}% or more of their lifetime."
+
     # Print the final filter message
     print(filter_message)
     
@@ -183,7 +222,8 @@ testing = False
 # analysis_type = '70W-48h'
 # analysis_type = '70W-1000km'
 # analysis_type = '70W-1500km'
-analysis_type = '70W-decayC'
+# analysis_type = '70W-decayC'
+analysis_type = '70W-no-continent'
 
 print("Initializing periods analysis for: ", analysis_type) if not testing else print("Testing")
 
