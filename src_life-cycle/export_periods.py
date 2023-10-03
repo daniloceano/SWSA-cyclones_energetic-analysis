@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/02 14:41:27 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/02 17:52:09 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -85,11 +85,17 @@ def process_cyclone(args):
     os.remove(tmp_file)
 
 def filter_tracks(tracks, analysis_type):
+    print("Filtering tracks...")
+
+    # Initialize a message to keep track of filtering actions
+    filter_message = ""
+
     # Filter the 'tracks' DataFrame to keep only the systems that are west of 70W
     if '70W' in analysis_type:
         RG = 'SAt-70W'
         ids_west_70 = tracks[tracks['lon vor'] < -70]['track_id'].unique()
         tracks = tracks[~tracks['track_id'].isin(ids_west_70)]
+        filter_message += "Removed systems west of 70W."
 
     # Filter the 'tracks' DataFrame to keep only the systems that have a duration of at least 48 hours
     if '48h' in analysis_type:
@@ -107,6 +113,7 @@ def filter_tracks(tracks, analysis_type):
 
         # Filter the 'tracks' DataFrame to keep only the systems that meet the duration criteria
         tracks = tracks[tracks['track_id'].isin(valid_track_ids)]
+        filter_message += " Removed systems with less than 48 hours duration."
 
     if 'km' in analysis_type:
         minimum_allowed_distance = float(analysis_type.split('-')[-1].split('km')[0])
@@ -133,6 +140,10 @@ def filter_tracks(tracks, analysis_type):
 
         # Apply the filter to the original DataFrame
         tracks = tracks[tracks['track_id'].isin(filtered_track_ids)]
+        filter_message += f" Removed systems with less than {minimum_allowed_distance} km total distance."
+
+    # Print the final filter message
+    print(filter_message)
     
     return tracks, RG
 
@@ -142,8 +153,8 @@ testing = False
 # analysis_type = '70W' 
 # analysis_type = '48h'
 # analysis_type = '70W-48h'
-analysis_type = '70W-1000km'
-# analysis_type = '70W-1500km'
+# analysis_type = '70W-1000km'
+analysis_type = '70W-1500km'
 
 print("Initializing periods analysis for: ", analysis_type) if not testing else print("Testing")
 

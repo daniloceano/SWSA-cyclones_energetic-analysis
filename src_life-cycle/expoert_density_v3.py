@@ -1,12 +1,12 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    export_density_v2.py                               :+:      :+:    :+:    #
+#    expoert_density_v3.py                              :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/02 16:19:41 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/02 18:03:12 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,6 +21,7 @@ import os
 import sys 
 import cProfile
 import concurrent.futures
+import multiprocessing
 
 import numpy as np
 import pandas as pd
@@ -33,17 +34,17 @@ from glob import glob
 from export_periods import filter_tracks
 
 
-
 def get_tracks(RG, analysis_type, season=False):
     season_message = f" and season: {season}" if season else ''
     print(f"Merging tracks for RG: {RG}{season_message}")
 
     month_season_map = {
-    12: 'DJF', 1: 'DJF', 2: 'DJF',
-    3: 'MAM', 4: 'MAM', 5: 'MAM',
-    6: 'JJA', 7: 'JJA', 8: 'JJA',
-    9: 'SON', 10: 'SON', 11: 'SON'
-}
+        12: 'DJF', 1: 'DJF', 2: 'DJF',
+        3: 'MAM', 4: 'MAM', 5: 'MAM',
+        6: 'JJA', 7: 'JJA', 8: 'JJA',
+        9: 'SON', 10: 'SON', 11: 'SON'
+    }
+    
     if analysis_type == 'BY_RG-all':
         track_columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42', 'lon mslp', 'lat mslp', 'mslp', 'lon 10spd', 'lat 10spd', '10spd']
         if RG != 'all':
@@ -51,46 +52,70 @@ def get_tracks(RG, analysis_type, season=False):
             results_directories = [f'../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG{RG}_csv/']
         else:
             str_RG = 'all RGs'
-            results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/',
-                                '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG2_csv/',
-                                '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/']
+            results_directories = [
+                '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/',
+                '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG2_csv/',
+                '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/'
+            ]
     else:
         track_columns = ['track_id', 'date', 'lon vor', 'lat vor', 'vor42']
         str_RG = f'{analysis_type} systems'
         results_directories = ['../raw_data/SAt/']
 
-    tracks = pd.DataFrame(columns = track_columns)
+    tracks = pd.DataFrame(columns=track_columns)
 
-    for results_directory in results_directories:  
-                files = glob(f'{results_directory}*')
+    def process_file(file, processed_files):
+        try:
+            tmp = pd.read_csv(file)
+            tmp.columns = track_columns
+            processed_files[0] += 1
+            sys.stdout.write(f'\rProcessed: {processed_files[0]} out of {processed_files[1]} files')
+            sys.stdout.flush()
+            return tmp
+        except Exception as e:
+            print(f"Error processing file {file}: {e}")
+            return None
 
-                for file in files:  
-                    try:
-                        tmp = pd.read_csv(file)
-                    except:
-                        continue
+    def process_directory(results_directory):
+        directory_tracks = pd.DataFrame(columns=track_columns)
+        files = glob(f'{results_directory}*')
+        processed_files = [0, len(files)]  # Keep track of processed files
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = {executor.submit(process_file, file, processed_files): file for file in files}
+            for future in concurrent.futures.as_completed(futures):
+                file = futures[future]
+                try:
+                    tmp = future.result()
+                    if tmp is not None:
+                        if season:
+                            system_end = pd.to_datetime(tmp['date'].iloc[-1])
+                            system_month = system_end.month
+                            corresponding_season = month_season_map[system_month]
+                            if corresponding_season == season:
+                                directory_tracks = pd.concat([directory_tracks, tmp])
+                        else:
+                            directory_tracks = pd.concat([directory_tracks, tmp])
+                except Exception as e:
+                    print(f"Error processing file {file}: {e}")
+        print('')
+        return directory_tracks
 
-                    tmp.columns = track_columns
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        all_directory_tracks = list(executor.map(process_directory, results_directories))
 
-                    # Check season, if season is given
-                    if season:
-                        system_end = pd.to_datetime(tmp['date'].iloc[-1])
-                        system_month = system_end.month
-                        corresponding_season = month_season_map[system_month]
-                        if corresponding_season == season:
-                            tracks = pd.concat([tracks,tmp])
-                    else:
-                        tracks = pd.concat([tracks,tmp])
-                    
-    x = tracks['lon vor'].values 
+    for directory_tracks in all_directory_tracks:
+        tracks = pd.concat([tracks, directory_tracks])
+
+    x = tracks['lon vor'].values
     tracks['lon vor'] = np.where(x > 180, x - 360, x)
 
     tracks, _ = filter_tracks(tracks, analysis_type)
 
     cyclone_ids = tracks['track_id'].unique()
     print(f"Number of cyclones for {str_RG}: {len(cyclone_ids)}")
-    
+
     return tracks, cyclone_ids
+
 
 def process_track(cyclone_id, tracks, periods_directory, filter_residual=False):
     track = tracks[tracks['track_id'] == cyclone_id].copy() 
@@ -169,6 +194,9 @@ def compute_density(tracks_with_periods, num_time):
 
     return density, longrd, latgrd
 
+def process_track_parallel(args):
+    cyclone_id, tracks, periods_directory, filter_residual = args
+    return process_track(cyclone_id, tracks, periods_directory, filter_residual)
 
 def main():
     # analysis_type = 'BY_RG-all'
@@ -200,27 +228,27 @@ def main():
 
             tracks, cyclone_ids = get_tracks(RG, analysis_type, season)
 
-            print('Filtering tracks...')
-            tracks, _ = filter_tracks(tracks, analysis_type)
+            # print('Filtering tracks...')
+            # tracks, _ = filter_tracks(tracks, analysis_type)
+
+            print('Starting to process individual tracks...')
 
             tracks_with_periods = pd.DataFrame(columns = tracks.columns)
 
             processed_cyclones = 0
             tracks_with_periods = pd.DataFrame(columns=tracks.columns)
+            arguments_list = [(cyclone_id, tracks, periods_directory, False) for cyclone_id in cyclone_ids]
 
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                futures = {executor.submit(process_track_parallel, cyclone_id, tracks, periods_directory, False): cyclone_id for cyclone_id in cyclone_ids}
-                for future in concurrent.futures.as_completed(futures):
-                    cyclone_id = futures[future]
-                    try:
-                        tmp = future.result()
-                        tracks_with_periods = pd.concat([tracks_with_periods, tmp])
-                        processed_cyclones += 1
-                    except Exception as e:
-                        print(f"Error processing cyclone {cyclone_id}: {e}")
+            with multiprocessing.Pool() as pool:
+                results = pool.map(process_track_parallel, arguments_list)
 
+            for result in results:
+                if result is not None:
+                    tracks_with_periods = pd.concat([tracks_with_periods, result])
+                    processed_cyclones += 1
                     sys.stdout.write(f'\rProcessed: {processed_cyclones}/{len(cyclone_ids)}')
-                    sys.stdout.flush()
+                    sys.stdout.flush()        
+            print('')  # Print a newline to separate the progress indicator
             
             # Reset the index and inplace
             tracks_with_periods.reset_index(drop=True, inplace=True)
