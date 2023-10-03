@@ -63,7 +63,8 @@ def plot_density(ax, density, phase):
 # analysis_type = '48h'
 # analysis_type = '70W-48h'
 # analysis_type = "70W-1000km"
-analysis_type = "70W-1500km"
+# analysis_type = "70W-1500km"
+analysis_type = "70W-decayC"
 
 output_directory = f'../figures/periods_statistics/{analysis_type}/density_maps/'
 infile_directory = f'../periods_species_statistics/{analysis_type}/track_density/'
