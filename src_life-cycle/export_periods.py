@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/03 14:58:31 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/03 14:59:18 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -189,7 +189,7 @@ def filter_tracks(tracks, analysis_type):
 
     if  'no-continental' in analysis_type:
         # Load a shapefile or GeoDataFrame representing the continent boundaries
-        continent_shapefile = "path_to_continent_shapefile.shp"
+        continent_shapefile = "ne_50m_land/ne_50m_land.shp"
         continent_gdf = gpd.read_file(continent_shapefile)
 
         # Calculate the threshold percentage (80%)
