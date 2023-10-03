@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/03 11:19:26 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/03 11:29:11 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -151,7 +151,7 @@ def filter_tracks(tracks, analysis_type):
         tracks = tracks[tracks['track_id'].isin(filtered_track_ids)]
         filter_message += f" Removed systems with less than {minimum_allowed_distance} km total distance."
 
-    if analysis_type == 'decayC':
+    if 'decayC' in analysis_type:
         # Load a shapefile or GeoDataFrame representing the continent boundaries
         continent_shapefile = "path_to_continent_shapefile.shp"
         continent_gdf = gpd.read_file(continent_shapefile)
