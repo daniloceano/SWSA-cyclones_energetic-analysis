@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/03 11:15:59 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/03 11:19:26 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -44,6 +44,14 @@ def calculate_distance(cyclone_id, track_data):
     track['date'] = pd.to_datetime(track['date'])
     track['distance'] = haversine(track['lon vor'].shift(), track['lat vor'].shift(), track['lon vor'], track['lat vor'])
     return track
+
+def check_last_position_on_continent(cyclone_id, tracks, continent_gdf):
+    cyclone_track = tracks[tracks['track_id'] == cyclone_id]
+    last_position = cyclone_track.tail(1)  # Get the last row
+    last_position_on_continent = gpd.points_from_xy(last_position['lon vor'], last_position['lat vor'])
+    last_position_on_continent = gpd.GeoSeries(last_position_on_continent, crs=continent_gdf.crs)
+    last_position_on_continent = last_position_on_continent.within(continent_gdf.unary_union)
+    return cyclone_id, not last_position_on_continent.all()
 
 def process_cyclone(args):
     id_cyclone, track_file, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG = args
@@ -143,35 +151,24 @@ def filter_tracks(tracks, analysis_type):
         tracks = tracks[tracks['track_id'].isin(filtered_track_ids)]
         filter_message += f" Removed systems with less than {minimum_allowed_distance} km total distance."
 
-    if 'decayC' in analysis_type:
+    if analysis_type == 'decayC':
         # Load a shapefile or GeoDataFrame representing the continent boundaries
-        continent_shapefile = "ne_50m_land/ne_50m_land.shp"
+        continent_shapefile = "path_to_continent_shapefile.shp"
         continent_gdf = gpd.read_file(continent_shapefile)
 
-        # Iterate through unique cyclone track IDs
-        valid_track_ids = []
-        for cyclone_id in tracks['track_id'].unique():
-            # Extract the cyclone's track data
-            cyclone_track = tracks[tracks['track_id'] == cyclone_id]
-            
-            # Check if the last position of the cyclone is on the continent
-            last_position = cyclone_track.tail(1)  # Get the last row
-            last_position_on_continent = gpd.points_from_xy(last_position['lon vor'], last_position['lat vor'])
-            last_position_on_continent = gpd.GeoSeries(last_position_on_continent, crs=continent_gdf.crs)
-            last_position_on_continent = last_position_on_continent.within(continent_gdf.unary_union)
-            
-            if not last_position_on_continent.all():
-                valid_track_ids.append(cyclone_id)
+        # Create a list of unique cyclone IDs
+        unique_cyclone_ids = tracks['track_id'].unique()
+
+        # Create a pool for multiprocessing
+        with multiprocessing.Pool() as pool:
+            results = pool.starmap(check_last_position_on_continent, [(cyclone_id, tracks, continent_gdf) for cyclone_id in unique_cyclone_ids])
+
+        # Extract valid cyclone IDs from the results
+        valid_track_ids = [cyclone_id for cyclone_id, is_valid in results if is_valid]
 
         # Filter the 'tracks' DataFrame to keep only cyclones not ending on the continent
         tracks = tracks[tracks['track_id'].isin(valid_track_ids)]
         filter_message += "Removed cyclones with their last positions on the continent."
-
-
-        # Filter the 'tracks' DataFrame to keep only cyclones not on the continent
-        tracks = tracks[tracks['track_id'].isin(valid_track_ids)]
-        filter_message += "Removed cyclones with positions on the continent."
-
 
     # Print the final filter message
     print(filter_message)
