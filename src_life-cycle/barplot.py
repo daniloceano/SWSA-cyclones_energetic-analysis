@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:44:54 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/30 23:47:02 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/04 17:04:12 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -134,7 +134,9 @@ def plot_barplot(df, title, fname):
 # analysis_type = 'all'
 # analysis_type = '70W'
 # analysis_type = '48h'
-analysis_type = '70W-48h'
+# analysis_type = '70W-48h'
+analysis_type = '70W-no-continental'
+
 
 # Set output directories
 fig_output_directory = f'../figures/periods_statistics/{analysis_type}/barplots/'

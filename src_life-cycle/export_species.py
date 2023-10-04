@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 14:07:51 by Danilo            #+#    #+#              #
-#    Updated: 2023/09/30 23:45:06 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/04 15:20:44 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,7 +23,8 @@ that fits in one of each category of the life cycle.
 # analysis_type = 'all'
 # analysis_type = '70W'
 # analysis_type = '48h'
-analysis_type = '70W-48h'
+# analysis_type = '70W-48h'
+analysis_type = '70W-no-continental'
 
 
 csv_directory = f'../periods-energetics/{analysis_type}/'
