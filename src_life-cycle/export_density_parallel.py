@@ -1,12 +1,12 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    expoert_density_v3.py                              :+:      :+:    :+:    #
+#    export_density_parallel.py                         :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/02 18:03:12 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/06 11:47:44 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -118,6 +118,18 @@ def get_tracks(RG, analysis_type, season=False):
 
 
 def process_track(cyclone_id, tracks, periods_directory, filter_residual=False):
+    """
+    Attribute periods to the track of a given cyclone
+
+    Parameters:
+    - cyclone_id (int): The ID of the cyclone track to process.
+    - tracks (pandas.DataFrame): DataFrame containing cyclone tracks.
+    - periods_directory (str): Directory path containing period files.
+    - filter_residual (bool, optional): Whether to filter out residual periods. Defaults to False.
+
+    Returns:
+    - pandas.DataFrame: Processed track for the cyclone.
+    """
     track = tracks[tracks['track_id'] == cyclone_id].copy() 
     track['date'] = pd.to_datetime(track['date'])
     track['lon vor'] = (track['lon vor'] + 180) % 360 - 180
@@ -144,9 +156,6 @@ def process_track(cyclone_id, tracks, periods_directory, filter_residual=False):
             track = track[track['period'] != 'residual']
 
     return track
-
-def process_track_parallel(cyclone_id, tracks, periods_directory, filter_residual=False):
-    return process_track(cyclone_id, tracks, periods_directory, filter_residual)
 
 def compute_density(tracks_with_periods, num_time):
     """
