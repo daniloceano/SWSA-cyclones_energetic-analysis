@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    map_density.py                                     :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
+#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/08 20:33:08 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/01 10:53:49 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/06 19:55:19 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -76,8 +76,6 @@ phases = ['incipient', 'intensification', 'mature', 'decay', 'residual',
 # List of season names
 seasons = ['JJA', 'MAM', 'SON', 'DJF', False]
 
-# List of RGs
-RGs = ['1', '2', '3', 'all'] if analysis_type == 'BY_RG-all' else ['all']
 
 # Colormap for plotting
 colors = ['white', '#F1F5F9', '#AFC4DA', '#4471B2', '#B1DFA3', '#EFF9A6', 
@@ -86,34 +84,24 @@ cmap = mcolors.LinearSegmentedColormap.from_list("", colors)
 
 os.makedirs(output_directory, exist_ok=True)
 
-for RG in RGs:
-    if analysis_type == 'BY_RG-all':
-        RG_str = f'_RG{RG}' if RG != 'all' else '_all-RG'
-    else:
-        RG_str = ''
-    print(f'RG: {RG}...')
+for season in seasons:
+    season_str = f'_{season}' if season else ''
+    print(f'season: {season}') if season else print('all seasons') 
 
-    for season in seasons:
-        season_str = f'_{season}' if season else ''
-        print(f'season: {season}') if season else print('all seasons') 
+    infile = f'{infile_directory}/track_density{season_str}.nc'
+    ds = xr.open_dataset(infile)
 
-        infile = f'{infile_directory}/track_density{RG_str}{season_str}.nc'
-        ds = xr.open_dataset(infile)
+    fname = os.path.join(output_directory, f"density_{analysis_type}{season_str}")
 
-        if analysis_type == 'BY_RG-all':
-            fname = os.path.join(output_directory, RG_str+season_str)
-        else:
-            fname = os.path.join(output_directory, 'all'+season_str)
+    fig = plt.figure(figsize=(15, 10))
+    datacrs = ccrs.PlateCarree()
+    plt.subplots_adjust(wspace=0.35)
 
-        fig = plt.figure(figsize=(15, 10))
-        datacrs = ccrs.PlateCarree()
-        plt.subplots_adjust(wspace=0.35)
+    for i, phase in enumerate(phases):
+        ax = fig.add_subplot(4, 2, i+1, projection=datacrs, )
 
-        for i, phase in enumerate(phases):
-            ax = fig.add_subplot(4, 2, i+1, projection=datacrs, )
+        density = ds[phase]
+        plot_density(ax, density, phase)
 
-            density = ds[phase]
-            plot_density(ax, density, phase)
-
-        plt.savefig(fname, bbox_inches='tight')
-        print(f'Density map saved in {fname}')
+    plt.savefig(fname, bbox_inches='tight')
+    print(f'Density map saved in {fname}')
