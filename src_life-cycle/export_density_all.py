@@ -1,12 +1,12 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    export_density_parallel_v2.py                      :+:      :+:    :+:    #
+#    export_density_all.py                              :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/06 20:18:55 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/06 21:17:36 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,7 +23,6 @@ import xarray as xr
 import numpy as np
 
 import concurrent.futures
-from concurrent.futures import ProcessPoolExecutor 
 
 from datetime import timedelta
 from tqdm import tqdm
@@ -137,29 +136,20 @@ def export_density(season_tracks, num_time):
     data_dict = {}
 
     for phase in season_tracks['period'].unique():
-        if str(phase) == 'nan':
-            continue
-        print(f'Computing density for {phase}...')
-        density, lon, lat = compute_density(season_tracks[season_tracks['period'] == phase], num_time)
-        
-        # Create DataArray
-        data = xr.DataArray(density, coords={'lon': lon, 'lat': lat}, dims=['lat', 'lon'])
-        
-        # Add the DataArray to the dictionary with the phase as the key
-        data_dict[phase] = data
+        if pd.notna(phase):
+            print(f'Computing density for {phase}...')
+            density, lon, lat = compute_density(season_tracks[season_tracks['period'] == phase], num_time)
+
+            # Handle the 'nan' case by using 'no_data' as the name
+            name = str(phase) if pd.notna(phase) else 'no_data'
+            
+            # Create DataArray with the appropriate name
+            data = xr.DataArray(density, coords={'lon': lon, 'lat': lat}, dims=['lat', 'lon'], name=name)
+            
+            # Add the DataArray to the dictionary with the name as the key
+            data_dict[name] = data
+
     return data_dict
-
-def compute_density_for_phase(phase, season_tracks, num_time):
-    if str(phase) == 'nan':
-        return None, None, None  # Skip NaN phases
-    print(f'Computing density for {phase}...')
-
-    # Filter tracks for the current phase
-    phase_tracks = season_tracks[season_tracks['period'] == phase]
-
-    density, lon, lat = compute_density(phase_tracks, num_time)
-
-    return phase, density, lon, lat
 
 def main():
     # analysis_type = 'all'
@@ -191,45 +181,34 @@ def main():
 
     seasons = ['JJA', 'MAM', 'SON', 'DJF', False]
 
-    with ProcessPoolExecutor() as executor:
-        futures = []
-        for season in seasons:
-            if season:
-                if season == 'JJA':
-                    season_months = [6, 7, 8]  # June, July, August
-                elif season == 'MAM':
-                    season_months = [3, 4, 5]  # March, April, May
-                elif season == 'SON':
-                    season_months = [9, 10, 11]  # September, October, November
-                elif season == 'DJF':
-                    season_months = [12, 1, 2]  # December, January, February
-                # Filter tracks for the specific months of the season
-                season_tracks = filtered_tracks[filtered_tracks['date'].dt.month.isin(season_months)]
-            else:
-                season_tracks = filtered_tracks
+    for season in seasons:
+        # num_time = 3 * num_years if season else 12
+        if season:
+            if season == 'JJA':
+                season_months = [6, 7, 8]  # June, July, August
+            elif season == 'MAM':
+                season_months = [3, 4, 5]  # March, April, May
+            elif season == 'SON':
+                season_months = [9, 10, 11]  # September, October, November
+            elif season == 'DJF':
+                season_months = [12, 1, 2]  # December, January, February
+            # Filter tracks for the specific months of the season
+            season_tracks = filtered_tracks[filtered_tracks['date'].dt.month.isin(season_months)]
+        else:
+            season_tracks = filtered_tracks
 
-            unique_years_months = season_tracks['date'].dt.to_period('M').unique()
-            num_time = len(unique_years_months)
-            print(f"Total number of time months: {num_time}")
-
-            # Use the executor to parallelize the KDE computation
-            futures.append(executor.submit(compute_density_for_phase, season, season_tracks, num_time))
-
-        data_dict = {}
-        for future in futures:
-            phase, density, lon, lat = future.result()
-            if phase is not None:
-                data = xr.DataArray(density, coords={'lon': lon, 'lat': lat}, dims=['lat', 'lon'])
-                data_dict[phase] = data
+        unique_years_months = season_tracks['date'].dt.to_period('M').unique()
+        num_time = len(unique_years_months)
+        print(f"Total number of time months: {num_time}")
+        
+        data_dict = export_density(season_tracks, num_time)
 
         dataset = xr.Dataset(data_dict)
 
-        # Save the results to NetCDF files
-        for season in seasons:
-            fname = f'{output_directory}/track_density'
-            fname += f'_{season}.nc' if season else '.nc'
-            dataset.to_netcdf(fname)
-            print(f'Wrote {fname}')
+        fname = f'{output_directory}/track_density'
+        fname += f'_{season}.nc' if season else '.nc'
+        dataset.to_netcdf(fname)
+        print(f'Wrote {fname}')
 
 if __name__ == '__main__':
     main()
