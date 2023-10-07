@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/06 21:17:36 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/06 22:15:06 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -151,15 +151,8 @@ def export_density(season_tracks, num_time):
 
     return data_dict
 
-def main():
-    # analysis_type = 'all'
-    # analysis_type = '70W'
-    # analysis_type = '48h'
-    # analysis_type = '70W-48h'
-    # analysis_type = '70W-1000km'
-    # analysis_type = '70W-1500km'
-    # analysis_type = '70W-decayC'
-    analysis_type = '70W-no-continental'
+def main(analysis_type):
+
     periods_directory = f'../periods-energetics/{analysis_type}/'
     output_directory = f'../periods_species_statistics/{analysis_type}/track_density'
     os.makedirs(output_directory, exist_ok=True)
@@ -211,4 +204,19 @@ def main():
         print(f'Wrote {fname}')
 
 if __name__ == '__main__':
-    main()
+    analysis_types = [
+    'all',
+    '70W',
+    '48h',
+    '70W-48h',
+    '70W-1000km',
+    '70W-1500km',
+    '70W-decayC',
+    '70W-no-continental'
+]
+
+    for analysis_type in analysis_types:
+        print('-------------------------------------------')
+        print(f"Analysis type: {analysis_type}")
+        main(analysis_type)
+        print()
