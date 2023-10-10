@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/08 20:33:08 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/10 00:43:22 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/10 08:37:56 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -34,7 +34,7 @@ def gridlines(ax):
 
 def plot_density(ax, density, phase, i):
 
-    ax.set_extent([-90, 180, 0, -90], crs=datacrs)
+    ax.set_extent([-90, 180, -15, -90], crs=datacrs)
 
     lon, lat = density.lon, density.lat
 
@@ -56,7 +56,7 @@ def plot_density(ax, density, phase, i):
         colorbar.ax.tick_params(labelsize=12)
 
     props = dict(boxstyle='round', facecolor='white')
-    ax.text(160, -18, phase, ha='right', va='bottom', fontsize=14, fontweight='bold', bbox=props)
+    ax.text(160, -40, phase, ha='right', va='bottom', fontsize=14, fontweight='bold', bbox=props)
 
     ax.coastlines(zorder=1)
     gridlines(ax)
@@ -106,7 +106,7 @@ for season in seasons:
 
     fname = os.path.join(output_directory, f"density_{analysis_type}{season_str}")
 
-    fig = plt.figure(figsize=(12, 10))
+    fig = plt.figure(figsize=(14.5, 10))
     datacrs = ccrs.PlateCarree()
 
     for i, phase in enumerate(phases):
