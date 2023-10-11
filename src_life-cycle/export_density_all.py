@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/11 09:21:05 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/11 09:29:23 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -212,7 +212,7 @@ def export_density(season_tracks, num_time):
 
     return data_dict
 
-def main(analysis_type):
+def main():
 
     print(f"Analysis type: {analysis_type}")
     analysis_type = '70W-no-continental'
