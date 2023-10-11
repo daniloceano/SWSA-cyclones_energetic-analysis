@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_density_all.py                              :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/06 22:15:06 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/11 09:21:05 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,6 +23,7 @@ import xarray as xr
 import numpy as np
 
 import concurrent.futures
+import multiprocessing
 
 from datetime import timedelta
 from tqdm import tqdm
@@ -46,6 +47,66 @@ def get_tracks():
     tracks.columns = track_columns
     tracks['lon vor'] = np.where(tracks['lon vor'] > 180, tracks['lon vor'] - 360, tracks['lon vor'])
     return tracks
+
+def check_first_position_inside_area(cyclone_id, tracks, area_bounds):
+    cyclone_track = tracks[tracks['track_id'] == cyclone_id]
+    first_position = cyclone_track.head(1)  # Get the first row
+    first_lat = first_position['lat vor'].values[0]
+    first_lon = first_position['lon vor'].values[0]
+
+    min_lon, min_lat, max_lon, max_lat = area_bounds
+
+    # Check if the first position is inside the specified area
+    is_inside_area = (min_lat <= first_lat <= max_lat) and (min_lon <= first_lon <= max_lon)
+
+    return cyclone_id, is_inside_area
+
+def filter_tracks_area(tracks, region):
+    print(f"Filtering tracks for region: {region}...")
+
+    regions = {
+        "SE-BR": [(-37, -23, -52, -38)],
+        "LA-PLATA": [(-52, -23, -69, -38)],
+        "ARG": [(-50, -39, -70, -55)],
+        "SE-SAO": [(30, -37, -15, -55)],
+        "SA-NAM": [(20, -21, 8, -33)],
+        "AT-PEN": [(-44, -58, -65, -69)],
+        "WEDDELL": [(-10, -72, -65, -85)]
+    }
+
+    if region not in regions:
+        raise ValueError(f"Invalid region '{region}'. Region must be one of: {', '.join(regions.keys())}")
+
+    region_bounds = regions[region]
+
+    # Extract the correct region bounds
+    area_bounds = region_bounds[0]  # Assuming there's only one set of bounds for the selected region
+
+    # Count the number of systems before filtering
+    num_systems_before = len(tracks['track_id'].unique())
+
+    # Create a list of unique cyclone IDs
+    unique_cyclone_ids = tracks['track_id'].unique()
+
+    # Create a pool for multiprocessing
+    with multiprocessing.Pool() as pool:
+        results = pool.starmap(check_first_position_inside_area, [(cyclone_id, tracks, area_bounds) for cyclone_id in unique_cyclone_ids])
+
+    # Extract valid cyclone IDs from the results
+    valid_track_ids = [cyclone_id for cyclone_id, is_valid in results if is_valid]
+
+    # Filter the 'tracks' DataFrame to keep only cyclones with the first position inside the defined area
+    filtered_tracks = tracks[tracks['track_id'].isin(valid_track_ids)]
+
+    # Count the number of systems after filtering
+    num_systems_after = len(filtered_tracks['track_id'].unique())
+
+    # Print the final filter message and the number of systems before and after filtering
+    print(f"Removed cyclones with the first position inside the defined area.")
+    print(f"Number of systems before filtering: {num_systems_before}")
+    print(f"Number of systems after filtering: {num_systems_after}")
+
+    return filtered_tracks
 
 def process_period_file(args):
     period_file, periods_directory, tracks = args
@@ -153,11 +214,15 @@ def export_density(season_tracks, num_time):
 
 def main(analysis_type):
 
+    print(f"Analysis type: {analysis_type}")
+    analysis_type = '70W-no-continental'
+
     periods_directory = f'../periods-energetics/{analysis_type}/'
     output_directory = f'../periods_species_statistics/{analysis_type}/track_density'
     os.makedirs(output_directory, exist_ok=True)
 
     tracks = get_tracks()
+    tracks = filter_tracks_area(tracks, "SE-BR")
     periods = get_periods(analysis_type, periods_directory, tracks)
     print(f"Periods and tracks have been obtained.")
 
@@ -204,19 +269,15 @@ def main(analysis_type):
         print(f'Wrote {fname}')
 
 if __name__ == '__main__':
-    analysis_types = [
-    'all',
-    '70W',
-    '48h',
-    '70W-48h',
-    '70W-1000km',
-    '70W-1500km',
-    '70W-decayC',
-    '70W-no-continental'
-]
+#     analysis_types = [
+#     'all',
+#     '70W',
+#     '48h',
+#     '70W-48h',
+#     '70W-1000km',
+#     '70W-1500km',
+#     '70W-decayC',
+#     '70W-no-continental'
+# ]
 
-    for analysis_type in analysis_types:
-        print('-------------------------------------------')
-        print(f"Analysis type: {analysis_type}")
-        main(analysis_type)
-        print()
+    main()

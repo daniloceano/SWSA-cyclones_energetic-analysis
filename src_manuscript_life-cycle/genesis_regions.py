@@ -12,7 +12,7 @@ def plot_region_box(ax, coords, edgecolor, label=None):
         ax.add_geometries([box], ccrs.PlateCarree(), edgecolor=edgecolor, facecolor='none', alpha=0.8)
         if label:
             # Adjust the text coordinates
-            text_lat = coord[1]  # Subtract 2 degrees
+            text_lat = coord[4]  # Subtract 2 degrees
             text_lon = coord[0]  # Add 1 degree
             ax.text(text_lon, text_lat, label, transform=ccrs.PlateCarree(), 
                     fontsize=14, color=edgecolor, fontweight='bold', ha='left', va='bottom')
@@ -53,13 +53,13 @@ ax.contour(lon, lat, density, colors='#383838', linewidths=0.35,  levels=levels,
 
 # Region coordinates and labels
 regions = {
-    "SE-BR": [(-52, -23, -37, -38)],
-    "LA-PLATA": [(-69, -23, -52, -38)],
-    "ARG": [(-70, -39, -50, -55)],
-    "SE-SAO": [(-15, -37, 30, -55)],
-    "SA-NAM": [(8, -21, 20, -33)],
-    "AT-PEN": [(-65, -58, -44, -69)],
-    "WEDDELL": [(-65, -72, -10, -85)]
+    "SE-BR": [(-52, -38, -37, -23)],
+    "LA-PLATA": [(-69, -38, -52, -23)],
+    "ARG": [(-70, -55, -50, -39)],
+    "SE-SAO": [(-15, -55, 30, -37)],
+    "SA-NAM": [(8, -33, 20, -21)],
+    "AT-PEN": [(-65, -69, -44, -58)],
+    "WEDDELL": [(-65, -85, -10, -72)]
 }
 
 # Add boxes for regions
