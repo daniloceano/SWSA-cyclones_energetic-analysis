@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/08 20:33:08 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/10 08:37:56 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/11 13:04:56 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -32,14 +32,15 @@ def gridlines(ax):
     gl.top_labels = None
     gl.right_labels = None
 
-def plot_density(ax, density, phase, i):
+def plot_density(ax, density, phase, i, region=False):
 
     ax.set_extent([-90, 180, -15, -90], crs=datacrs)
 
     lon, lat = density.lon, density.lat
 
-    # levels = np.linspace(0, round(float(density.max()),2), 21)
     levels = [0, 0.1, 1, 2, 5, 8, 10, 15, 20, 30, 40, 50, 70, 100, 130]
+    if region == 'SE-BR':
+        levels = [0, 0.1, 1, 2, 5, 8, 10, 13, 15, 18, 20, 25, 30, 35, 40, 45, 50]
 
     norm = mpl.colors.BoundaryNorm(levels, cmap.N)
 
@@ -65,6 +66,7 @@ def plot_density(ax, density, phase, i):
 
 #####################################    
 
+# Choose an analysis type
 # analysis_type = 'BY_RG-all'
 # analysis_type = 'all'
 # analysis_type = '70W'
@@ -74,6 +76,10 @@ def plot_density(ax, density, phase, i):
 # analysis_type = "70W-1500km"
 # analysis_type = "70W-decayC"
 analysis_type = "70W-no-continental"
+
+# Choose a region
+region = "SE-BR"
+## region = False
 
 output_directory = f'../figures/periods_statistics/{analysis_type}/density_maps/'
 infile_directory = f'../periods_species_statistics/{analysis_type}/track_density/'
@@ -85,26 +91,26 @@ phases = ['incipient', 'intensification', 'mature', 'decay', 'residual',
 seasons = ['JJA', 'MAM', 'SON', 'DJF', False]
 
 # Colormap for plotting
-colors_linear = ['white', '#F1F5F9', '#AFC4DA', '#4471B2', '#B1DFA3', '#EFF9A6', 
-            '#FEEC9F', '#FDB567', '#F06744',  '#C1274A']
 colors_linear = ['white', '#AFC4DA', '#4471B2', '#B1DFA3', '#EFF9A6', 
             '#FEEC9F', '#FDB567', '#F06744',  '#C1274A']
 cmap = mcolors.LinearSegmentedColormap.from_list("", colors_linear)
 
-# colors_listed = ['white', '#4471b2', '#008bc1', '#00a3c2', '#1fb8ba', '#66cbae', '#80cc99',
-#           '#9ecc85', '#bdc975', '#cab658', '#d99f43', '#e6853c', '#ef6d42', '#E1471F']
-# cmap = mcolors.ListedColormap(colors_listed)
 
 os.makedirs(output_directory, exist_ok=True)
 
 for season in seasons:
-    season_str = f'_{season}' if season else ''
-    print(f'season: {season}') if season else print('all seasons') 
+    print(f'Season: {season}') if season else print('Season: all') 
+    print(f'Region: {region}') if region else print('Region: SAt') 
 
-    infile = f'{infile_directory}/track_density{season_str}.nc'
+    region_str = f"{region}_" if region else "SAt_"
+    season_str = f"_{season}" if season else ""
+    
+    if region:
+        infile = f'{infile_directory}/{region_str}track_density{season_str}.nc'
+    else:
+        infile = f'{infile_directory}/track_density{season_str}.nc'
+        
     ds = xr.open_dataset(infile)
-
-    fname = os.path.join(output_directory, f"density_{analysis_type}{season_str}")
 
     fig = plt.figure(figsize=(14.5, 10))
     datacrs = ccrs.PlateCarree()
@@ -113,7 +119,8 @@ for season in seasons:
         ax = fig.add_subplot(4, 2, i+1, projection=datacrs, )
 
         density = ds[phase]
-        plot_density(ax, density, phase, i)
+        plot_density(ax, density, phase, i, region)
 
+    fname = os.path.join(output_directory, f"{region_str}density_{analysis_type}{season_str}.png")
     plt.savefig(fname, bbox_inches='tight')
     print(f'Density map saved in {fname}')
