@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_density_all.py                              :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
+#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/11 13:13:05 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/11 16:18:58 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -224,68 +224,67 @@ def main():
     analysis_type = '70W-no-continental'
     print(f"Analysis type: {analysis_type}")
 
-    regions = ["SE-BR", "LA-PLATA","ARG", "SE-SAO",
-               "SA-NAM", "AT-PEN", "WEDDELL", False]
+    region = False
 
-    for region in regions:
-        print(f"Region: {region}")
+    # for region in regions:
+    print(f"Region: {region}")
 
-        periods_directory = f'../periods-energetics/{analysis_type}/'
-        output_directory = f'../periods_species_statistics/{analysis_type}/track_density'
-        os.makedirs(output_directory, exist_ok=True)
+    periods_directory = f'../periods-energetics/{analysis_type}/'
+    output_directory = f'../periods_species_statistics/{analysis_type}/track_density'
+    os.makedirs(output_directory, exist_ok=True)
 
-        # Get all tracks for SAt
-        tracks = get_tracks()
+    # Get all tracks for SAt
+    tracks = get_tracks()
 
-        # Filter tracks for specific region
-        tracks = filter_tracks_area(tracks,region) if region else tracks
+    # Filter tracks for specific region
+    tracks = filter_tracks_area(tracks,region) if region else tracks
 
-        # Get periods csv files
-        periods = get_periods(analysis_type, periods_directory, tracks)
-        print(f"Periods and tracks have been obtained.")
+    # Get periods csv files
+    periods = get_periods(analysis_type, periods_directory, tracks)
+    print(f"Periods and tracks have been obtained.")
 
-        # Filter tracks for the track_ids in periods and reset the index
-        filtered_tracks = tracks[tracks['track_id'].isin(periods['track_id'])].reset_index(drop=True)
+    # Filter tracks for the track_ids in periods and reset the index
+    filtered_tracks = tracks[tracks['track_id'].isin(periods['track_id'])].reset_index(drop=True)
 
-        # Create a dictionary mapping 'track_id' and 'date' to 'period'
-        period_mapping = periods.set_index(['track_id', 'date'])['period'].to_dict()
+    # Create a dictionary mapping 'track_id' and 'date' to 'period'
+    period_mapping = periods.set_index(['track_id', 'date'])['period'].to_dict()
 
-        # Add the 'period' column to filtered_tracks based on 'track_id' and 'date' mapping
-        filtered_tracks['period'] = filtered_tracks.set_index(['track_id', 'date']).index.map(period_mapping)
+    # Add the 'period' column to filtered_tracks based on 'track_id' and 'date' mapping
+    filtered_tracks['period'] = filtered_tracks.set_index(['track_id', 'date']).index.map(period_mapping)
 
-        filtered_tracks['date'] = pd.to_datetime(filtered_tracks['date'])
+    filtered_tracks['date'] = pd.to_datetime(filtered_tracks['date'])
 
-        seasons = ['JJA', 'MAM', 'SON', 'DJF', False]
+    seasons = ['JJA', 'MAM', 'SON', 'DJF', False]
 
-        for season in seasons:
-            # num_time = 3 * num_years if season else 12
-            if season:
-                if season == 'JJA':
-                    season_months = [6, 7, 8]  # June, July, August
-                elif season == 'MAM':
-                    season_months = [3, 4, 5]  # March, April, May
-                elif season == 'SON':
-                    season_months = [9, 10, 11]  # September, October, November
-                elif season == 'DJF':
-                    season_months = [12, 1, 2]  # December, January, February
-                # Filter tracks for the specific months of the season
-                season_tracks = filtered_tracks[filtered_tracks['date'].dt.month.isin(season_months)]
-            else:
-                season_tracks = filtered_tracks
+    for season in seasons:
+        # num_time = 3 * num_years if season else 12
+        if season:
+            if season == 'JJA':
+                season_months = [6, 7, 8]  # June, July, August
+            elif season == 'MAM':
+                season_months = [3, 4, 5]  # March, April, May
+            elif season == 'SON':
+                season_months = [9, 10, 11]  # September, October, November
+            elif season == 'DJF':
+                season_months = [12, 1, 2]  # December, January, February
+            # Filter tracks for the specific months of the season
+            season_tracks = filtered_tracks[filtered_tracks['date'].dt.month.isin(season_months)]
+        else:
+            season_tracks = filtered_tracks
 
-            unique_years_months = season_tracks['date'].dt.to_period('M').unique()
-            num_time = len(unique_years_months)
-            print(f"Total number of time months: {num_time}")
-            
-            data_dict = export_density(season_tracks, num_time)
+        unique_years_months = season_tracks['date'].dt.to_period('M').unique()
+        num_time = len(unique_years_months)
+        print(f"Total number of time months: {num_time}")
+        
+        data_dict = export_density(season_tracks, num_time)
 
-            dataset = xr.Dataset(data_dict)
+        dataset = xr.Dataset(data_dict)
 
-            region_str = f"{region}_" if region else "SAt_"
-            season_str = f"_{season}" if season else ""
-            fname = f'{output_directory}/{region_str}track_density{season_str}.nc'
-            dataset.to_netcdf(fname)
-            print(f'Wrote {fname}')
+        region_str = f"{region}_" if region else "SAt_"
+        season_str = f"_{season}" if season else ""
+        fname = f'{output_directory}/{region_str}track_density{season_str}.nc'
+        dataset.to_netcdf(fname)
+        print(f'Wrote {fname}')
 
 if __name__ == '__main__':
     main()
