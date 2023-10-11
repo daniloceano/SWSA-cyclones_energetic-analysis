@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/11 09:31:17 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/11 09:42:51 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -213,15 +213,34 @@ def export_density(season_tracks, num_time):
     return data_dict
 
 def main():
+    """
+    analysis_types = [
+        'all',
+        '70W',
+        '48h',
+        '70W-48h',
+        '70W-1000km',
+        '70W-1500km',
+        '70W-decayC',
+        '70W-no-continental'
+    ]
+    """
+
     analysis_type = '70W-no-continental'
+    region = "SE-BR"
     print(f"Analysis type: {analysis_type}")
 
     periods_directory = f'../periods-energetics/{analysis_type}/'
     output_directory = f'../periods_species_statistics/{analysis_type}/track_density'
     os.makedirs(output_directory, exist_ok=True)
 
+    # Get all tracks for SAt
     tracks = get_tracks()
-    tracks = filter_tracks_area(tracks, "SE-BR")
+
+    # Filter tracks for specific region
+    tracks = filter_tracks_area(tracks,region) if region else tracks
+
+    # Get periods csv files
     periods = get_periods(analysis_type, periods_directory, tracks)
     print(f"Periods and tracks have been obtained.")
 
@@ -262,21 +281,11 @@ def main():
 
         dataset = xr.Dataset(data_dict)
 
-        fname = f'{output_directory}/track_density'
-        fname += f'_{season}.nc' if season else '.nc'
+        region_str = f"{region}_" if region else ""
+        season_str = f"_{season}" if season else ""
+        fname = f'{output_directory}/{region_str}track_density{season_str}.nc'
         dataset.to_netcdf(fname)
         print(f'Wrote {fname}')
 
 if __name__ == '__main__':
-#     analysis_types = [
-#     'all',
-#     '70W',
-#     '48h',
-#     '70W-48h',
-#     '70W-1000km',
-#     '70W-1500km',
-#     '70W-decayC',
-#     '70W-no-continental'
-# ]
-
     main()
