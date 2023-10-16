@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/16 18:51:39 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/16 18:52:24 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -119,7 +119,7 @@ def process_cyclone(args):
     except Exception as e:
         error_msg = str(e)
         with open("error_log.txt", "a") as file:
-            file.write(f"Error processing cyclone: {id_cyclone} - RG: {RG} in track_file: {track_file}\n")
+            file.write(f"Error processing cyclone: {id_cyclone} - RG: {RG}")
             file.write(f"Error message: {error_msg}\n\n")
 
     os.remove(tmp_file)
