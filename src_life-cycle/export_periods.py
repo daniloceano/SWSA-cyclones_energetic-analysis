@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/16 18:52:24 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/16 19:19:29 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,6 +27,7 @@ import geopandas as gpd
 from cyclophaser import determine_periods
 from multiprocessing import Pool
 from glob import glob
+from tqdm import tqdm
 
 def read_csv_file(file):
     return pd.read_csv(file, header=None)
@@ -70,7 +71,7 @@ def check_last_position_on_continent(cyclone_id, tracks, continent_gdf):
     last_position_on_continent = last_position_on_continent.within(continent_gdf.unary_union)
     return cyclone_id, not last_position_on_continent.all()
 
-def check_on_continent_percentage(cyclone_id, tracks, continent_gdf, threshold_percentage):
+def check_on_continent_percentage(cyclone_id, tracks, continent_gdf, threshold_percentage, pbar):
     cyclone_track = tracks[tracks['track_id'] == cyclone_id]
     
     # Calculate the number of time steps where the cyclone is on the continent
@@ -84,6 +85,9 @@ def check_on_continent_percentage(cyclone_id, tracks, continent_gdf, threshold_p
     
     # Calculate the percentage of time on the continent
     percentage_on_continent = (on_continent_count / total_time_steps) * 100
+
+    # Update the progress bar
+    pbar.update(1)
     
     return cyclone_id, percentage_on_continent < threshold_percentage
 
@@ -270,9 +274,10 @@ def filter_tracks(tracks, analysis_type):
         # Create a list of unique cyclone IDs
         unique_cyclone_ids = tracks['track_id'].unique()
 
-        # Create a pool for multiprocessing
-        with multiprocessing.Pool() as pool:
-            results = pool.starmap(check_on_continent_percentage, [(cyclone_id, tracks, continent_gdf, threshold_percentage) for cyclone_id in unique_cyclone_ids])
+        # Create a tqdm instance to track the progress
+        with tqdm(total=len(unique_cyclone_ids), position=0, leave=True) as pbar:
+            with multiprocessing.Pool() as pool:
+                results = pool.starmap(check_on_continent_percentage, [(cyclone_id, tracks, continent_gdf, threshold_percentage, pbar) for cyclone_id in unique_cyclone_ids])
 
         # Extract valid cyclone IDs from the results
         valid_track_ids = [cyclone_id for cyclone_id, is_valid in results if is_valid]
