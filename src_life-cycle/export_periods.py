@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_periods.py                                  :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
+#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/03 14:59:18 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/16 18:50:38 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,7 +16,6 @@ for each cyclone
 
 """
 
-import glob
 import multiprocessing
 import os
 
@@ -26,7 +25,25 @@ import matplotlib.pyplot as plt
 import geopandas as gpd 
 
 from cyclophaser import determine_periods
+from multiprocessing import Pool
+from glob import glob
 
+def read_csv_file(file):
+    return pd.read_csv(file, header=None)
+
+def get_tracks():
+    print(f"Reading raw track files...")
+    file_list = glob("../raw_data/SAt/*.csv")
+    with Pool() as pool:
+        dfs = pool.map(read_csv_file, file_list)
+    print("Done, now merging tracks...")
+    tracks = pd.concat(dfs, ignore_index=True)
+    print(f"Done.")
+
+    track_columns = ['track_id', 'date', 'lon vor', 'lat vor', 'vor42']
+    tracks.columns = track_columns
+    tracks['lon vor'] = np.where(tracks['lon vor'] > 180, tracks['lon vor'] - 360, tracks['lon vor'])
+    return tracks
 
 def haversine(lon1, lat1, lon2, lat2):
     earth_radius_km = 6371.0
@@ -71,18 +88,15 @@ def check_on_continent_percentage(cyclone_id, tracks, continent_gdf, threshold_p
     return cyclone_id, percentage_on_continent < threshold_percentage
 
 def process_cyclone(args):
-    id_cyclone, track_file, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG = args
+    id_cyclone, tracks, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG = args
     plt.close('all') # save memory
 
     # Set the output file names
     periods_csv_outfile = f"{periods_csv_outfile_path}{RG}_{id_cyclone}"
-    periods_outfile = f"{periods_outfile_path}{RG}_{id_cyclone}"
-    periods_didatic_outfile = f"{periods_didatic_outfile_path}{RG}_{id_cyclone}"
+
+    track = tracks[tracks['track_id'] == id_cyclone]
 
     # Create temporary files for cyclophaser function
-    tracks = pd.read_csv(track_file)
-    tracks.columns = track_columns
-    track = tracks[tracks['track_id']==id_cyclone][['date','vor42']]
     track = track.rename(columns={"date":"time"})
     track['vor42'] = - track['vor42'] * 1e-5
     tmp_file = (f"tmp_{RG}-{id_cyclone}.csv")
@@ -110,10 +124,68 @@ def process_cyclone(args):
 
     os.remove(tmp_file)
 
+def check_first_position_inside_area(cyclone_id, tracks, area_bounds):
+    cyclone_track = tracks[tracks['track_id'] == cyclone_id]
+    first_position = cyclone_track.head(1)  # Get the first row
+    first_lat = first_position['lat vor'].values[0]
+    first_lon = first_position['lon vor'].values[0]
+
+    min_lon, min_lat, max_lon, max_lat = area_bounds
+
+    # Check if the first position is inside the specified area
+    is_inside_area = (min_lat <= first_lat <= max_lat) and (min_lon <= first_lon <= max_lon)
+
+    return cyclone_id, is_inside_area
+
+def filter_tracks_area(tracks, region):
+    print(f"Filtering tracks for region: {region}...")
+
+    regions = {
+        "SE-BR": [(-52, -38, -37, -23)],
+        "LA-PLATA": [(-69, -38, -52, -23)],
+        "ARG": [(-70, -55, -50, -39)],
+        "SE-SAO": [(-15, -55, 30, -37)],
+        "SA-NAM": [(8, -33, 20, -21)],
+        "AT-PEN": [(-65, -69, -44, -58)],
+        "WEDDELL": [(-65, -85, -10, -72)]
+    }
+
+    if region not in regions:
+        raise ValueError(f"Invalid region '{region}'. Region must be one of: {', '.join(regions.keys())}")
+
+    region_bounds = regions[region]
+
+    # Extract the correct region bounds
+    area_bounds = region_bounds[0]  # Assuming there's only one set of bounds for the selected region
+
+    # Count the number of systems before filtering
+    num_systems_before = len(tracks['track_id'].unique())
+
+    # Create a list of unique cyclone IDs
+    unique_cyclone_ids = tracks['track_id'].unique()
+
+    # Create a pool for multiprocessing
+    with multiprocessing.Pool() as pool:
+        results = pool.starmap(check_first_position_inside_area, [(cyclone_id, tracks, area_bounds) for cyclone_id in unique_cyclone_ids])
+
+    # Extract valid cyclone IDs from the results
+    valid_track_ids = [cyclone_id for cyclone_id, is_valid in results if is_valid]
+
+    # Filter the 'tracks' DataFrame to keep only cyclones with the first position inside the defined area
+    filtered_tracks = tracks[tracks['track_id'].isin(valid_track_ids)]
+
+    # Count the number of systems after filtering
+    num_systems_after = len(filtered_tracks['track_id'].unique())
+
+    # Print the final filter message and the number of systems before and after filtering
+    print(f"Removed cyclones with the first position inside the defined area.")
+    print(f"Number of systems before filtering: {num_systems_before}")
+    print(f"Number of systems after filtering: {num_systems_after}")
+
+    return filtered_tracks
+
 def filter_tracks(tracks, analysis_type):
     print("Filtering tracks...")
-
-    RG = analysis_type
 
     # Initialize a message to keep track of filtering actions
     filter_message = ""
@@ -212,7 +284,7 @@ def filter_tracks(tracks, analysis_type):
     # Print the final filter message
     print(filter_message)
     
-    return tracks, RG
+    return tracks
 
 testing = False
 # analysis_type = 'BY_RG-all'
@@ -225,81 +297,44 @@ testing = False
 # analysis_type = '70W-decayC'
 analysis_type = '70W-no-continental'
 
+# RGs = [False]
+RGs = ["SE-BR", "LA-PLATA","ARG", "SE-SAO", "SA-NAM",
+               "AT-PEN", "WEDDELL", False]
+
 print("Initializing periods analysis for: ", analysis_type) if not testing else print("Testing")
 
-if testing == True:
-    output_directory = './'
-    periods_outfile_path = output_directory + './'    
-    periods_didatic_outfile_path = output_directory + './'
-    periods_csv_outfile_path = './'
-    results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/']
+output_directory = '../figures/'
+results_dir = '../raw_data/SAt/'
 
-else:
-    output_directory = '../figures/'
-    periods_outfile_path = output_directory + f'periods/{analysis_type}/'    
-    periods_didatic_outfile_path = output_directory + f'periods_didactic/{analysis_type}/'
-    periods_csv_outfile_path = f'../periods-energetics/{analysis_type}/'
-
-    if analysis_type == 'BY_RG-all':
-        track_columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42', 'lon mslp', 'lat mslp', 'mslp', 'lon 10spd', 'lat 10spd', '10spd']
-        results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/',
-                        '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG2_csv/',
-                        '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/']
-    
-    else:
-        track_columns = ['track_id', 'date', 'lon vor', 'lat vor', 'vor42']
-        results_directories = ['../raw_data/SAt/']
-
-
-os.makedirs(periods_outfile_path, exist_ok=True)
-os.makedirs(periods_didatic_outfile_path, exist_ok=True)
-os.makedirs(periods_csv_outfile_path, exist_ok=True)
+track_columns = ['track_id', 'date', 'lon vor', 'lat vor', 'vor42']
 
 if __name__ == '__main__':
 
-    for results_dir in results_directories:
-        for track_file in sorted(glob.glob(f'{results_dir}/*')):
+    # Get all tracks for SAt
+    tracks = get_tracks()
 
-            if testing:
-                if '1980' not in track_file:
-                    continue
+    # Filter for analysis type
+    # tracks = filter_tracks(tracks, analysis_type)
 
-            # Check if the track_file is empty
-            try:
-                tracks = pd.read_csv(track_file)
-            except pd.errors.EmptyDataError:
-                with open("error_log.txt", "a") as file:
-                    file.write(f"Empty track file: {track_file} - Skipping processing.\n")
-                continue
+    for RG in RGs:
+        print(f"RG: {RG}") if RG else print("RG: SAt")
 
-            # Check if track_file contains "40W" and skip processing if it does
-            if "40W" in track_file:
-                with open("error_log.txt", "a") as file:
-                    file.write(f"Skipping track file: {track_file} - Contains '40W'.\n")
-                continue
-            
-            tracks.columns = track_columns
+        RG_str = f"_{RG}" if RG else ""
 
-            # Parameters for each type of analysis
-            if analysis_type == 'BY_RG-all':
-                if 'RG1' in track_file:
-                    RG = 'RG1'
-                elif 'RG2' in track_file:
-                    RG = 'RG2'
-                elif 'RG3' in track_file:
-                    RG = 'RG3'
+        periods_outfile_path = output_directory + f'periods/{analysis_type}_{RG_str}/' 
+        periods_didatic_outfile_path = output_directory + f'periods_didactic/{analysis_type}_{RG_str}/' 
+        periods_csv_outfile_path = f'../periods-energetics/{analysis_type}_{RG_str}/'
+        os.makedirs(periods_outfile_path, exist_ok=True)
+        os.makedirs(periods_didatic_outfile_path, exist_ok=True)
+        os.makedirs(periods_csv_outfile_path, exist_ok=True)
 
-            elif analysis_type == 'all':
-                RG = 'SAt'
+        tracks_RG = filter_tracks_area(tracks, RG) if RG else tracks
 
-            else:
-                tracks, RG = filter_tracks(tracks, analysis_type)
+        id_cyclones = tracks_RG['track_id'].unique()
 
-            id_cyclones = tracks['track_id'].unique()
+        # Create a list of arguments for the process_cyclone function
+        arguments_list = [(id_cyclone, tracks_RG, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG) for id_cyclone in id_cyclones]
 
-            # Create a list of arguments for the process_cyclone function
-            arguments_list = [(id_cyclone, track_file, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG) for id_cyclone in id_cyclones]
-
-            # Use multiprocessing Pool to execute the function in parallel
-            with multiprocessing.Pool() as pool:
-                pool.map(process_cyclone, arguments_list)
+        # Use multiprocessing Pool to execute the function in parallel
+        with multiprocessing.Pool() as pool:
+            pool.map(process_cyclone, arguments_list)
