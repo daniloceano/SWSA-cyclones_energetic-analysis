@@ -7,6 +7,11 @@ import matplotlib as mpl
 import numpy as np
 import matplotlib.patches as mpatches
 
+def load_seasonal_data(season):
+    file_path = f'../periods_species_statistics/70W-no-continental/track_density/SAt_track_density_{season}.nc'
+    ds = xr.open_dataset(file_path)
+    return ds['incipient']
+
 def plot_region_box(ax, coords, edgecolor, label=None):
     for coord in coords:
         lon_corners = np.array([coord[0], coord[2], coord[2], coord[0]])
@@ -23,24 +28,33 @@ def plot_region_box(ax, coords, edgecolor, label=None):
             text_lon = coord[2] - 1
             if label == 'ARG':
                 text_lat = coord[3] - 5
-                text_lon = coord[2] + 10
+                text_lon = coord[2] + 17
+            elif label == 'SE-BR':
+                text_lon = coord[2] + 5
             elif label == 'AT-PEN':
-                text_lon = coord[2] + 15
+                text_lon = coord[2] + 30
             elif label == 'SA-NAM':
                 text_lat = coord[3] + 5
             elif label == 'SE-SAO':
-                text_lon = coord[2] - 27
-                text_lat = coord[3] - 5
+                text_lon = coord[0] + 13
+                text_lat = coord[3] + 2
+            elif label == 'WEDDELL':
+                text_lon = coord[2] + 25
+                text_lat = coord[3] + 5
                 
             ax.text(text_lon, text_lat, label, transform=ccrs.Geodetic(),
                      fontsize=16, color=edgecolor, fontweight='bold', ha='right', va='bottom')
-
+            
 def create_map_and_axes():
-    fig = plt.figure(figsize=(10, 10))
+    fig = plt.figure(figsize=(15, 10))  # Adjust the figure size to accommodate subplots
     proj = ccrs.AlbersEqualArea(central_longitude=-30, central_latitude=-35, standard_parallels=(-20.0, -50.0))
-    ax = fig.add_subplot(1, 1, 1, projection=proj)
-    ax.set_extent([-80, 50, -15, -90], crs=ccrs.PlateCarree())
-    return fig, ax
+
+    # Create a grid of subplots for seasons (2 rows, 2 columns)
+    axs = fig.subplots(2, 2, subplot_kw={'projection': proj})
+    for ax in axs.flat:
+        ax.set_extent([-80, 50, -15, -90], crs=ccrs.PlateCarree())
+    
+    return fig, axs
 
 def add_gridlines_and_continents(ax):
     gl = ax.gridlines(draw_labels=True, zorder=2, linestyle='dashed', alpha=0.8, lw=0.35, color='#383838')
@@ -50,45 +64,58 @@ def add_gridlines_and_continents(ax):
     gl.right_labels = None
     ax.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '50m', edgecolor='face', facecolor='lightgray'), zorder=1)
 
-def plot_genesis_density(ax):
+def plot_genesis_density(fig, ax, seasonal_data, i):
     colors_linear = ['#AFC4DA', '#4471B2', '#B1DFA3', '#EFF9A6', 
             '#FEEC9F', '#FDB567', '#F06744',  '#C1274A']
     cmap = mcolors.LinearSegmentedColormap.from_list("", colors_linear)
-    infile = '../periods_species_statistics/70W-no-continental/track_density/track_density.nc'
-    ds = xr.open_dataset(infile)
-    density = ds['incipient']
-    levels = [0.1, 1, 2, 5, 8, 10, 15, 20, 30, 40, 50]
+    labels = ["(A)", "(B)", "(C)", "(D)"]
+    levels = [0.1, 1, 2, 5, 8, 10, 12, 15, 17, 20, 25, 30, 35, 40]
     norm = mpl.colors.BoundaryNorm(levels, cmap.N)
-    lon, lat = density.lon, density.lat
-    cf = plt.contourf(lon, lat, density, cmap=cmap, levels=levels, norm=norm, transform=ccrs.PlateCarree(), alpha=0.7)
-    ax.contour(lon, lat, density, colors='#383838', linewidths=0.35, levels=levels, norm=norm, linestyles='dashed', transform=ccrs.PlateCarree())
-    cbar = plt.colorbar(cf, format='%g', orientation='horizontal', ticks=levels, pad=0.06)
-    cbar.ax.tick_params(labelsize=12)
+    lon, lat = seasonal_data.lon, seasonal_data.lat
+    cf = ax.contourf(lon, lat, seasonal_data, cmap=cmap, levels=levels, norm=norm, transform=ccrs.PlateCarree(), alpha=0.7)
+    ax.contour(lon, lat, seasonal_data, colors='#383838', linewidths=0.35, levels=levels, norm=norm, linestyles='dashed', transform=ccrs.PlateCarree())
+    props = dict(boxstyle='round', facecolor='white')
+    ax.text(27, -3, labels[i], transform=ccrs.PlateCarree(), ha='left', va='top', fontsize=16, fontweight='bold', bbox=props)
+    if i == 3:
+        cbar_axes = fig.add_axes([0.15, 0.01, 0.7, 0.04])
+        ticks = np.round(levels, decimals=2)
+        colorbar = plt.colorbar(cf, cax=cbar_axes, ticks=ticks, format='%g', orientation='horizontal')
+        colorbar.ax.tick_params(labelsize=12)
     return cf
 
 def main():
-    fig, ax = create_map_and_axes()
-    add_gridlines_and_continents(ax)
-    cf = plot_genesis_density(ax)
+    fig, axs = create_map_and_axes()
+    add_gridlines_and_continents(axs[0, 0])  # Apply gridlines and continents to the first subplot
 
-    regions = {
-        "SE-BR": [(-52, -38, -37, -23)],
-        "LA-PLATA": [(-69, -38, -52, -23)],
-        "ARG": [(-70, -55, -50, -39)],
-        "SE-SAO": [(-15, -55, 30, -37)],
-        "SA-NAM": [(8, -33, 20, -21)],
-        "AT-PEN": [(-65, -69, -44, -58)],
-        "WEDDELL": [(-65, -85, -10, -72)]
-    }
+    # Define seasons and corresponding subplot positions
+    seasons = ['DJF', 'MAM', 'JJA', 'SON']
+    subplot_positions = [(0, 0), (0, 1), (1, 0), (1, 1)]
 
-    for region, coords in regions.items():
-        plot_region_box(ax, coords, edgecolor='#383838', label=region)
+    i = 0
+    for season, position in zip(seasons, subplot_positions):
+        ax = axs[position]
+        seasonal_data = load_seasonal_data(season)
+        add_gridlines_and_continents(ax)
+        plot_genesis_density(fig, ax, seasonal_data, i)
 
-    ax.add_feature(cfeature.BORDERS, linestyle=':', edgecolor='gray', facecolor='None')
-    ax.coastlines()
+        regions = {
+            "SE-BR": [(-52, -38, -37, -23)],
+            "LA-PLATA": [(-69, -38, -52, -23)],
+            "ARG": [(-70, -55, -50, -39)],
+            "SE-SAO": [(-15, -55, 30, -37)],
+            "SA-NAM": [(8, -33, 20, -21)],
+            "AT-PEN": [(-65, -69, -44, -58)],
+            "WEDDELL": [(-65, -85, -10, -72)]
+        }
 
-    plt.tight_layout()
+        for region, coords in regions.items():
+            plot_region_box(ax, coords, edgecolor='#383838', label=region)
 
+        ax.add_feature(cfeature.BORDERS, linestyle=':', edgecolor='gray', facecolor='None')
+        ax.coastlines()
+
+        i+=1
+    
     fname = '../figures/manuscript_life-cycle/genesis_regions.png'
     plt.savefig(fname, bbox_inches='tight')
     print(f'Genesis regions saved in {fname}')
