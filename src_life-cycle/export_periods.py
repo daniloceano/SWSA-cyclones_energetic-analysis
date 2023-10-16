@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/16 18:50:38 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/16 18:51:39 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -314,7 +314,7 @@ if __name__ == '__main__':
     tracks = get_tracks()
 
     # Filter for analysis type
-    # tracks = filter_tracks(tracks, analysis_type)
+    tracks = filter_tracks(tracks, analysis_type)
 
     for RG in RGs:
         print(f"RG: {RG}") if RG else print("RG: SAt")
