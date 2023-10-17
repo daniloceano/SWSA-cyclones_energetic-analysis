@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/17 14:42:43 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/17 19:15:20 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -96,11 +96,11 @@ def check_on_continent_percentage(cyclone_id, tracks, continent_gdf, threshold_p
             return None  # Return a sentinel value to indicate an error
 
 def process_cyclone(args):
-    id_cyclone, tracks, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG = args
+    id_cyclone, tracks, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG_str = args
     plt.close('all') # save memory
 
     # Set the output file names
-    periods_csv_outfile = f"{periods_csv_outfile_path}{RG}_{id_cyclone}"
+    periods_csv_outfile = f"{periods_csv_outfile_path}{id_cyclone}{RG_str}"
 
     track = tracks[tracks['track_id'] == id_cyclone]
 
@@ -108,7 +108,7 @@ def process_cyclone(args):
     track = track.rename(columns={"date":"time"})
     track['vor42'] = - track['vor42'] * 1e-5
     track = track.drop('track_id', axis=1)
-    tmp_file = (f"tmp_{RG}-{id_cyclone}.csv")
+    tmp_file = (f"tmp{RG_str}-{id_cyclone}.csv")
     track.to_csv(tmp_file, index=False, sep=';')
 
     # if not periods_outfile_exists:
@@ -128,7 +128,7 @@ def process_cyclone(args):
     except Exception as e:
         error_msg = str(e)
         with open("error_log.txt", "a") as file:
-            file.write(f"Error processing cyclone: {id_cyclone} - RG: {RG}")
+            file.write(f"Error processing cyclone: {id_cyclone} - RG: {RG_str}")
             file.write(f"Error message: {error_msg}\n\n")
 
     os.remove(tmp_file)
@@ -309,6 +309,7 @@ analysis_type = '70W-no-continental'
 RGs = ["SE-BR", "LA-PLATA","ARG", "SE-SAO", "SA-NAM",
                "AT-PEN", "WEDDELL", False]
 
+
 print("Initializing periods analysis for: ", analysis_type) if not testing else print("Testing")
 
 output_directory = '../figures/'
@@ -327,7 +328,7 @@ if __name__ == '__main__':
     for RG in RGs:
         print(f"RG: {RG}") if RG else print("RG: SAt")
 
-        RG_str = f"_{RG}" if RG else ""
+        RG_str = f"_{RG}" if RG else "_SAt"
 
         periods_outfile_path = output_directory + f'periods/{analysis_type}{RG_str}/' 
         periods_didatic_outfile_path = output_directory + f'periods_didactic/{analysis_type}{RG_str}/' 
@@ -341,7 +342,7 @@ if __name__ == '__main__':
         id_cyclones = tracks_RG['track_id'].unique()
 
         # Create a list of arguments for the process_cyclone function
-        arguments_list = [(id_cyclone, tracks_RG, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG) for id_cyclone in id_cyclones]
+        arguments_list = [(id_cyclone, tracks_RG, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG_str) for id_cyclone in id_cyclones]
 
         # Use multiprocessing Pool to execute the function in parallel
         with multiprocessing.Pool() as pool:
