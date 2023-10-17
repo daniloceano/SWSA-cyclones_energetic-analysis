@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_periods.py                                  :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/16 19:40:01 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/17 10:38:05 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -72,21 +72,28 @@ def check_last_position_on_continent(cyclone_id, tracks, continent_gdf):
     return cyclone_id, not last_position_on_continent.all()
 
 def check_on_continent_percentage(cyclone_id, tracks, continent_gdf, threshold_percentage):
-    cyclone_track = tracks[tracks['track_id'] == cyclone_id]
-    
-    # Calculate the number of time steps where the cyclone is on the continent
-    positions_on_continent = gpd.points_from_xy(cyclone_track['lon vor'], cyclone_track['lat vor'])
-    positions_on_continent = gpd.GeoSeries(positions_on_continent, crs=continent_gdf.crs)
-    positions_on_continent = positions_on_continent.within(continent_gdf.unary_union)
-    on_continent_count = positions_on_continent.sum()
-    
-    # Calculate the total number of time steps in the cyclone's lifetime
-    total_time_steps = len(cyclone_track)
-    
-    # Calculate the percentage of time on the continent
-    percentage_on_continent = (on_continent_count / total_time_steps) * 100
-    
-    return cyclone_id, percentage_on_continent < threshold_percentage
+    print(f"Checking cyclone {cyclone_id}...")
+
+    try:
+        cyclone_track = tracks[tracks['track_id'] == cyclone_id]
+        # Calculate the number of time steps where the cyclone is on the continent
+        positions_on_continent = gpd.points_from_xy(cyclone_track['lon vor'], cyclone_track['lat vor'])
+        positions_on_continent = gpd.GeoSeries(positions_on_continent, crs=continent_gdf.crs)
+        positions_on_continent = positions_on_continent.within(continent_gdf.unary_union)
+        on_continent_count = positions_on_continent.sum()
+        
+        # Calculate the total number of time steps in the cyclone's lifetime
+        total_time_steps = len(cyclone_track)
+        
+        # Calculate the percentage of time on the continent
+        percentage_on_continent = (on_continent_count / total_time_steps) * 100
+        print(f"Cyclone {cyclone_id} is on the continent {percentage_on_continent}% of the time.")
+        
+        return cyclone_id, percentage_on_continent < threshold_percentage
+
+    except Exception as e:
+            print(f"Error in worker for cyclone {cyclone_id}: {str(e)}")
+            return None  # Return a sentinel value to indicate an error
 
 def process_cyclone(args):
     id_cyclone, tracks, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG = args
