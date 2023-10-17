@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/17 10:50:04 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/17 14:13:46 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -107,6 +107,7 @@ def process_cyclone(args):
     # Create temporary files for cyclophaser function
     track = track.rename(columns={"date":"time"})
     track['vor42'] = - track['vor42'] * 1e-5
+    track = track.drop('track_id', axis=1)
     tmp_file = (f"tmp_{RG}-{id_cyclone}.csv")
     track.to_csv(tmp_file, index=False, sep=';')
 
