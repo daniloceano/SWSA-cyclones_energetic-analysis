@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/17 14:26:55 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/17 14:42:43 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -28,8 +28,6 @@ from cyclophaser import determine_periods
 from multiprocessing import Pool
 from glob import glob
 from tqdm import tqdm
-from functools import partial
-
 
 def read_csv_file(file):
     return pd.read_csv(file, header=None)
@@ -74,7 +72,7 @@ def check_last_position_on_continent(cyclone_id, tracks, continent_gdf):
     return cyclone_id, not last_position_on_continent.all()
 
 def check_on_continent_percentage(cyclone_id, tracks, continent_gdf, threshold_percentage):
-    # print(f"Checking cyclone {cyclone_id}...")
+    print(f"Checking cyclone {cyclone_id}...")
 
     try:
         cyclone_track = tracks[tracks['track_id'] == cyclone_id]
@@ -89,7 +87,7 @@ def check_on_continent_percentage(cyclone_id, tracks, continent_gdf, threshold_p
         
         # Calculate the percentage of time on the continent
         percentage_on_continent = (on_continent_count / total_time_steps) * 100
-        # print(f"Cyclone {cyclone_id} is on the continent {percentage_on_continent}% of the time.")
+        print(f"Cyclone {cyclone_id} is on the continent {percentage_on_continent}% of the time.")
         
         return cyclone_id, percentage_on_continent < threshold_percentage
 
@@ -281,20 +279,8 @@ def filter_tracks(tracks, analysis_type):
         # Create a list of unique cyclone IDs
         unique_cyclone_ids = tracks['track_id'].unique()
 
-        # Define a partial function with the fixed arguments
-        partial_check_on_continent_percentage = partial(check_on_continent_percentage, tracks, continent_gdf, threshold_percentage)
-
-        # Create a progress bar for multiprocessing tasks
-        with tqdm(total=len(unique_cyclone_ids)) as pbar:
-            with multiprocessing.Pool() as pool:
-                # Define a chunk size to update the progress bar more frequently
-                chunksize = 10  # You can adjust this value as needed
-                results = list(
-                    tqdm(
-                        pool.imap(partial_check_on_continent_percentage, unique_cyclone_ids, chunksize=chunksize),
-                        total=len(unique_cyclone_ids),
-                    )
-                )
+        with multiprocessing.Pool() as pool:
+            results = pool.starmap(check_on_continent_percentage, [(cyclone_id, tracks, continent_gdf, threshold_percentage) for cyclone_id in unique_cyclone_ids])
 
         # Extract valid cyclone IDs from the results
         valid_track_ids = [cyclone_id for cyclone_id, is_valid in results if is_valid]
