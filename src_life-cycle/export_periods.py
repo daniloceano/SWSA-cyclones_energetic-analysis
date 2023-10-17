@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/17 10:38:05 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/17 10:50:04 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -331,9 +331,9 @@ if __name__ == '__main__':
 
         RG_str = f"_{RG}" if RG else ""
 
-        periods_outfile_path = output_directory + f'periods/{analysis_type}_{RG_str}/' 
-        periods_didatic_outfile_path = output_directory + f'periods_didactic/{analysis_type}_{RG_str}/' 
-        periods_csv_outfile_path = f'../periods-energetics/{analysis_type}_{RG_str}/'
+        periods_outfile_path = output_directory + f'periods/{analysis_type}{RG_str}/' 
+        periods_didatic_outfile_path = output_directory + f'periods_didactic/{analysis_type}{RG_str}/' 
+        periods_csv_outfile_path = f'../periods-energetics/{analysis_type}{RG_str}/'
         os.makedirs(periods_outfile_path, exist_ok=True)
         os.makedirs(periods_didatic_outfile_path, exist_ok=True)
         os.makedirs(periods_csv_outfile_path, exist_ok=True)
