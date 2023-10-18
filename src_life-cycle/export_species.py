@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 14:07:51 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/18 09:44:58 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/18 09:53:05 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -55,7 +55,7 @@ for RG in RGs:
 
     if analysis_type == '70W-no-continental':
         RG_str = f'_{RG}'if RG else '_SAt'
-        csv_directory = f'../periods-energetics/{analysis_type}{RG_str}/'
+        csv_directory = f'../periods-energetics/{analysis_type}{RG_str}/' if RG else f'../periods-energetics/{analysis_type}/'
         csv_files = glob.glob(f'{csv_directory}/*')
         total_systems = len(csv_files)
 
