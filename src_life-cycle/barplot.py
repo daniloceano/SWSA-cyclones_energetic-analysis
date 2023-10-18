@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:44:54 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/04 17:04:12 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/18 09:32:33 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -149,14 +149,22 @@ os.makedirs(csv_directory_processed, exist_ok=True)
 seasons = ['JJA', 'MAM', 'SON', 'DJF', 'total']
 
 # List of RGs
-RGs = ['RG1', 'RG2', 'RG3', 'all_RG'] if analysis_type == 'BY_RG-all' else ['']
+if analysis_type == 'BY_RG-all': 
+    RGs = ['RG1', 'RG2', 'RG3', 'all_RG']
+elif analysis_type == '70W-no-continental':
+    RGs = ["SE-BR", "LA-PLATA","ARG", "SE-SAO", "SA-NAM",
+                "AT-PEN", "WEDDELL", False]
+else:
+    RGs = ['']
 
 for RG in RGs:
-    print(f'---------------------------\n RG: {RG}') if analysis_type == 'BY_RG-all' else print(f'---------------------------')
+    print(f'---------------------------\n RG: {RG}'
+          ) if analysis_type in ['BY_RG-all', '70W-no-continental'] else print(
+              f'---------------------------')
 
     # Suffix for creating files
-    if analysis_type == 'BY_RG-all':
-        suffix = f'_{RG}'
+    if analysis_type in ['BY_RG-all', '70W-no-continental']:
+        suffix = f'_{RG}' if RG else '_SAt'
     else:
         suffix = '' 
 
