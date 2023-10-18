@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 14:07:51 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/04 15:20:44 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/18 09:35:29 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -42,9 +42,21 @@ month_season_map = {
 total_systems = len(csv_files)
 total_systems_season = {'DJF': 0, 'MAM': 0, 'JJA': 0, 'SON': 0}
 
-RGs = ['RG1', 'RG2', 'RG3'] if analysis_type == 'BY_RG-all' else ['']
+# List of RGs
+if analysis_type == 'BY_RG-all': 
+    RGs = ['RG1', 'RG2', 'RG3', 'all_RG']
+elif analysis_type == '70W-no-continental':
+    RGs = ["SE-BR", "LA-PLATA","ARG", "SE-SAO", "SA-NAM",
+                "AT-PEN", "WEDDELL", False]
+else:
+    RGs = ['']
 
 for RG in RGs:
+
+    if analysis_type == '70W-no-continental':
+        RG_str = f'_{RG}'if RG else '_SAt'
+        csv_files = glob.glob(f'{csv_directory}{RG_str}/*')
+        total_systems = len(csv_files)
 
     phase_counts = {}
 
@@ -87,6 +99,8 @@ for RG in RGs:
 
     if analysis_type == 'BY_RG-all':
         suffix = f'_{RG}' if RG != '' else '_all_RG'
+    elif analysis_type == '70W-no-continental':
+        suffix = f'_{RG}' if RG else '_SAt'
     else:
         suffix = ''
 
