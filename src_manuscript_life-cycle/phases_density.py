@@ -44,13 +44,13 @@ def plot_density(ax, i, density, label):
     ax.coastlines()
 
     if i == 7:
-        cbar_axes = fig.add_axes([0.15, 0.05, 0.7, 0.02])
+        cbar_axes = fig.add_axes([0.15, 0.05, 0.7, 0.04])
         ticks = np.round(levels, decimals=2)
         colorbar = plt.colorbar(cf, cax=cbar_axes, ticks=ticks, format='%g', orientation='horizontal')
         colorbar.ax.tick_params(labelsize=12)
 
     props = dict(boxstyle='round', facecolor='white')
-    ax.text(160, -18, label, ha='left', va='bottom', fontsize=16, fontweight='bold', bbox=props)
+    ax.text(150, -22, label, ha='left', va='bottom', fontsize=16, fontweight='bold', bbox=props)
 
     gridlines(ax)
 
@@ -58,9 +58,9 @@ def plot_density(ax, i, density, label):
 
 phases = ['incipient', 'intensification', 'mature', 'decay',
             'intensification 2', 'mature 2', 'decay 2', 'residual']
-regions = [False, "SE-BR", "LA-PLATA", "ARG", "SE-SAO", "SA-NAM", "AT-PEN", "WEDDELL"]
+regions = [False, "ARG", "LA-PLATA", "SE-BR", "SE-SAO", "AT-PEN", "WEDDELL" , "SA-NAM"]
 seasons = [False, 'JJA', 'DJF']
-letters = ['A)', 'B)', 'C)', 'D)', 'E)', 'F)', 'G)', 'H)']
+letters = ['(A)', '(B)', '(C)', '(D)', '(E)', '(F)', '(G)', '(H)']
 
 
 
@@ -76,7 +76,7 @@ for phase in phases:
     for season in seasons:
         print(f'Plotting season: {season}')
 
-        fig = plt.figure(figsize=(15, 10))
+        fig = plt.figure(figsize=(12, 10))
         datacrs = ccrs.PlateCarree()
 
         for i, region in enumerate(regions):
@@ -92,7 +92,7 @@ for phase in phases:
             label = f'{letters[i]}'
             plot_density(ax, i, density, label)
 
-        plt.subplots_adjust(wspace=0.35)
-        fname = f'../figures/manuscript_life-cycle/density_map_{phase}{season_str}.png'
+        plt.subplots_adjust(wspace=0.15)
+        fname = f'../figures/manuscript_life-cycle/density_maps/density_map_{phase}{season_str}.png'
         plt.savefig(fname, bbox_inches='tight')
         print(f'Density map saved in {fname}')
