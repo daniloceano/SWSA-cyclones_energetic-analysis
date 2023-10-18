@@ -50,7 +50,8 @@ def create_map_and_axes():
     proj = ccrs.AlbersEqualArea(central_longitude=-30, central_latitude=-35, standard_parallels=(-20.0, -50.0))
 
     # Create a grid of subplots for seasons (2 rows, 2 columns)
-    axs = fig.subplots(2, 2, subplot_kw={'projection': proj})
+    # axs = fig.subplots(2, 2, subplot_kw={'projection': proj})
+    axs = fig.subplots(1, 2, subplot_kw={'projection': proj})
     for ax in axs.flat:
         ax.set_extent([-80, 50, -15, -90], crs=ccrs.PlateCarree())
     
@@ -85,11 +86,14 @@ def plot_genesis_density(fig, ax, seasonal_data, i):
 
 def main():
     fig, axs = create_map_and_axes()
-    add_gridlines_and_continents(axs[0, 0])  # Apply gridlines and continents to the first subplot
+    #add_gridlines_and_continents(axs[0, 0])  # Apply gridlines and continents to the first subplot
+    add_gridlines_and_continents(axs[0])
 
     # Define seasons and corresponding subplot positions
-    seasons = ['DJF', 'MAM', 'JJA', 'SON']
-    subplot_positions = [(0, 0), (0, 1), (1, 0), (1, 1)]
+    # seasons = ['DJF', 'MAM', 'JJA', 'SON']
+    # subplot_positions = [(0, 0), (0, 1), (1, 0), (1, 1)]
+    seasons = ['DJF','JJA']
+    subplot_positions = [0, 1]
 
     i = 0
     for season, position in zip(seasons, subplot_positions):
@@ -102,7 +106,7 @@ def main():
             "SE-BR": [(-52, -38, -37, -23)],
             "LA-PLATA": [(-69, -38, -52, -23)],
             "ARG": [(-70, -55, -50, -39)],
-            "SE-SAO": [(-15, -55, 30, -37)],
+            "SE-SAO": [(-15, -52, 30, -37)],
             "SA-NAM": [(8, -33, 20, -21)],
             "AT-PEN": [(-65, -69, -44, -58)],
             "WEDDELL": [(-65, -85, -10, -72)]
