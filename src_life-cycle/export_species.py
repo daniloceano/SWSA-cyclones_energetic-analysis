@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 14:07:51 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/18 09:35:29 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/18 09:44:58 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -55,7 +55,8 @@ for RG in RGs:
 
     if analysis_type == '70W-no-continental':
         RG_str = f'_{RG}'if RG else '_SAt'
-        csv_files = glob.glob(f'{csv_directory}{RG_str}/*')
+        csv_directory = f'../periods-energetics/{analysis_type}{RG_str}/'
+        csv_files = glob.glob(f'{csv_directory}/*')
         total_systems = len(csv_files)
 
     phase_counts = {}
@@ -69,10 +70,6 @@ for RG in RGs:
                 continue 
         else:
             df = pd.read_csv(csv_file, index_col=[0])
-
-        # for residual_phase in ['residual', 'residual 2']:
-        #     if residual_phase in df.columns:
-        #         df = df.drop([residual_phase], axis=1)
 
         phases = list(df.index)
         phase_arrangement = ', '.join(phases)
