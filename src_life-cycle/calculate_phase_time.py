@@ -19,7 +19,13 @@ if not os.path.exists(figure_path):
 
 
 # List of RGs
-RGs = ['1', '2', '3', 'all'] if analysis_type == 'BY_RG-all' else ['all']
+if analysis_type == 'BY_RG-all': 
+    RGs = ['RG1', 'RG2', 'RG3', 'all_RG']
+elif analysis_type == '70W-no-continental':
+    RGs = ["SE-BR", "LA-PLATA","ARG", "SE-SAO", "SA-NAM",
+                "AT-PEN", "WEDDELL", False]
+else:
+    RGs = ['']
 
 for RG in RGs:
     
