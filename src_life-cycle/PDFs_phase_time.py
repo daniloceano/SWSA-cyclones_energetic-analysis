@@ -1,5 +1,6 @@
 import os
 import glob
+import colorsys
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -21,20 +22,24 @@ def process_csv_file(csv_file):
     - csv_file (str): Path to the CSV file
     
     Returns:
-    - dict: Dictionary containing phase durations
+    - dict: Dictionary containing phase durations and seasons
     """
     try:
         df = pd.read_csv(csv_file, parse_dates=['start', 'end'], index_col=0)
+        
+        # Deduce season from the 'start' date
+        month = df.loc['incipient', 'start'].month
+        season = 'DJF' if month in [12, 1, 2] else ('JJA' if month in [6, 7, 8] else None)
+        
         phase_durations = {
             phase: ((df.loc[phase, 'end'] - df.loc[phase, 'start']).total_seconds() / SECONDS_IN_AN_HOUR)
             for phase in df.index
         }
-        return phase_durations
+        return {**phase_durations, "Season": season}
     except Exception as e:
         print(f"Error processing file {csv_file}: {e}")
         return {}
-
-
+    
 def process_phase_data_parallel(data_path):
     """
     Process CSV data in parallel.
@@ -45,7 +50,7 @@ def process_phase_data_parallel(data_path):
     Returns:
     - dict: Aggregated durations for each phase
     """
-    csv_files = glob.glob(os.path.join(data_path, '*.csv'))[:200]
+    csv_files = glob.glob(os.path.join(data_path, '*.csv'))
     durations = defaultdict(list)
 
     with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
@@ -57,7 +62,6 @@ def process_phase_data_parallel(data_path):
 
     return durations
 
-
 def ensure_directory_exists(path):
     """
     Ensure a directory exists; if not, create it.
@@ -67,7 +71,6 @@ def ensure_directory_exists(path):
     """
     if not os.path.exists(path):
         os.makedirs(path)
-
 
 def create_seaborn_dataframe(duration_data, region):
     """
@@ -83,110 +86,127 @@ def create_seaborn_dataframe(duration_data, region):
     data = {
         'Phase': [],
         'Duration (hours)': [],
-        'Region': region
+        'Region': [],
+        'Season': []
     }
 
     for phase, phase_durations in duration_data.items():
-        data['Phase'].extend([phase] * len(phase_durations))
-        data['Duration (hours)'].extend(phase_durations)
+        if phase != "Season":  # Make sure we don't treat 'Season' as a phase
+            for duration, season in zip(phase_durations, duration_data["Season"]):
+                if season:  # Check if seasons is not None
+                    data['Phase'].append(phase)
+                    data['Duration (hours)'].append(duration)
+                    data['Region'].append(region)
+                    data['Season'].append(season)
 
     return pd.DataFrame(data)
 
-def plot_single_ridge(data, regions, phase, colors, fig, gs, figure_path):
+def plot_single_ridge(data, regions, figure_path, phase):
     """
-    Plot a single ridge plot for given data.
+    Plot a single ridge plot for given data, combining both seasons in one subplot.
+    """
+    # Create a figure with a row for each region
+    fig, ax = plt.subplots(nrows=len(data['Region'].unique()), ncols=2, figsize=(12, 9))
     
-    Args:
-    - data (DataFrame): Data to plot
-    - regions (list): List of regions
-    - phase (str): Phase identifier
-    - colors (list): List of colors for the plot
-    - fig (Figure): Matplotlib figure object
-    - gs (GridSpec): Matplotlib GridSpec object
-    - figure_path (str): Path to save the figure
-    """
-    ax_objs = []
     duration = data['Duration (hours)']
     xmin, xmax = duration.min(), duration.max()
     x_d = np.linspace(xmin, xmax, 1000)
-    
+
+    # Define the vertical gap between rows to create overlapping effect
+    vertical_gap = 0.07 
+    horizontal_gap = 0.01
+
+    blue_shades = ['#010339','#03045e','#023e8a','#0077b6','#0096c7','#00b4d8','#48cae4','#a4defb']
+    red_shades = ['#1c0008','#370617','#6a040f','#9d0208','#d00000','#dc2f02','#e85d04','#ff9066']
+
     for idx, rg in enumerate(regions):
-        x = np.array(data[data['Region'] == rg]['Duration (hours)'])
-        
-        kde = KernelDensity(bandwidth=1, kernel='gaussian')
-        kde.fit(x[:, None])
+        color_djf = red_shades[idx]
+        color_jja = blue_shades[idx]
+        for season, col in zip(['DJF', 'JJA'], [0, 1]):                
+            season_data = data[(data['Region'] == rg) & (data['Season'] == season)]
+            x = np.array(season_data['Duration (hours)'])
+            
+            kde = KernelDensity(bandwidth=1, kernel='gaussian')
+            kde.fit(x[:, None])
 
-        logprob = kde.score_samples(x_d[:, None])
-        ax_objs.append(fig.add_subplot(gs[idx:idx+1, 0:]))
+            color = color_djf if season == "DJF" else color_jja
 
-        # plotting the distribution
-        ax_objs[-1].plot(x_d, np.exp(logprob), color="#f0f0f0", lw=1)
-        ax_objs[-1].fill_between(x_d, np.exp(logprob), alpha=1, color=colors[idx % len(colors)])
+            logprob = kde.score_samples(x_d[:, None])
+            ax[idx][col].plot(x_d, np.exp(logprob), color="#f0f0f0", lw=1, linestyle='-')
+            ax[idx][col].fill_between(x_d, np.exp(logprob), alpha=1, color=color, linestyle='-')
+            
+            # setting uniform x and y lims
+            ax[idx][col].set_xlim(xmin, xmax)
+            ax[idx][col].set_ylim(0, np.exp(logprob).max() + 0.2)  # added a bit of padding
 
-        # setting uniform x and y lims
-        ax_objs[-1].set_xlim(xmin, xmax)
-        ax_objs[-1].set_ylim(0, np.exp(logprob).max() + 0.2)  # added a bit of padding
+            # make background transparent
+            rect = ax[idx][col].patch
+            rect.set_alpha(0)
 
-        # make background transparent
-        rect = ax_objs[-1].patch
-        rect.set_alpha(0)
+            # remove borders, axis ticks, and labels
+            ax[idx][col].set_yticklabels([])
+            ax[idx][col].yaxis.set_ticks([])  # Remove y-axis ticks
 
-        # remove borders, axis ticks, and labels
-        ax_objs[-1].set_yticklabels([])
-        ax_objs[-1].yaxis.set_ticks([])  # Remove y-axis ticks
+            # Determine the y-limits for the grid lines, which would be confined to the KDE
+            y_limit = np.exp(logprob).max() + 0.2
 
-        if idx == len(regions) - 1:
-            ax_objs[-1].set_xlabel("Duration (hours)", fontsize=16, fontweight="bold")
-        else:
-            ax_objs[-1].set_xticklabels([])
+            # Calculate grid line positions
+            num_lines = 10
+            interval = round(xmax) // num_lines
+            interval = max(1, interval) + 1 
+            
+            # Draw each grid line manually using axvline
+            for grid_x in range(0, int(xmax), interval):
+                ax[idx][col].axvline(x=grid_x, ymin=0, ymax=y_limit, color='grey', linestyle='--', linewidth=0.5)
 
-        # Determine the y-limits for the grid lines, which would be confined to the KDE
-        y_limit = np.exp(logprob).max() + 0.2
+            # Calculate the mean of the data for the current region
+            mean_value = x.mean()
 
-        # Calculate grid line positions
-        num_lines = 10
-        interval = round(xmax) // num_lines
-        interval = max(1, interval) + 1 
-        
-        # Draw each grid line manually using axvline
-        for grid_x in range(0, int(xmax), interval):
-            ax_objs[-1].axvline(x=grid_x, ymin=0, ymax=y_limit, color='grey', linestyle='--', linewidth=0.5)
+            color_line = 'r' if season == "DJF" else 'b'
+            # Draw a vertical line at the mean value
+            ax[idx][col].axvline(x=mean_value, ymin=0, ymax=np.exp(logprob).max() + 0.1, 
+                                color=color_line, linestyle='-', linewidth=2, label="Mean")
 
-        # Calculate the mean of the data for the current region
-        mean_value = x.mean()
+            spines = ["top", "right", "left", "bottom"]
+            for s in spines:
+                ax[idx][col].spines[s].set_visible(False)
+            if col == 0:
+                ax[idx][col].text(-0.02, 0, rg, fontweight="bold", fontsize=14, ha="right")
+            
+            # x-label
+            if idx == len(regions) - 1:
+                fig.text(0.5, 0.55, 'Duration (hours)', ha='center', fontsize=16, fontweight="bold")
+            ax[idx][col].set_xticklabels([])
 
-        # Draw a vertical line at the mean value
-        ax_objs[-1].axvline(x=mean_value, ymin=0, ymax=np.exp(logprob).max() + 0.1, 
-                            color='black', linestyle='-', linewidth=2, label="Mean")
+            # season
+            if idx == 0:
+                letter = "A" if col == 0 else "B"
+                ax[idx][col].text(10, 0.2, f"({letter}) {season}", fontweight="bold", fontsize=14, ha="right")
 
-        spines = ["top", "right", "left", "bottom"]
-        for s in spines:
-            ax_objs[-1].spines[s].set_visible(False)
+            # Adjust x-position of the second column to make columns closer
+            if col == 1:
+                pos = ax[idx][col].get_position()
+                ax[idx][col].set_position([pos.x0 + horizontal_gap, pos.y0, pos.width, pos.height])
 
-        ax_objs[-1].text(-0.02, 0, rg, fontweight="bold", fontsize=14, ha="right")
+        # Adjust the position of each row of axes to create overlap
+        pos = ax[idx][0].get_position()
+        ax[idx][0].set_position([pos.x0, pos.y0 + idx * vertical_gap, pos.width, pos.height])
+        ax[idx][1].set_position([pos.x0 + pos.width + horizontal_gap, pos.y0 + idx * vertical_gap, pos.width, pos.height])
 
-        gs.update(hspace=-0.7)
-        fig.text(0.07, 0.75, phase, fontsize=20)
-        plt.tight_layout()
-        plt.savefig(os.path.join(figure_path, f'Ridge_Plot_{phase}.png'))
+    # Save the combined figure for the current phase
+    # plt.tight_layout()
+    plt.savefig(os.path.join(figure_path, f'Ridge_Plot_{phase}.png'))
 
 def plot_ridge_plots(dfs, figure_path, phases):
-    """
-    Plot ridge plots for the given data.
-    
-    Args:
-    - dfs (DataFrame): Data to plot
-    - figure_path (str): Path to save the plots
-    - phases (list): List of phase identifiers
-    """
-    colors = ['#3333ff', '#4040ff', '#5959cc', '#737399', '#868699', '#a68099', '#b38699', '#c79999']
-    
     for phase in phases:
+        
+        print(f"Plotting phase: {phase}")
+        # Filter the data for the current phase
         data = dfs[dfs['Phase'] == phase]
         regions = dfs['Region'].unique()
-        gs = grid_spec.GridSpec(len(regions), 1)
-        fig = plt.figure(figsize=(12, 9))
-        plot_single_ridge(data, regions, phase, colors, fig, gs, figure_path)
+            
+        plot_single_ridge(data, regions, figure_path, phase)
+
 
 def main():
     analysis_type_to_regions = {
@@ -203,7 +223,7 @@ def main():
 
     data_frames = []
     for region in regions:
-        region_str = f'_{region}' if region else '_SAt'
+        region_str = f'_{region}' if region else ''
         data_path = os.path.join('..', 'periods-energetics', analysis_type + region_str)
         
         duration_data = process_phase_data_parallel(data_path)
@@ -212,7 +232,7 @@ def main():
         df = create_seaborn_dataframe(duration_data, region if region else 'Total')
         data_frames.append(df)
 
-    phases = list(duration_data.keys())
+    phases = [key for key in list(duration_data.keys()) if key not in ['Season', 'incipient 2']]
     dfs = pd.concat(data_frames)
 
     plot_ridge_plots(dfs, figure_path, phases)
