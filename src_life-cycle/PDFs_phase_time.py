@@ -10,6 +10,7 @@ import matplotlib.gridspec as grid_spec
 from sklearn.neighbors import KernelDensity
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
+from scipy import stats
 
 # Constants
 SECONDS_IN_AN_HOUR = 3600
@@ -112,22 +113,28 @@ def plot_single_ridge(data, regions, figure_path, phase):
     # Create a figure with a row for each region
     gs = grid_spec.GridSpec(len(regions), 2)
     fig = plt.figure(figsize=(12, 9))
-    
-    duration = data['Duration (hours)']
-    xmin, xmax = duration.min(), duration.max()
 
-    bandwidth = {
-        "incipient": 1,
-        "intensification": 1.5,
-        "mature": 1,
-        "decay": 1.5,
-        "intensification 2": 2,
-        "mature 2": 1,
-        "decay 2": 2,
-        "residual": 1.5,
-        }
+    duration = data['Duration (hours)']
+
+    # [bandwidth, number of samples, quantile]
+    kde_params = {
+        "incipient": [1, 1000, 99],
+        "intensification": [2, 100, 98],
+        "mature": [1, 1000, 99.9],
+        "decay": [2, 1000, 95],
+        "intensification 2": [3, 70, 100],
+        "mature 2": [1, 1000, 99.9],
+        "decay 2": [2, 1000, 97],
+        "residual": [2, 500, 99]
+    }
+
+    # Calculate the upper percentile to define the x-axis range
+    upper_percentile = np.percentile(duration, kde_params[phase][2]) 
     
-    x_d = np.linspace(xmin, xmax, 500)
+    # Set the x-axis limits based on the percentiles
+    xmin, xmax = 0, upper_percentile
+    
+    x_d = np.linspace(xmin, xmax, kde_params[phase][1])
 
     red_shades = ['#9d0208', '#b30109', '#c7010a', '#d9000b', '#dc2f02', '#e14c03', '#e56904', '#ff9066']
     blue_shades = ['#023e8a', '#0251a0', '#0264b6', '#0077b6', '#0091c3', '#00abd0', '#00c5dd', '#48cae4']
@@ -139,7 +146,7 @@ def plot_single_ridge(data, regions, figure_path, phase):
             season_data = data[(data['Region'] == rg) & (data['Season'] == season)]
             x = np.array(season_data['Duration (hours)'])
             
-            kde = KernelDensity(bandwidth=bandwidth[phase], kernel='gaussian')
+            kde = KernelDensity(bandwidth=kde_params[phase][0], kernel='gaussian')
             kde.fit(x[:, None])
 
             color = color_djf if season == "DJF" else color_jja
@@ -177,7 +184,6 @@ def plot_single_ridge(data, regions, figure_path, phase):
             # Calculate the mean of the data for the current region
             mean_value = x.mean()
 
-            color_line = 'r' if season == "DJF" else 'b'
             # Draw a vertical line at the mean value
             ax.axvline(x=mean_value, ymin=0, ymax=np.exp(logprob).max() + 0.2, 
                                 color='k', linestyle='-', linewidth=2, label="Mean")
@@ -195,18 +201,22 @@ def plot_single_ridge(data, regions, figure_path, phase):
             # season
             if idx == 0:
                 letter = "A" if col == 0 else "B"
-                ax.text(10, 0.2, f"({letter}) {season}", fontweight="bold", fontsize=14, ha="right")
+                ax.text((xmax - xmin) / 2, np.exp(logprob).max() + 0.05, f"({letter}) {season}", fontweight="bold", fontsize=14, ha="center")
 
             # Adjust x-position of the second column to make columns closer
             if col == 1:
                 pos = ax.get_position()
                 ax.set_position([pos.x0 + 0.01, pos.y0, pos.width, pos.height])
 
-    fig.text(0.5, 0.05, 'Duration (hours)', ha='center', fontsize=16, fontweight="bold")
+    fig.text(0.5, 0.05, f'Duration (hours) - {phase}', ha='center', fontsize=16, fontweight="bold")
 
     # Adjust the position of each row of axes to create overlap
     gs.update(hspace=-0.7)
     gs.update(wspace=0.1)
+    
+    # Reduce top margin to remove excess white space
+    fig.subplots_adjust(top=1.1)
+    
     plt.tight_layout()
 
     # Save the combined figure for the current phase
@@ -217,12 +227,21 @@ def plot_single_ridge(data, regions, figure_path, phase):
 def plot_ridge_plots(dfs, figure_path, phases):
     for phase in phases:
         
+        print('\n-----------------')
         print(f"Plotting phase: {phase}")
         # Filter the data for the current phase
         data = dfs[dfs['Phase'] == phase]
         regions = dfs['Region'].unique()
             
         plot_single_ridge(data, regions, figure_path, phase)
+        print(f"DJF mean duration: {data['Duration (hours)'].mean():.2f} hours")
+        print(f"DJF max duration: {data['Duration (hours)'].max():.2f} hours")
+        print(f"JJA mean duration: {data[data['Season'] == 'JJA']['Duration (hours)'].mean():.2f} hours")
+        print(f"JJA max duration: {data[data['Season'] == 'JJA']['Duration (hours)'].max():.2f} hours")
+
+    # phase = "residual"
+    # data = dfs[dfs['Phase'] == phase]
+    # plot_single_ridge(data, regions, figure_path, phase)
 
 def main():
     analysis_type_to_regions = {
@@ -240,7 +259,7 @@ def main():
     phase_time_database = f"../periods_species_statistics/{analysis_type}/phase_time.csv"
 
     try:
-        pd.read_csv(phase_time_database)
+        dfs = pd.read_csv(phase_time_database)
 
     except:
         print(f"{phase_time_database} not found, creating it...")
@@ -255,11 +274,11 @@ def main():
             df = create_seaborn_dataframe(duration_data, region if region else 'Total')
             data_frames.append(df)
 
-        phases = [key for key in list(duration_data.keys()) if key not in ['Season', 'incipient 2']]
         dfs = pd.concat(data_frames)
         dfs.to_csv(phase_time_database)
         print(f"{phase_time_database} created.")
 
+    phases = [phase for phase in dfs['Phase'].unique() if phase not in ['Season', 'incipient 2']]
     plot_ridge_plots(dfs, figure_path, phases)
 
 if __name__ == '__main__':
