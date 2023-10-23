@@ -122,7 +122,7 @@ def plot_single_ridge(data, regions, figure_path, phase):
         "intensification": [2, 100, 98],
         "mature": [1, 1000, 99.9],
         "decay": [2, 1000, 95],
-        "intensification 2": [3, 70, 100],
+        "intensification 2": [3, 70, 99],
         "mature 2": [1, 1000, 99.9],
         "decay 2": [2, 1000, 97],
         "residual": [2, 500, 99]
@@ -175,10 +175,14 @@ def plot_single_ridge(data, regions, figure_path, phase):
             # Calculate grid line positions
             num_lines = 10
             interval = round(xmax) // num_lines
-            interval = max(1, interval) + 1 
-            
+            interval = max(1, interval) + 1
+
+            # Set x-ticks based on the calculated positions
+            x_ticks = list(range(0, int(round(xmax, -1)), interval))
+            ax.set_xticks(x_ticks)
+
             # Draw each grid line manually using axvline
-            for grid_x in range(0, int(xmax), interval):
+            for grid_x in x_ticks:
                 ax.axvline(x=grid_x, ymin=0, ymax=y_limit, color='grey', linestyle='--', linewidth=0.5)
 
             # Calculate the mean of the data for the current region
@@ -208,6 +212,9 @@ def plot_single_ridge(data, regions, figure_path, phase):
                 pos = ax.get_position()
                 ax.set_position([pos.x0 + 0.01, pos.y0, pos.width, pos.height])
 
+            print(f"Mean duration for {rg} in {season}: {mean_value:.2f} hours")
+            print(f"Max duration for {rg} in {season}: {season_data['Duration (hours)'].max()} hours")
+
     fig.text(0.5, 0.05, f'Duration (hours) - {phase}', ha='center', fontsize=16, fontweight="bold")
 
     # Adjust the position of each row of axes to create overlap
@@ -234,10 +241,6 @@ def plot_ridge_plots(dfs, figure_path, phases):
         regions = dfs['Region'].unique()
             
         plot_single_ridge(data, regions, figure_path, phase)
-        print(f"DJF mean duration: {data['Duration (hours)'].mean():.2f} hours")
-        print(f"DJF max duration: {data['Duration (hours)'].max():.2f} hours")
-        print(f"JJA mean duration: {data[data['Season'] == 'JJA']['Duration (hours)'].mean():.2f} hours")
-        print(f"JJA max duration: {data[data['Season'] == 'JJA']['Duration (hours)'].max():.2f} hours")
 
     # phase = "residual"
     # data = dfs[dfs['Phase'] == phase]
