@@ -277,15 +277,20 @@ def plot_ridge_phases(data):
             ax.axvline(x=grid_x, ymin=0, ymax=y_limit, color='grey', linestyle='--', linewidth=0.5)
 
         # Calculate the mean of the data for the current region
+        mean_value = np.mean(x)
         meadian_value = np.median(x)
 
         # Draw a vertical line at the mean value
         max_kde_value = np.exp(logprob).max()
         ymax_fraction = 2.8
         ymax_value = max_kde_value * ymax_fraction
+        
+        ax.axvline(x=mean_value, ymin=0, ymax=ymax_value,
+                        color='k', linestyle='-', linewidth=4, label="Mean")
         ax.axvline(x=meadian_value, ymin=0, ymax=ymax_value,
-                        color='k', linestyle='-', linewidth=4, label="Median")
-        print(f"Median value for {phase}: {meadian_value}")
+                        color='k', linestyle='--', linewidth=4, alpha=0.8, label="Median")
+        
+        print(f"Mean value for {phase}: {mean_value}, median: {meadian_value}")
 
         spines = ["top", "right", "left", "bottom"]
         for s in spines:
