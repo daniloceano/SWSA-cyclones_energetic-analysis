@@ -246,6 +246,23 @@ def plot_ridge_plots(dfs, figure_path, phases):
     # data = dfs[dfs['Phase'] == phase]
     # plot_single_ridge(data, regions, figure_path, phase)
 
+def phases_statistics(dfs, analysis_type):
+    # Specified order for 'Region'
+    region_order = ["Total", "ARG", "LA-PLATA", "SE-BR", "SE-SAO", "AT-PEN", "WEDDELL", "SA-NAM"]
+    dfs['Region'] = pd.Categorical(dfs['Region'], categories=region_order, ordered=True)
+
+    # Group by 'Region', 'Season' and 'Phase' and compute mean and std
+    grouped = dfs.groupby(['Region', 'Season', 'Phase'])['Duration (hours)'].agg(['mean', 'std']).reset_index()
+
+    # Pivot the dataframe to have 'Phase' as columns
+    pivot_df = grouped.pivot_table(index=['Region', 'Season'], columns='Phase', values=['mean', 'std'], aggfunc='first')
+
+    # Flatten MultiIndex columns and rename them
+    pivot_df.columns = ['_'.join(col).strip() for col in pivot_df.columns.values]
+    pivot_df.reset_index(inplace=True)
+    
+    pivot_df.to_csv(f"../periods_species_statistics/{analysis_type}/phase_time_stastics.csv", index=False)
+
 def main():
     analysis_type_to_regions = {
         'BY_RG-all': ['RG1', 'RG2', 'RG3', 'all_RG'],
@@ -283,6 +300,7 @@ def main():
 
     phases = [phase for phase in dfs['Phase'].unique() if phase not in ['Season', 'incipient 2']]
     plot_ridge_plots(dfs, figure_path, phases)
+    phases_statistics(dfs, analysis_type)
 
 if __name__ == '__main__':
     main()
