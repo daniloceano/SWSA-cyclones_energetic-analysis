@@ -323,14 +323,11 @@ def plot_ridge_phases(data):
 
 def plot_ridge_plots(dfs, figure_path, phases, labels):
     regions = dfs['Region'].unique()
-    # for phase, label in zip(phases, labels):
-    #     print('\n-----------------')
-    #     print(f"Plotting for phase: {phase}")
-    #     data = dfs[dfs['Phase'] == phase]
-    #     plot_single_ridge(data, regions, figure_path, phase, label)
-    
-    # phase, label = ('residual', 'H')
-    # plot_single_ridge(dfs, dfs['Region'].unique(), figure_path, phase, label)
+    for phase, label in zip(phases, labels):
+        print('\n-----------------')
+        print(f"Plotting for phase: {phase}")
+        data = dfs[dfs['Phase'] == phase]
+        plot_single_ridge(data, regions, figure_path, phase, label)
 
     plot_ridge_phases(dfs)
 
