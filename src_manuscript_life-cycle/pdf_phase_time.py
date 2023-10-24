@@ -233,20 +233,26 @@ def plot_ridge_phases(data):
 
     phases = ['incipient', 'mature', 'mature 2', 'residual',
               'intensification',  'intensification 2', 'decay', 'decay 2']
+    
+    colors_phases = {'incipient': '#65a1e6',
+                     'intensification': '#f7b538',
+                     'intensification 2': '#dc9209',
+                     'mature': '#d62828',
+                     'mature 2': '#c7010a',
+                     'decay': '#9aa981',
+                     'decay 2': '#5d6a48',
+                     'residual': 'gray'}
 
     duration = data['Duration (hours)']
     
     gs = grid_spec.GridSpec(len(phases), 1)
     fig = plt.figure(figsize=(12, len(phases) * 1.5))  # Adjusted figure height based on number of phases
 
-    upper_percentile = np.percentile(duration, 99) 
     # Set the x-axis limits based on the percentiles
+    upper_percentile = np.percentile(duration, 99) 
     xmin, xmax = 0, upper_percentile
     
     x_d = np.linspace(xmin, xmax, 1000)
-
-    red_shades = ['#9d0208', '#b30109', '#c7010a', '#d9000b', '#dc2f02', '#e14c03', '#e56904', '#ff9066']
-    blue_shades = ['#023e8a', '#0251a0', '#0264b6', '#0077b6', '#0091c3', '#00abd0', '#00c5dd', '#48cae4']
 
     for idx, phase in enumerate(phases):
         phase_data = data[data['Phase'] == phase]
@@ -258,8 +264,9 @@ def plot_ridge_phases(data):
         ax = fig.add_subplot(gs[idx:idx+1, 0])
 
         logprob = kde.score_samples(x_d[:, None])
+
         ax.plot(x_d, np.exp(logprob), color="#f0f0f0", lw=1, linestyle='-')
-        ax.fill_between(x_d, np.exp(logprob), alpha=1, color='b', linestyle='-')
+        ax.fill_between(x_d, np.exp(logprob), alpha=1, color=colors_phases[phase], linestyle='-')
         
         # setting uniform x and y lims
         ax.set_xlim(xmin, xmax)
@@ -293,8 +300,11 @@ def plot_ridge_phases(data):
         meadian_value = np.median(x)
 
         # Draw a vertical line at the mean value
-        ax.axvline(x=meadian_value, ymin=0, ymax=np.exp(logprob).max() + 0.08,
-                            color='grey', linestyle='-', linewidth=4, label="Median")
+        max_kde_value = np.exp(logprob).max()
+        ymax_fraction = 2.8
+        ymax_value = max_kde_value * ymax_fraction
+        ax.axvline(x=meadian_value, ymin=0, ymax=ymax_value,
+                        color='k', linestyle='-', linewidth=4, label="Median")
 
         spines = ["top", "right", "left", "bottom"]
         for s in spines:
@@ -305,7 +315,8 @@ def plot_ridge_phases(data):
         else:
             ax.tick_params(axis='x', labelsize=14)
 
-        ax.text(-0.5, 0, phase, fontweight="bold", fontsize=14, ha="right")
+        ax.text(0.99, 0.01, phase, fontweight="bold", fontsize=14,
+                 ha="right", transform=ax.transAxes)
 
     ax.text((xmax - xmin) / 2, np.exp(logprob).min() - 0.025,
             'Duration (hours)', ha='center', fontsize=16, fontweight="bold")
