@@ -71,8 +71,8 @@ def plot_combined_barplots(df1, df2, output_directory, suffix):
     fig, axes = plt.subplots(1, 2, figsize=(16, 6))
 
     # Plot bar plots for df1 and df2 on the provided axes
-    plot_barplot(df1, 'A)', ax=axes[0], filter=False)
-    plot_barplot(df2, 'B)', ax=axes[1],  filter=False)
+    plot_barplot(df1, '(A)', ax=axes[0], filter=False)
+    plot_barplot(df2, '(B)', ax=axes[1],  filter=False)
 
     # Adjust spacing
     plt.tight_layout()
@@ -86,7 +86,7 @@ output_directory = '../figures/manuscript_life-cycle/'
 os.makedirs(output_directory, exist_ok=True)
 
 # Read data from CSV file
-df = pd.read_csv('../periods_species_statistics/all/count_systems_raw/total_count_of_systems.csv')
+df = pd.read_csv('../periods_species_statistics/70W-no-continental/count_systems_raw/total_count_of_systems_SAt.csv')
 
 # df with all possible phases
 df = df.sort_values(by='Total Count', ascending=False)
