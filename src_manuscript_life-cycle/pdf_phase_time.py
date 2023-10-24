@@ -1,33 +1,13 @@
 import os
 import glob
-import colorsys
 import numpy as np
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import matplotlib.gridspec as grid_spec
 from sklearn.neighbors import KernelDensity
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from scipy import stats
-
-# Constants
-SECONDS_IN_AN_HOUR = 3600
-
-import os
-import glob
-import colorsys
-import numpy as np
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-from tqdm import tqdm
-import matplotlib.gridspec as grid_spec
-from sklearn.neighbors import KernelDensity
-from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor
-from scipy import stats
 
 # Constants
 SECONDS_IN_AN_HOUR = 3600
@@ -305,6 +285,7 @@ def plot_ridge_phases(data):
         ymax_value = max_kde_value * ymax_fraction
         ax.axvline(x=meadian_value, ymin=0, ymax=ymax_value,
                         color='k', linestyle='-', linewidth=4, label="Median")
+        print(f"Median value for {phase}: {meadian_value}")
 
         spines = ["top", "right", "left", "bottom"]
         for s in spines:
@@ -330,7 +311,7 @@ def plot_ridge_phases(data):
     plt.tight_layout()
 
     figure_path = os.path.join('..', 'figures', 'manuscript_life-cycle')
-    fname = os.path.join(figure_path, 'Ridge_Plot_total_All_Phases.png')
+    fname = os.path.join(figure_path, 'duration_PDF_total_all_phases.png')
     plt.savefig(fname, dpi=200)
     print(f"{fname} created.")
 
