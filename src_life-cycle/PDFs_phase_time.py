@@ -257,6 +257,32 @@ def phases_statistics(dfs, analysis_type):
     # Flatten MultiIndex columns and rename them
     pivot_df.columns = ['_'.join(col).strip() for col in pivot_df.columns.values]
     pivot_df.reset_index(inplace=True)
+
+    # Given phases in the desired order
+    phase_order = ["incipient", "intensification", "mature", "decay", 
+                "intensification 2", "mature 2", "decay 2", "residual"]
+
+    # Create an ordered list of columns based on the desired order with mean followed by std
+    ordered_columns = ["Region", "Season"]
+    for phase in phase_order:
+        ordered_columns.append(f"mean_{phase}")
+        ordered_columns.append(f"std_{phase}")
+
+    # Reorder the dataframe columns
+    pivot_df = pivot_df[ordered_columns]
+
+    # Create a custom order for the 'Season' column
+    season_order = ["DJF", "JJA"]
+    pivot_df['Season'] = pd.Categorical(pivot_df['Season'], categories=season_order, ordered=True)
+
+    # Sort by 'Season' first and then by 'Region'
+    pivot_df.sort_values(by=['Season', 'Region'], inplace=True)
+
+    # Identify columns that contain numerical data (excluding 'Region' and 'Season' columns)
+    numeric_columns = pivot_df.columns.difference(['Region', 'Season'])
+
+    # Round the numerical columns to 1 decimal place
+    pivot_df[numeric_columns] = pivot_df[numeric_columns].round(1)
     
     pivot_df.to_csv(f"../periods_species_statistics/{analysis_type}/phase_time_stastics.csv", index=False)
 
