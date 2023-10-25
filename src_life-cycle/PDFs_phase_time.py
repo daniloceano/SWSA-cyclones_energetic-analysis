@@ -25,18 +25,21 @@ def process_csv_file(csv_file):
     try:
         df = pd.read_csv(csv_file, parse_dates=['start', 'end'], index_col=0)
         
-        # Deduce season from the 'start' date
-        month = df['start'].min().month
-        if month in  [12, 1, 2, 6, 7, 8]:
-            season = 'DJF' if month in [12, 1, 2] else 'JJA'
+        # Check if mature phase is present
+        if 'mature' in df.index:
+            mature_month = df.at['mature', 'start'].month
+            
+            # Deduce season from the 'start' date of mature phase
+            if mature_month in  [12, 1, 2, 6, 7, 8]:
+                season = 'DJF' if mature_month in [12, 1, 2] else 'JJA'
+                
+                phase_durations = {
+                    phase: ((df.at[phase, 'end'] - df.at[phase, 'start']).total_seconds() / SECONDS_IN_AN_HOUR)
+                    for phase in df.index
+                }
+                return {**phase_durations, "Season": season}
         
-            phase_durations = {
-                phase: ((df.loc[phase, 'end'] - df.loc[phase, 'start']).total_seconds() / SECONDS_IN_AN_HOUR)
-                for phase in df.index
-            }
-            return {**phase_durations, "Season": season}
-        else:
-            return {}
+        return {}
         
     except Exception as e:
         print(f"Error processing file {csv_file}: {e}")
