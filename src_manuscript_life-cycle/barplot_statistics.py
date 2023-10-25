@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
-def process_df(df, percentage_threshold=1, filter_df=False, exclude_residual=False):
+def process_df(df, percentage_threshold=1, filter_df=False, exclude_residual=False, contain_mature_phase=False):
 
     processed_df = df.copy()
 
@@ -20,9 +20,12 @@ def process_df(df, percentage_threshold=1, filter_df=False, exclude_residual=Fal
                     'Percentage': 'sum'
                     }).sort_values(by='Total Count', ascending=False)
     
+    if contain_mature_phase:
+        processed_df = processed_df[processed_df['Type of System'].str.contains('mature')]
+    
     return processed_df
 
-def plot_barplot(df, label, ax, suffix, filter=False):
+def plot_barplot(df, label, ax, suffix):
     # Mapping labels to the desired scheme
     label_mapping = {
         'incipient': 'Ic',
@@ -43,7 +46,7 @@ def plot_barplot(df, label, ax, suffix, filter=False):
     df['Type of System'] = df['Type of System'].apply(lambda x: ', '.join([label_mapping.get(word, word) for word in x.split(', ')]))
 
     # Determine the orientation based on the filter flag
-    orient = 'h' if not filter else 'v'
+    orient = 'h'
 
     if suffix == 'filtered':
         unique_sequences = df['Type of System'].str.replace(', R', '').str.replace('R, ', '').str.replace('R', '').unique()
@@ -76,6 +79,11 @@ def plot_barplot(df, label, ax, suffix, filter=False):
     ax.set_xlabel(None)
     ax.set_ylabel(None)
 
+    # Add text annotations for total count and percentage
+    total_count = df['Total Count'].sum()
+    total_percentage = df['Percentage'].sum()
+    ax.title.set_text(f'Total Count: {total_count} - Total Percentage: {total_percentage:.2f}%')
+
     sns.despine(fig=None, ax=None, top=True, right=True, left=False, bottom=False, offset=None, trim=False)
 
     
@@ -88,14 +96,7 @@ def plot_combined_barplots(df1, df2, output_directory, suffix):
 
     # Adjust spacing
     plt.tight_layout()
-    plt.subplots_adjust(top=0.95)
-
-    # Add text annotations for total count and percentage
-    total_count = df1['Total Count'].sum()
-    total_percentage = df1['Percentage'].sum()
-    axes[0].text(1, 1, f'{total_count} systems - {total_percentage:.1f}%',
-                  fontweight='bold', fontsize=18,
-                 transform=axes[0].transAxes, ha='left', va='bottom')
+    plt.subplots_adjust(top=0.9)
 
     # Save the combined figure
     combined_output_file = os.path.join(output_directory, f'combined_barplots_{suffix}.png')
@@ -118,10 +119,10 @@ df_excluded_residual = process_df(df, filter_df=False, exclude_residual=True)
 filtered_df = process_df(df, filter_df=True, exclude_residual=False)
 
 # df for phases with more than 1% and exluding residual phases
-filtered_df_exclude_residual = process_df(df, filter_df=True, exclude_residual=True)
+filtered_df_exclude_residual_contain_mature = process_df(df, filter_df=True, exclude_residual=True, contain_mature_phase=True)
 # export csv for further analysis
-filtered_df_exclude_residual.to_csv('../periods_species_statistics/70W-no-continental/total_count_of_systems_filtered.csv')
+filtered_df_exclude_residual_contain_mature.to_csv('../periods_species_statistics/70W-no-continental/total_count_of_systems_filtered.csv')
 
 # Combine the four bar plots into one figure
 plot_combined_barplots(df, df_excluded_residual, output_directory, 'total')
-plot_combined_barplots(filtered_df, filtered_df_exclude_residual, output_directory, 'filtered')
+plot_combined_barplots(filtered_df, filtered_df_exclude_residual_contain_mature, output_directory, 'filtered')
