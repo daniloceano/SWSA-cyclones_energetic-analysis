@@ -75,7 +75,7 @@ systems_for_representing = ['SAt_20101172', # Ic, It, M, D
                             'SAt_19970580', # D, It, M, D2
                             'SAt_19790004', # D
                             'SAt_20170528', # It, M, D, It2, M2, D2
-                            'SAt_19820786', # It
+                            'SAt_19950912', # It
                             'SAt_20060514', # D, It
                             'SAt_20040233', # Ic, D
                             ]   
