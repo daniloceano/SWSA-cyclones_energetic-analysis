@@ -107,7 +107,7 @@ def plot_specific_peaks_valleys(df, ax, *kwargs):
                    s=marker_size, linewidth=2, zorder=zorder)
 
 # Sample data
-source_dir = '/home/daniloceano/Documents/Programs_and_scripts/SWSA-cyclones_energetic-analysis/LEC_results-0.99/'
+source_dir = '../LEC_results-q0.99/'
 RG = 3
 cyclone_id = '20080518'
 track_file = os.path.join(source_dir, f'RG{RG}-0.99-{cyclone_id}_ERA5_track-15x15/RG{RG}-0.99-{cyclone_id}_ERA5_track-15x15_track')
