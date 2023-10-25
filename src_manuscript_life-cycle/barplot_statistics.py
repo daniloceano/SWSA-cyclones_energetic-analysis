@@ -22,7 +22,7 @@ def process_df(df, percentage_threshold=1, filter_df=False, exclude_residual=Fal
     
     return processed_df
 
-def plot_barplot(df, label, ax, filter=False):
+def plot_barplot(df, label, ax, suffix, filter=False):
     # Mapping labels to the desired scheme
     label_mapping = {
         'incipient': 'Ic',
@@ -36,9 +36,6 @@ def plot_barplot(df, label, ax, filter=False):
         'residual': 'R'
     }
 
-    total_count = df['Total Count'].sum()
-    total_percentage = df['Percentage'].sum()
-
     # Convert 'Type of System' column to string to handle NaN values
     df['Type of System'] = df['Type of System'].astype(str)
 
@@ -48,9 +45,24 @@ def plot_barplot(df, label, ax, filter=False):
     # Determine the orientation based on the filter flag
     orient = 'h' if not filter else 'v'
 
-    # Create a bar plot using Seaborn on the provided axes
-    sns.barplot(x='Total Count', y='Type of System', data=df, orient=orient, ci=None, palette='pastel', edgecolor='grey', ax=ax)
-    ax.set_title(f'{total_count} systems - {total_percentage:.1f}%', fontweight='bold')
+    if suffix == 'filtered':
+        unique_sequences = df['Type of System'].str.replace(', R', '').str.replace('R, ', '').str.replace('R', '').unique()
+        palette = sns.color_palette("pastel", n_colors=len(unique_sequences))
+        color_mapping = dict(zip(unique_sequences, palette))
+        # Modify the sequence column to exclude the residual stage
+        df['Sequence Without R'] = df['Type of System'].str.replace(', R', '').str.replace('R, ', '').str.replace('R', '')
+
+        # Create a new color column using the mapping
+        df['Color'] = df['Sequence Without R'].map(color_mapping)
+
+        # Plot using the color column
+        sns.barplot(x='Total Count', y='Type of System', data=df, orient=orient, ci=None, 
+                    palette=df.set_index('Type of System')['Color'].to_dict(), edgecolor='grey', ax=ax)
+
+    else:
+        # Create a bar plot using Seaborn on the provided axes
+        sns.barplot(x='Total Count', y='Type of System', data=df, orient=orient, ci=None, palette='pastel', edgecolor='grey', ax=ax)
+    
     ax.text(0.95, 0.05, label, ha='right', fontsize=14, va='bottom', transform=ax.transAxes, fontweight='bold')
     
     # Add text annotations for total count and percentage on the right side of each bar
@@ -71,11 +83,19 @@ def plot_combined_barplots(df1, df2, output_directory, suffix):
     fig, axes = plt.subplots(1, 2, figsize=(16, 6))
 
     # Plot bar plots for df1 and df2 on the provided axes
-    plot_barplot(df1, '(A)', ax=axes[0], filter=False)
-    plot_barplot(df2, '(B)', ax=axes[1],  filter=False)
+    plot_barplot(df1, '(A)', axes[0], suffix)
+    plot_barplot(df2, '(B)', axes[1], suffix)
 
     # Adjust spacing
     plt.tight_layout()
+    plt.subplots_adjust(top=0.95)
+
+    # Add text annotations for total count and percentage
+    total_count = df1['Total Count'].sum()
+    total_percentage = df1['Percentage'].sum()
+    axes[0].text(1, 1, f'{total_count} systems - {total_percentage:.1f}%',
+                  fontweight='bold', fontsize=18,
+                 transform=axes[0].transAxes, ha='left', va='bottom')
 
     # Save the combined figure
     combined_output_file = os.path.join(output_directory, f'combined_barplots_{suffix}.png')
@@ -100,7 +120,7 @@ filtered_df = process_df(df, filter_df=True, exclude_residual=False)
 # df for phases with more than 1% and exluding residual phases
 filtered_df_exclude_residual = process_df(df, filter_df=True, exclude_residual=True)
 # export csv for further analysis
-filtered_df_exclude_residual.to_csv('../periods_species_statistics/total_count_of_systems_filtered.csv')
+filtered_df_exclude_residual.to_csv('../periods_species_statistics/70W-no-continental/total_count_of_systems_filtered.csv')
 
 # Combine the four bar plots into one figure
 plot_combined_barplots(df, df_excluded_residual, output_directory, 'total')

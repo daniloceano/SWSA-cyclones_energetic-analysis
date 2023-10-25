@@ -65,16 +65,16 @@ results_dirs = {'RG1': '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_
                'RG3': '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/'
                }
 
-systems_for_representing = ['SAt_19820363', # Ic, It, M, D
-                             '', # It, M, D
-                             'SAt_19800410', # Ic, D, It, M, D2
-                             '', # Ic, It, M, D, It2, M2, D2
-                             '', # D, It, M, D2
-                             'SAt_19790004', # D
-                             '', # It, M, D, It2, M2, D2
-                             'SAt_19820786', # It
-                             '', # D, It
-                             '', # Ic, D
+systems_for_representing = ['SAt_20101172', # Ic, It, M, D
+                            'SAt_19810380', # It, M, D
+                            'SAt_19800410', # Ic, D, It, M, D2
+                            'SAt_20020611', # Ic, It, M, D, It2, M2, D2
+                            'SAt_19991004', # D, It, M, D2
+                            'SAt_19790004', # D
+                            'SAt_20170528', # It, M, D, It2, M2, D2
+                            'SAt_19820786', # It
+                            'SAt_20060514', # D, It
+                            'SAt_20040233', # Ic, D
                             ]   
 
 labels = ["A)", "B)", "C)", "D)", "E)", "F)", "G)"]
