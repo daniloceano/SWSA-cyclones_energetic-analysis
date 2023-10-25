@@ -35,7 +35,7 @@ def plot_vorticity(df, ax=None, vorticity=None, fig_dir=None):
     ax.legend(lines + lines2, labels + labels2, loc='upper left',
                fontsize=18, bbox_to_anchor=(-0.45, 0.8))
 
-    plot_label(ax, "A)")
+    plot_label(ax, "(A)")
     adjust_labels(ax)
  
 
@@ -139,27 +139,27 @@ plot_vorticity(df, ax=ax, vorticity=vorticity, fig_dir=None)
 
 ax2 = fig.add_subplot(232)
 df_int = find.find_intensification_period(df.copy())
-plot_phase(df_int, "intensification", "B)", ax2)
+plot_phase(df_int, "intensification", "(B)", ax2)
 plot_specific_peaks_valleys(df_int, ax2, "z_peaks", "z_valleys")
 
 ax3 = fig.add_subplot(233)
 df_decay = find.find_decay_period(df.copy())
-plot_phase(df_decay, "decay", "C)", ax3)
+plot_phase(df_decay, "decay", "(C)", ax3)
 plot_specific_peaks_valleys(df_decay, ax3, "z_peaks", "z_valleys")
 
 ax4 = fig.add_subplot(234)
 df_mature = find.find_mature_stage(df.copy())
-plot_phase(df_mature, "mature", "D)", ax4)
+plot_phase(df_mature, "mature", "(D)", ax4)
 plot_specific_peaks_valleys(df_mature, ax4, "z_peaks", "z_valleys")
 
 ax5 = fig.add_subplot(235)
 df_residual = find.find_residual_period(df.copy())
-plot_phase(df_residual, "residual", "E)", ax5)
+plot_phase(df_residual, "residual", "(E)", ax5)
 #plot_specific_peaks_valleys(df_residual, ax5, "z_peaks", "z_valleys")
 
 ax6 = fig.add_subplot(236)
 df_incipient = find.find_mature_stage(df.copy())
-plot_phase(df_incipient, "incipient", "F)", ax6)
+plot_phase(df_incipient, "incipient", "(F)", ax6)
 plot_specific_peaks_valleys(df_incipient, ax6, "z_peaks", "z_valleys")
 
 fname = os.path.join(fig_dir, "methodology.png")
