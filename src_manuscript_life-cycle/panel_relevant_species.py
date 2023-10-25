@@ -4,6 +4,7 @@ from glob import glob
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from matplotlib.ticker import MaxNLocator
 
 from cyclophaser import determine_periods
 from cyclophaser.determine_periods import periods_to_dict, process_vorticity
@@ -15,10 +16,10 @@ def plot_all_periods(phases_dict, df, ax, vorticity, i):
                           'decay': '#9aa981',
                           'residual': 'gray'}
 
-    ax.plot(vorticity.time, vorticity.zeta, linewidth=6, color='gray', alpha=0.8, label=r'ζ')
-    ax.plot(vorticity.time, vorticity.vorticity_smoothed, linewidth=4,
+    ax.plot(vorticity.time, vorticity.zeta, linewidth=10, color='gray', alpha=0.8, label=r'ζ')
+    ax.plot(vorticity.time, vorticity.vorticity_smoothed, linewidth=6,
              c='#1d3557', alpha=0.8, label=r'$ζ_{fs}$')
-    ax.plot(vorticity.time, vorticity.vorticity_smoothed2, linewidth=4,
+    ax.plot(vorticity.time, vorticity.vorticity_smoothed2, linewidth=3,
              c='#e63946', alpha=0.6, label=r'$ζ_{fs^{2}}$')
 
     if len(vorticity.time) < 50:
@@ -40,15 +41,20 @@ def plot_all_periods(phases_dict, df, ax, vorticity, i):
                         alpha=0.5, color=color, label=base_phase)
 
     if i == 0:
-        ax.legend(loc='upper right', bbox_to_anchor=(2.1, -2.2), fontsize=14)
+        ax.legend(loc='upper right', bbox_to_anchor=(7, 0.25), fontsize=14)
 
-    ax.text(0.84, 0.84, labels[i], fontsize=16, fontweight='bold', ha='left', va='bottom', transform=ax.transAxes)
+    ax.text(0.78, 0.84, labels[i], fontsize=16, fontweight='bold', ha='left', va='bottom', transform=ax.transAxes)
 
     ax.ticklabel_format(axis='y', style='sci', scilimits=(-3, 3))
     date_format = mdates.DateFormatter("%Y-%m-%d")
     ax.xaxis.set_major_formatter(date_format)
+
+    # Add this line to set x-tick locator
+    ax.xaxis.set_major_locator(MaxNLocator(nbins=6))  
+
     plt.setp(ax.get_xticklabels(), rotation=45, ha='right', fontsize=12)
     plt.setp(ax.get_yticklabels(), fontsize=12)
+
 
 options = {
         "vorticity_column": 'vor42',
@@ -60,16 +66,13 @@ options = {
             "use_smoothing_twice": "auto"}
     }
 
-results_dirs = {'RG1': '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/',
-               'RG2': '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG2_csv/',
-               'RG3': '../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG3_csv/'
-               }
+results_dir = '../raw_data/SAt/'
 
 systems_for_representing = ['SAt_20101172', # Ic, It, M, D
-                            'SAt_19810380', # It, M, D
-                            'SAt_19800410', # Ic, D, It, M, D2
-                            'SAt_20020611', # Ic, It, M, D, It2, M2, D2
-                            'SAt_19991004', # D, It, M, D2
+                            'SAt_20190644', # It, M, D
+                            'SAt_20001176', # Ic, D, It, M, D2
+                            'SAt_19840092', # Ic, It, M, D, It2, M2, D2
+                            'SAt_19970580', # D, It, M, D2
                             'SAt_19790004', # D
                             'SAt_20170528', # It, M, D, It2, M2, D2
                             'SAt_19820786', # It
@@ -77,11 +80,11 @@ systems_for_representing = ['SAt_20101172', # Ic, It, M, D
                             'SAt_20040233', # Ic, D
                             ]   
 
-labels = ["A)", "B)", "C)", "D)", "E)", "F)", "G)"]
+labels = ["(A)", "(B)", "(C)", "(D)", "(E)", "(F)", "(G)", "(H)", "(I)", "(J)"]
 
-count_species = pd.read_csv('total_count_of_systems_filtered.csv', index_col=0)
+count_species = pd.read_csv('../periods_species_statistics/70W-no-continental/total_count_of_systems_filtered.csv', index_col=0)
 
-fig = plt.figure(figsize=(10, 10))
+fig = plt.figure(figsize=(15, 7))
 
 i = 0
 for system in systems_for_representing:
@@ -92,8 +95,6 @@ for system in systems_for_representing:
     RG = system.split('_')[0]
 
     year = str(cyclone_id[0:4])
-
-    results_dir = results_dirs[RG]
 
     results = glob(f'{results_dir}/*')
 
@@ -109,7 +110,7 @@ for system in systems_for_representing:
 
         cyclone_id = int(cyclone_id)
         
-        tracks.columns = ['track_id', 'dt', 'date', 'lon vor', 'lat vor', 'vor42', 'lon mslp', 'lat mslp', 'mslp', 'lon 10spd', 'lat 10spd', '10spd']
+        tracks.columns = ['track_id', 'date', 'lon vor', 'lat vor', 'vor42']
 
         track = tracks[tracks['track_id']==cyclone_id][['date','vor42']]
 
@@ -129,7 +130,7 @@ for system in systems_for_representing:
             df = determine_periods(tmp_file, **options)
             periods_dict = periods_to_dict(df)
 
-            ax = fig.add_subplot(3, 3, i+1)
+            ax = fig.add_subplot(2, 5, i+1)
 
             zeta_df = pd.DataFrame(track['vor42'].rename('zeta'))
             zeta_df.index = pd.to_datetime(track['time'])
@@ -143,7 +144,7 @@ for system in systems_for_representing:
 
             os.remove(tmp_file)
         
-plt.subplots_adjust(hspace=0.6)
+plt.subplots_adjust(hspace=0.6, bottom=0.15, right=0.83, top=0.96, left=0.05)
 fname = f'../figures/manuscript_life-cycle/main_species_life-cycle.png'
 plt.savefig(fname, dpi=500)
 print(f"{fname} created.")
