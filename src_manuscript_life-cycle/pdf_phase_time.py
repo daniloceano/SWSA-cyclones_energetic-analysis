@@ -25,7 +25,7 @@ def process_csv_file(csv_file):
     df = pd.read_csv(csv_file, parse_dates=['start', 'end'], index_col=0)
 
     # Remove whenever there is only one phase
-    if len(df) <= 1:
+    if "mature" not in df.index:
         return {}
     
     else:

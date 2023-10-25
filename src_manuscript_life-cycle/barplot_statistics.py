@@ -72,9 +72,9 @@ def plot_barplot(df, label, ax, suffix):
     for index, value in enumerate(df['Total Count']):
         percentage = df.loc[df.index[index], 'Percentage']
         if orient == 'h':
-            ax.text(value + 100, index, f"{value} ({percentage:.2f}%)", va='center', color='black', fontweight='bold')
+            ax.text(value + 100, index, f"{value} ({percentage:.2f}%)", va='center', color='black')
         else:
-            ax.text(index, value + 100, f"{value} ({percentage:.2f}%)", ha='center', color='black', fontweight='bold')
+            ax.text(index, value + 100, f"{value} ({percentage:.2f}%)", ha='center', color='black')
 
     ax.set_xlabel(None)
     ax.set_ylabel(None)
@@ -83,6 +83,7 @@ def plot_barplot(df, label, ax, suffix):
     total_count = df['Total Count'].sum()
     total_percentage = df['Percentage'].sum()
     ax.title.set_text(f'Total Count: {total_count} - Total Percentage: {total_percentage:.2f}%')
+    ax.title.set_fontsize(14)
 
     sns.despine(fig=None, ax=None, top=True, right=True, left=False, bottom=False, offset=None, trim=False)
 
