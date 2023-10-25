@@ -3,14 +3,17 @@ import glob
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from tqdm import tqdm
+import scipy.stats as stats
 import matplotlib.gridspec as grid_spec
+
+from tqdm import tqdm
 from sklearn.neighbors import KernelDensity
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 
 # Constants
 SECONDS_IN_AN_HOUR = 3600
+alpha = 0.05  # Significance level
 
 def process_csv_file(csv_file):
     """
@@ -106,6 +109,34 @@ def create_seaborn_dataframe(duration_data, region):
 
     return pd.DataFrame(data)
 
+def compare_djf_jja(data_for_region):
+    # Extract DJF and JJA data
+    djf_data = data_for_region[data_for_region['Season'] == 'DJF']['Duration (hours)'].dropna().values
+    jja_data = data_for_region[data_for_region['Season'] =='JJA']['Duration (hours)'].dropna().values
+
+    # Check if lengths are same, if not, trim to shorter length
+    min_len = min(len(djf_data), len(jja_data))
+    djf_data = djf_data[:min_len]
+    jja_data = jja_data[:min_len]
+
+    # Test normality for both DJF and JJA
+    _, p_value_djf = stats.shapiro(djf_data)
+    _, p_value_jja = stats.shapiro(jja_data)
+
+    # Define significance level, e.g., 0.05
+    alpha = 0.05
+
+    if p_value_djf > alpha and p_value_jja > alpha:
+        # Both samples are normally distributed
+        _, p_value = stats.ttest_rel(djf_data, jja_data)
+        test_used = 'paired t-test'
+    else:
+        # At least one of the samples isn't normally distributed
+        _, p_value = stats.wilcoxon(djf_data, jja_data)
+        test_used = 'Wilcoxon signed-rank test'
+
+    return test_used, p_value
+
 def plot_single_ridge(data, regions, figure_path, phase):
     """
     Plot a single ridge plot for given data, combining both seasons in one subplot.
@@ -142,6 +173,19 @@ def plot_single_ridge(data, regions, figure_path, phase):
     for idx, rg in enumerate(regions):
         color_djf = red_shades[idx]
         color_jja = blue_shades[idx]
+
+        # Get data for the region
+        data_for_region = data[data['Region'] == rg]
+
+        # Compare DJF and JJA data for the region
+        test_used, p_value = compare_djf_jja(data_for_region)
+
+        # Determine statistical significance
+        if p_value <= alpha:
+            significance = "statistically significant"
+        else:
+            significance = "not statistically significant"
+        
         for season, col in zip(['DJF', 'JJA'], [0, 1]):                
             season_data = data[(data['Region'] == rg) & (data['Season'] == season)]
             x = np.array(season_data['Duration (hours)'])
@@ -187,18 +231,29 @@ def plot_single_ridge(data, regions, figure_path, phase):
 
             # Calculate the mean of the data for the current region
             mean_value = x.mean()
+            meadian_value = np.median(x)
 
             # Draw a vertical line at the mean value
             ax.axvline(x=mean_value, ymin=0, ymax=np.exp(logprob).max() + 0.2, 
                                 color='k', linestyle='-', linewidth=2, label="Mean")
+            ax.axvline(x=meadian_value, ymin=0, ymax=np.exp(logprob).max() + 0.2,
+                                color='k', linestyle='--', alpha=0.8, linewidth=2, label="Median")
+                       
 
             spines = ["top", "right", "left", "bottom"]
             for s in spines:
                 ax.spines[s].set_visible(False)
 
             if col == 0:
-                ax.text(-0.5, 0, rg, fontweight="bold", fontsize=14, ha="right")
+                ax.text(-0.5, 0, f"{rg}\n", fontweight="bold", fontsize=14, ha="right")
+                ax.text(-0.5, 0, f"({mean_value:.1f} h)", fontsize=10, ha="right")
+            else:
+                ax.text(np.max(x_d)*1.15, 0, f"({mean_value:.1f} h)", fontsize=10, ha="right")
+                if p_value <= alpha:
+                    ax.text(np.max(x_d) - (np.max(x_d)*1.05), 0.01, "*", fontweight="bold", fontsize=14, ha="right", color="k")
+
             
+
             if idx != len(regions)-1:                
                 ax.set_xticklabels([])
 
@@ -214,6 +269,7 @@ def plot_single_ridge(data, regions, figure_path, phase):
 
             print(f"Mean duration for {rg} in {season}: {mean_value:.2f} hours")
             print(f"Max duration for {rg} in {season}: {season_data['Duration (hours)'].max()} hours")
+            print(f"For region {rg} using {test_used}, the difference is {significance} (p-value: {p_value:.4f})")
 
     fig.text(0.5, 0.05, f'Duration (hours) - {phase}', ha='center', fontsize=16, fontweight="bold")
 
