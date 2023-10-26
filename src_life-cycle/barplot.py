@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:44:54 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/18 09:32:33 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/26 10:42:12 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,6 +19,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+from scipy.stats import mannwhitneyu
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -26,11 +27,12 @@ def process_df(df, percentage_threshold=1, filter_df=False, exclude_residual=Fal
 
     processed_df = df.copy()
 
-    # Filter rows based on percentage and number of phases
+    # Filter rows based on percentage and if contains mature stage
     if filter_df:
         processed_df = df[df['Percentage'] > percentage_threshold]
         processed_df.loc[:, 'Num Phases'] = processed_df.loc[:, 'Type of System'].copy().apply(lambda x: len(x.split(', ')))
-    
+        processed_df = processed_df[processed_df['Type of System'].str.contains('mature')]
+
     if exclude_residual:
         # Exclude systems with the 'residual' stage
         processed_df.loc[:, 'Type of System'] = processed_df.loc[:, 'Type of System'].copy().str.replace(', residual', '')
@@ -57,23 +59,56 @@ def plot_combined_barplot(df_counts, title, fname):
         'decay 2': 'D2',
     }
 
-    # Create a bar plot using Seaborn
-    plt.figure(figsize=(12, 6))
-    sns.barplot(data=df_counts, orient='h', ci=None, palette='pastel', edgecolor='grey')
-    plt.title(title, fontweight='bold')
+    # Calculate total counts for each season
+    total_counts = df_counts.groupby('Season')['Total Count'].sum()
+
+    # Compute percentage for each Type of System based on the total count of its respective season
+    df_counts['Percentage_season'] = df_counts.apply(lambda row: (row['Total Count'] / total_counts[row['Season']]) * 100, axis=1)
 
     # Replace labels with the desired scheme and join them back
     df_counts['Type of System'] = df_counts['Type of System'].apply(lambda x: ', '.join([label_mapping.get(word, word) for word in x.split(', ')]))
 
-    # Draw a nested barplot by species and sex
+    # Separate DJF and JJA counts for each Type of System for statistical testing
+    df_djf = df_counts[df_counts['Season'] == 'DJF']
+    df_jja = df_counts[df_counts['Season'] == 'JJA']
+
+    significant_diff = {}
+
+    # Perform Mann-Whitney U test for each Type of System
+    for system_type in df_counts['Type of System'].unique():
+        djf_values = df_djf[df_djf['Type of System'] == system_type]['Total Count']
+        jja_values = df_jja[df_jja['Type of System'] == system_type]['Total Count']
+
+        # Ensure values are of type float or int and not NaN
+        djf_values = int(djf_values.dropna().astype(float).values) if len(djf_values) > 0 else 0
+        jja_values = int(jja_values.dropna().astype(float).values) if len(jja_values) > 0 else 0
+        
+        _, p_val = mannwhitneyu(djf_values, jja_values, alternative='two-sided')
+        if p_val < 0.05:
+            significant_diff[system_type] = "*"
+
+    # Draw a nested barplot by species and season using Percentage on y-axis
     g = sns.catplot(
         data=df_counts, kind="bar",
-        x="Type of System", y="Total Count", hue="Season",
-          palette="pastel", height=6
-    )
-    g.set_axis_labels("", "")
+        x="Type of System", y="Percentage_season", hue="Season",
+        palette="pastel", height=6
+        )
+    
+    # Annotate bars with * for significant differences
+    for p in g.ax.patches:
+        height = p.get_height()
+        g.ax.text(p.get_x() + p.get_width()/2., height + 1, 
+                significant_diff.get(p.get_x(), ""), 
+                ha="center")
+    
     g.legend.set_title("")
     plt.title(title, fontweight='bold')
+
+    if df_counts['Type of System'].nunique() > 1:
+        plt.xticks(rotation=45, ha='right')
+
+    plt.savefig(fname, bbox_inches='tight')
+    print(f'{fname} saved.')
 
     if df_counts['Type of System'].nunique() > 1:
         plt.xticks(rotation=45, ha='right')
@@ -146,7 +181,7 @@ os.makedirs(fig_output_directory, exist_ok=True)
 os.makedirs(csv_directory_processed, exist_ok=True)
 
 # List of season names
-seasons = ['JJA', 'MAM', 'SON', 'DJF', 'total']
+seasons = ['JJA', 'DJF', 'total']
 
 # List of RGs
 if analysis_type == 'BY_RG-all': 
@@ -182,7 +217,7 @@ for RG in RGs:
         # df excluding residual phases
         df_excluded_residual = process_df(df, filter_df=False, exclude_residual=True)
 
-        # df for phases with more than 1%
+        # df for phases with more than 1% and with mature
         filtered_df = process_df(df, filter_df=True, exclude_residual=False)
 
         # df for phases with more than 1% and exluding residual phases
