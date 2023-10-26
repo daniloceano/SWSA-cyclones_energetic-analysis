@@ -124,9 +124,6 @@ def plot_single_ridge(data, regions, figure_path, phase, label):
     
     x_d = np.linspace(xmin, xmax, kde_params[phase][1])
 
-    red_shades = ['#9d0208', '#b30109', '#c7010a', '#d9000b', '#dc2f02', '#e14c03', '#e56904', '#ff9066']
-    blue_shades = ['#023e8a', '#0251a0', '#0264b6', '#0077b6', '#0091c3', '#00abd0', '#00c5dd', '#48cae4']
-
     for idx, rg in enumerate(regions):
         region_data = data[(data['Region'] == rg)]
         x = np.array(region_data['Duration (hours)'])
@@ -238,7 +235,7 @@ def plot_ridge_phases(data):
         phase_data = data[data['Phase'] == phase]
         x = np.array(phase_data['Duration (hours)'])
         
-        kde = KernelDensity(bandwidth=2, kernel='gaussian')
+        kde = KernelDensity(bandwidth=3, kernel='gaussian')
         kde.fit(x[:, None])
 
         ax = fig.add_subplot(gs[idx:idx+1, 0])
@@ -279,6 +276,7 @@ def plot_ridge_phases(data):
         # Calculate the mean of the data for the current region
         mean_value = np.mean(x)
         meadian_value = np.median(x)
+        std = np.std(x)
 
         # Draw a vertical line at the mean value
         max_kde_value = np.exp(logprob).max()
@@ -287,7 +285,7 @@ def plot_ridge_phases(data):
         
         ax.axvline(x=mean_value, ymin=0, ymax=ymax_value,
                         color='k', linestyle='-', linewidth=4, label="Mean")
-        ax.axvline(x=meadian_value, ymin=0, ymax=ymax_value,
+        ax.axvline(x=meadian_value, ymin=0, ymax=ymax_value * 1.3,
                         color='k', linestyle='--', linewidth=4, alpha=0.8, label="Median")
         
         print(f"Mean value for {phase}: {mean_value}, median: {meadian_value}")
@@ -301,7 +299,7 @@ def plot_ridge_phases(data):
         else:
             ax.tick_params(axis='x', labelsize=14)
 
-        ax.text(0.99, 0.01, phase, fontweight="bold", fontsize=14,
+        ax.text(0.99, 0.01, f"{phase}\n({mean_value:.1f} ± {std:.1f})", fontweight="bold", fontsize=14,
                  ha="right", transform=ax.transAxes)
 
     ax.text((xmax - xmin) / 2, np.exp(logprob).min() - 0.025,
