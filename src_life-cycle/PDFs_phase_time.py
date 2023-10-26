@@ -179,12 +179,6 @@ def plot_single_ridge(data, regions, figure_path, phase):
 
         # Compare DJF and JJA data for the region
         test_used, p_value = compare_djf_jja(data_for_region)
-
-        # Determine statistical significance
-        if p_value <= alpha:
-            significance = "statistically significant"
-        else:
-            significance = "not statistically significant"
         
         for season, col in zip(['DJF', 'JJA'], [0, 1]):                
             season_data = data[(data['Region'] == rg) & (data['Season'] == season)]
@@ -232,6 +226,7 @@ def plot_single_ridge(data, regions, figure_path, phase):
             # Calculate the mean of the data for the current region
             mean_value = x.mean()
             meadian_value = np.median(x)
+            std = np.std(x)
 
             # Draw a vertical line at the mean value
             ax.axvline(x=mean_value, ymin=0, ymax=np.exp(logprob).max() + 0.2, 
@@ -246,13 +241,11 @@ def plot_single_ridge(data, regions, figure_path, phase):
 
             if col == 0:
                 ax.text(-0.5, 0, f"{rg}\n", fontweight="bold", fontsize=14, ha="right")
-                ax.text(-0.5, 0, f"({mean_value:.1f} h)", fontsize=10, ha="right")
+                ax.text(-0.5, 0, f"({mean_value:.1f} ± {std:.1f})", fontsize=10, ha="right")
             else:
-                ax.text(np.max(x_d)*1.15, 0, f"({mean_value:.1f} h)", fontsize=10, ha="right")
+                ax.text(np.max(x_d)*1.15, 0.005, f"({mean_value:.1f} ± {std:.1f})", fontsize=10, ha="right")
                 if p_value <= alpha:
                     ax.text(np.max(x_d) - (np.max(x_d)*1.05), 0.01, "*", fontweight="bold", fontsize=14, ha="right", color="k")
-
-            
 
             if idx != len(regions)-1:                
                 ax.set_xticklabels([])
@@ -266,10 +259,6 @@ def plot_single_ridge(data, regions, figure_path, phase):
             if col == 1:
                 pos = ax.get_position()
                 ax.set_position([pos.x0 + 0.01, pos.y0, pos.width, pos.height])
-
-            print(f"Mean duration for {rg} in {season}: {mean_value:.2f} hours")
-            print(f"Max duration for {rg} in {season}: {season_data['Duration (hours)'].max()} hours")
-            print(f"For region {rg} using {test_used}, the difference is {significance} (p-value: {p_value:.4f})")
 
     fig.text(0.5, 0.05, f'Duration (hours) - {phase}', ha='center', fontsize=16, fontweight="bold")
 
@@ -358,7 +347,7 @@ def main():
     figure_path = os.path.join('..', 'figures', 'periods_statistics', analysis_type, 'phase_time')
     ensure_directory_exists(figure_path)
 
-    phase_time_database = f"../periods_species_statistics/{analysis_type}/phase_time_database_djf_jja.csv"
+    phase_time_database = f"../periods_species_statistics/{analysis_type}/phase_time/phase_time_database_djf_jja.csv"
 
     try:
         dfs = pd.read_csv(phase_time_database)
