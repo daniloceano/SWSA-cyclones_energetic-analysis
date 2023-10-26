@@ -343,7 +343,7 @@ def phases_statistics(dfs, analysis_type):
     # Round the numerical columns to 1 decimal place
     pivot_df[numeric_columns] = pivot_df[numeric_columns].round(1)
     
-    pivot_df.to_csv(f"../periods_species_statistics/{analysis_type}/phase_time_stastics.csv", index=False)
+    pivot_df.to_csv(f"../periods_species_statistics/{analysis_type}/phase_time/phase_time_stastics_djf_jja.csv", index=False)
 
 def main():
     analysis_type_to_regions = {
@@ -358,7 +358,7 @@ def main():
     figure_path = os.path.join('..', 'figures', 'periods_statistics', analysis_type, 'phase_time')
     ensure_directory_exists(figure_path)
 
-    phase_time_database = f"../periods_species_statistics/{analysis_type}/phase_time.csv"
+    phase_time_database = f"../periods_species_statistics/{analysis_type}/phase_time_database_djf_jja.csv"
 
     try:
         dfs = pd.read_csv(phase_time_database)
