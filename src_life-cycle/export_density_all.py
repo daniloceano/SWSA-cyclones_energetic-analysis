@@ -6,7 +6,7 @@
 #    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/11 16:18:58 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/25 20:36:14 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -114,6 +114,9 @@ def process_period_file(args):
     periods.columns = ['period', 'start', 'end']
     periods = periods.set_index('period')
 
+    if 'mature' not in periods.index:
+        return pd.DataFrame([], columns=['track_id', 'date', 'period'])
+
     tracks_id = int(period_file.split('_')[-1].split('.csv')[0])
     track = tracks[tracks['track_id'] == tracks_id].copy()
     track['date'] = pd.to_datetime(track['date'])
@@ -133,7 +136,6 @@ def get_periods(analysis_type, periods_directory, tracks):
     print(f"Merging periods for {analysis_type}...")
 
     period_files = sorted(os.listdir(periods_directory))
-    # period_files = period_files[:100]
 
     arguments = [(period_file, periods_directory, tracks) for period_file in period_files]
 
