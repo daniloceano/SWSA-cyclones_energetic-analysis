@@ -41,13 +41,15 @@ def plot_all_periods(phases_dict, df, ax, vorticity, i):
                         alpha=0.5, color=color, label=base_phase)
 
     if i == 0:
-        ax.legend(loc='upper right', bbox_to_anchor=(7, 0.25), fontsize=14)
+        ax.legend(loc='upper right', bbox_to_anchor=(4.1, 0.25), fontsize=14)
 
-    ax.text(0.78, 0.84, labels[i], fontsize=16, fontweight='bold', ha='left', va='bottom', transform=ax.transAxes)
+    ax.text(0.85, 0.84, labels[i], fontsize=16, fontweight='bold', ha='left', va='bottom', transform=ax.transAxes)
 
     ax.ticklabel_format(axis='y', style='sci', scilimits=(-3, 3))
     date_format = mdates.DateFormatter("%Y-%m-%d")
     ax.xaxis.set_major_formatter(date_format)
+    ax.set_xlim(vorticity.time.min(), vorticity.time.max())
+    ax.set_ylim(vorticity.zeta.min() - 0.25e-5, 0)
 
     # Add this line to set x-tick locator
     ax.xaxis.set_major_locator(MaxNLocator(nbins=6))  
@@ -73,11 +75,7 @@ systems_for_representing = ['SAt_20101172', # Ic, It, M, D
                             'SAt_20001176', # Ic, D, It, M, D2
                             'SAt_19840092', # Ic, It, M, D, It2, M2, D2
                             'SAt_19970580', # D, It, M, D2
-                            'SAt_19790004', # D
                             'SAt_20170528', # It, M, D, It2, M2, D2
-                            'SAt_19950912', # It
-                            'SAt_20060514', # D, It
-                            'SAt_20040233', # Ic, D
                             ]   
 
 labels = ["(A)", "(B)", "(C)", "(D)", "(E)", "(F)", "(G)", "(H)", "(I)", "(J)"]
@@ -130,7 +128,7 @@ for system in systems_for_representing:
             df = determine_periods(tmp_file, **options)
             periods_dict = periods_to_dict(df)
 
-            ax = fig.add_subplot(2, 5, i+1)
+            ax = fig.add_subplot(2, 3, i+1)
 
             zeta_df = pd.DataFrame(track['vor42'].rename('zeta'))
             zeta_df.index = pd.to_datetime(track['time'])
