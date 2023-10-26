@@ -344,8 +344,7 @@ def main():
     figure_path = os.path.join('..', 'figures', 'manuscript_life-cycle', 'phase_time_all_seasons')
     ensure_directory_exists(figure_path)
 
-    phase_time_database = f"../periods_species_statistics/{analysis_type}/phase_time_all_seasons.csv"
-
+    phase_time_database = f"../periods_species_statistics/{analysis_type}/phase_time/phase_time_database.csv"
 
     try:
         dfs = pd.read_csv(phase_time_database)
