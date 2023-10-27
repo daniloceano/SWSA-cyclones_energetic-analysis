@@ -208,8 +208,8 @@ def plot_ridge_phases(data):
     # Only select data for the region "Total"
     data = data[data['Region'] == 'Total']
 
-    phases = ['incipient', 'mature', 'mature 2', 'residual',
-              'intensification',  'intensification 2', 'decay', 'decay 2']
+    phases = ['incipient', 'mature 2', 'mature', 'residual', 'decay 2',
+              'intensification',  'intensification 2', 'decay']
     
     colors_phases = {'incipient': '#65a1e6',
                      'intensification': '#f7b538',
