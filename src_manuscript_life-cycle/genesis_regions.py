@@ -77,8 +77,8 @@ def plot_genesis_density(fig, ax, seasonal_data, i):
     ax.contour(lon, lat, seasonal_data, colors='#383838', linewidths=0.35, levels=levels, norm=norm, linestyles='dashed', transform=ccrs.PlateCarree())
     props = dict(boxstyle='round', facecolor='white')
     ax.text(27, -3, labels[i], transform=ccrs.PlateCarree(), ha='left', va='top', fontsize=16, fontweight='bold', bbox=props)
-    if i == 3:
-        cbar_axes = fig.add_axes([0.15, 0.01, 0.7, 0.04])
+    if i == 1:
+        cbar_axes = fig.add_axes([0.15, 0.22, 0.7, 0.04])
         ticks = np.round(levels, decimals=2)
         colorbar = plt.colorbar(cf, cax=cbar_axes, ticks=ticks, format='%g', orientation='horizontal')
         colorbar.ax.tick_params(labelsize=12)
@@ -86,12 +86,9 @@ def plot_genesis_density(fig, ax, seasonal_data, i):
 
 def main():
     fig, axs = create_map_and_axes()
-    #add_gridlines_and_continents(axs[0, 0])  # Apply gridlines and continents to the first subplot
     add_gridlines_and_continents(axs[0])
 
     # Define seasons and corresponding subplot positions
-    # seasons = ['DJF', 'MAM', 'JJA', 'SON']
-    # subplot_positions = [(0, 0), (0, 1), (1, 0), (1, 1)]
     seasons = ['DJF','JJA']
     subplot_positions = [0, 1]
 
