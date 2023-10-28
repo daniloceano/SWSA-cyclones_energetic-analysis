@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/28 11:47:52 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/28 12:19:12 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -165,15 +165,28 @@ def main():
     analysis_type = '70W-no-continental'
     print(f"Analysis type: {analysis_type}")
     regions = [False, "ARG", "LA-PLATA", "SE-BR", "SE-SAO", "AT-PEN", "WEDDELL", "SA-NAM"]
-    duration_database = os.path.join("..", "periods_species_statistics", analysis_type, "duration_time", "periods_database_djf_jja.csv")
     tracks = get_tracks()
-    try:
-        merged_data_frames = pd.read_csv(duration_database)
-    except FileNotFoundError:
-        print(f"{duration_database} not found, creating it...")
-        merged_data_frames = create_database(tracks, regions, analysis_type)
-    print(f"Periods and tracks have been obtained.")
-    merged_data_frames.to_csv(duration_database, index=False)
+
+    # Extract unique years from the tracks
+    tracks['year'] = tracks['date'].dt.year
+    unique_years = tracks['year'].unique()
+
+    for year in unique_years:
+        print(f"Processing year: {year}")
+        
+        # Filter tracks for the current year
+        tracks_year = tracks[tracks['year'] == year]
+        
+        # Adjust the saving path to include the year
+        duration_database = os.path.join("..", "periods_species_statistics", analysis_type, "duration_time", f"periods_database_{year}.csv")
+        
+        try:
+            merged_data_frames = pd.read_csv(duration_database)
+        except FileNotFoundError:
+            print(f"{duration_database} not found, creating it...")
+            merged_data_frames = create_database(tracks_year, regions, analysis_type)
+        print(f"Periods and tracks have been obtained for year: {year}.")
+        merged_data_frames.to_csv(duration_database, index=False)
 
 if __name__ == "__main__":
     main()
