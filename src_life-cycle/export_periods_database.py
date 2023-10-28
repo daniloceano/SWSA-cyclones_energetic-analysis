@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/28 14:34:06 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/28 15:50:34 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -113,7 +113,7 @@ def filter_seasons(tracks, seasons):
     Filter the tracks to include only those occurring in the provided seasons.
     """
     print("Filtering seasons...")
-    tracks['month'] = pd.to_datetime(tracks['date']).dt.month
+    tracks.loc[:, 'month'] = pd.to_datetime(tracks['date']).dt.month
     if seasons == 'DJF':
         tracks_season =  tracks[tracks['month'].isin([12, 1, 2])]
     elif seasons == 'JJA':
