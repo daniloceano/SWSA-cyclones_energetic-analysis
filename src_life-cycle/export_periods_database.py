@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/28 12:55:56 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/28 13:01:13 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -170,16 +170,16 @@ def main():
     tracks['date'] = pd.to_datetime(tracks['date']) 
     tracks['year'] = tracks['date'].dt.year
     unique_years = tracks['year'].unique()
-    for year in unique_years:
-        print(f"Processing year: {year}")
-        tracks_year = tracks[tracks['year'] == year]
-        duration_database = os.path.join(
+    duration_database_directory = os.path.join(
             "..", 
             "periods_species_statistics", 
             analysis_type, 
-            "duration_time",
-             f"periods_database_{year}.csv"
-             )
+            "duration_time")
+    os.makedirs(duration_database_directory, exist_ok=True)
+    for year in unique_years:
+        print(f"Processing year: {year}")
+        tracks_year = tracks[tracks['year'] == year]
+        duration_database = os.path.join(duration_database_directory, f"periods_database_{year}.csv")
         try:
             merged_data_frames = pd.read_csv(duration_database)
         except FileNotFoundError:
