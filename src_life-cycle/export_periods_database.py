@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/28 12:19:12 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/28 12:22:59 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -173,13 +173,14 @@ def main():
 
     for year in unique_years:
         print(f"Processing year: {year}")
-        
-        # Filter tracks for the current year
         tracks_year = tracks[tracks['year'] == year]
-        
-        # Adjust the saving path to include the year
-        duration_database = os.path.join("..", "periods_species_statistics", analysis_type, "duration_time", f"periods_database_{year}.csv")
-        
+        duration_database = os.path.join(
+            "..", 
+            "periods_species_statistics", 
+            analysis_type, 
+            "duration_time",
+             f"periods_database_{year}.csv"
+             )
         try:
             merged_data_frames = pd.read_csv(duration_database)
         except FileNotFoundError:
