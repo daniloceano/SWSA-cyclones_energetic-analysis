@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/28 14:24:40 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/28 14:34:06 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -170,15 +170,14 @@ def main():
     tracks['date'] = pd.to_datetime(tracks['date']) 
     tracks['year'] = tracks['date'].dt.year
     unique_years = tracks['year'].unique()
-    duration_database = os.path.join(
+    for year in unique_years:
+        print(f"Processing year: {year}")
+        duration_database = os.path.join(
             "..",
             "periods_species_statistics",
             analysis_type,
             f"periods_database_{year}.csv"
             )
-    os.makedirs(duration_database, exist_ok=True)
-    for year in unique_years:
-        print(f"Processing year: {year}")
         tracks_year = tracks[tracks['year'] == year]
         try:
             merged_data_frames = pd.read_csv(duration_database)
