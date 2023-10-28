@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/28 12:22:59 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/28 12:35:28 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -166,11 +166,9 @@ def main():
     print(f"Analysis type: {analysis_type}")
     regions = [False, "ARG", "LA-PLATA", "SE-BR", "SE-SAO", "AT-PEN", "WEDDELL", "SA-NAM"]
     tracks = get_tracks()
-
-    # Extract unique years from the tracks
+    tracks['date'] = pd.to_datetime(tracks['date']) 
     tracks['year'] = tracks['date'].dt.year
     unique_years = tracks['year'].unique()
-
     for year in unique_years:
         print(f"Processing year: {year}")
         tracks_year = tracks[tracks['year'] == year]
