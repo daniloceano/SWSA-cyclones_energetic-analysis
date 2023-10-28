@@ -1,12 +1,12 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
-#    calculate_distance.py                              :+:      :+:    :+:    #
+#    export_periods_database.py                         :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/27 21:06:30 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/27 23:01:18 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,10 +19,23 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from export_density_all import get_tracks
-from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import ProcessPoolExecutor
 
 SECONDS_IN_AN_HOUR = 3600
+
+def optimize_dataframe(df):
+    numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    df[numeric_cols] = df[numeric_cols].round(2)
+    for col in df.select_dtypes(include=['object']):
+        num_unique_values = len(df[col].unique())
+        num_total_values = len(df[col])
+        if num_unique_values / num_total_values < 0.5:
+            df[col] = df[col].astype('category')
+    # Convert float64 to float32
+    df_float = df.select_dtypes(include=['float64'])
+    df[df_float.columns] = df_float.astype(np.float32)
+    
+    return df
 
 def haversine_distance(lon1, lat1, lon2, lat2):
     """
@@ -40,15 +53,18 @@ def process_csv_file(csv_file, tracks):
     """
     Process a single CSV file and update the tracks dataframe.
     """
-    df_phases = pd.read_csv(csv_file, parse_dates=['start', 'end'], index_col=0)
+    chunk_size = 10000
+    chunks = pd.read_csv(csv_file, parse_dates=['start', 'end'], index_col=0, chunksize=chunk_size)
     updates = {}
-    for phase, row in df_phases.iterrows():
-        mask = (tracks['date'] >= row['start']) & (tracks['date'] <= row['end'])
-        updates[phase] = mask
+    for df_phases in chunks:
+        for phase, row in df_phases.iterrows():
+            mask = (tracks['date'] >= row['start']) & (tracks['date'] <= row['end'])
+            updates[phase] = mask
     return updates
 
 def filter_csv_file(f, track_id_set):
-    return any(track_id in f for track_id in track_id_set)
+    df_sample = pd.read_csv(f, nrows=10)
+    return any(track_id in df_sample.values for track_id in track_id_set)
 
 def map_filter_func(args):
     f, track_id_set = args
@@ -77,7 +93,7 @@ def process_phase_data_parallel(tracks, data_path):
     track_ids = tracks['track_id'].unique()
     filtered_csv_files = get_filtered_csv_files_parallel(csv_files, track_ids) 
     tracks['date'] = pd.to_datetime(tracks['date'])    
-    with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+    with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
         results = list(tqdm(executor.map(lambda csv_file: process_csv_file(csv_file, tracks),
                                           filtered_csv_files), total=len(filtered_csv_files),
                                             desc='Processing Files'))
@@ -88,15 +104,15 @@ def process_phase_data_parallel(tracks, data_path):
     return tracks
 
 def compute_distance_chunk(chunk):
-    chunk['previous_lon'] = chunk.groupby('track_id')['lon vor'].shift(1)
-    chunk['previous_lat'] = chunk.groupby('track_id')['lat vor'].shift(1)
+    prev_lon = chunk.groupby('track_id')['lon vor'].shift(1)
+    prev_lat = chunk.groupby('track_id')['lat vor'].shift(1)
+    
     chunk['Distance'] = haversine_distance(
-        chunk['previous_lat'], 
-        chunk['previous_lon'], 
+        prev_lat, 
+        prev_lon, 
         chunk['lat vor'], 
         chunk['lon vor']
     )
-    chunk.drop(columns=['previous_lon', 'previous_lat'], inplace=True)
     return chunk
 
 def compute_distance_parallel(tracks_df, num_workers=None):
@@ -153,6 +169,7 @@ def create_database(tracks, regions, analysis_type):
             else:
                 tracks_season = tracks.copy()
             tracks_season_distance = compute_distance_parallel(tracks_season)
+            tracks_season_distance = optimize_dataframe(tracks_season_distance)
             tracks_season_distance_periods = process_phase_data_parallel(tracks_season_distance, periods_directory)
             df = process_data(tracks_season_distance_periods)
             df['Region'] = 'Total' if not region else region
