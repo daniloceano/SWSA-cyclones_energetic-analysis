@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/28 12:35:28 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/28 12:42:56 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -52,19 +52,19 @@ def map_filter_func(args):
     f, track_id_set = args
     return f, filter_csv_file(f, track_id_set)
 
-def get_filtered_csv_files_parallel(csv_files, track_ids):
+def get_filtered_csv_files_parallel(csv_files, track_ids, year):
+    csv_files = [f for f in csv_files if str(year) in os.path.basename(f)]
     track_id_set = set(map(str, track_ids))
     filtered_files = []
     print("Starting the filtering process...")
-    
     with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
         # Using tqdm to display a progress bar
         for f, included in tqdm(executor.map(map_filter_func, [(f, track_id_set) for f in csv_files]), total=len(csv_files), desc='Filtering CSV Files'):
             if included:
                 filtered_files.append(f)
-
     print(f"Filtering completed. {len(filtered_files)} files matched out of {len(csv_files)} total files.")
     return filtered_files
+
 
 def process_phase_data_parallel(tracks, data_path):
     """
@@ -73,7 +73,7 @@ def process_phase_data_parallel(tracks, data_path):
     print("Reading periods...")
     csv_files = glob.glob(os.path.join(data_path, '*.csv'))
     track_ids = tracks['track_id'].unique()
-    filtered_csv_files = get_filtered_csv_files_parallel(csv_files, track_ids) 
+    filtered_csv_files = get_filtered_csv_files_parallel(csv_files, track_ids, year)
     tracks['date'] = pd.to_datetime(tracks['date'])    
     with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
         results = list(tqdm(executor.map(lambda csv_file: process_csv_file(csv_file, tracks),
