@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/28 12:42:56 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/28 12:55:56 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -73,6 +73,7 @@ def process_phase_data_parallel(tracks, data_path):
     print("Reading periods...")
     csv_files = glob.glob(os.path.join(data_path, '*.csv'))
     track_ids = tracks['track_id'].unique()
+    year = tracks['year'].unique()[0]
     filtered_csv_files = get_filtered_csv_files_parallel(csv_files, track_ids, year)
     tracks['date'] = pd.to_datetime(tracks['date'])    
     with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
