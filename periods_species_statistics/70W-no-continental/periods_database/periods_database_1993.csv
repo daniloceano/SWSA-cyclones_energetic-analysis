@@ -82,7 +82,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930013,intensification,208.8485486866693,31.0,1.8714027660095824,Total,Total
 =======,,,,,,
-19930013,intensification,208.84854868666932,31.0,1.8714027660095824,Total,Total
+19930013,intensification,208.8485486866693,31.0,1.8714027660095824,Total,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930013,mature,199.9517915744535,13.0,4.272474178941314,Total,Total
 19930014,decay,2690.6502580573115,74.0,10.10003850622114,Total,Total
@@ -994,7 +994,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930276,mature 2,189.6304247393305,2.0,26.33755899157369,Total,Total
 =======,,,,,,
-19930276,mature 2,189.63042473933052,2.0,26.33755899157369,Total,Total
+19930276,mature 2,189.6304247393305,2.0,26.33755899157369,Total,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930277,decay,724.4854523150763,24.0,8.385248290683753,Total,Total
 19930277,intensification,64.39550756901545,3.0,5.96254699713106,Total,Total
@@ -1370,7 +1370,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 19930352,decay 2,1375.5836163220342,10.0,38.2106560089454,Total,Total
 19930352,intensification,6013.194742620361,55.0,30.369670417274552,Total,Total
 19930352,residual,356.7746280794378,3.0,33.03468778513313,Total,Total
-19930353,decay 2,234.36849466155252,3.0,21.70078654273635,Total,Total
+19930353,decay 2,234.3684946615525,3.0,21.70078654273635,Total,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930353,intensification,2386.9295986778548,25.0,26.52143998530949,Total,Total
 19930353,residual,267.8087214991186,3.0,24.79710384251098,Total,Total
@@ -3649,7 +3649,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930870,mature,253.1850881818769,9.0,7.814354573514722,Total,Total
 =======,,,,,,
-19930870,mature,253.18508818187692,9.0,7.814354573514722,Total,Total
+19930870,mature,253.1850881818769,9.0,7.814354573514722,Total,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930871,decay,504.2278243368389,27.0,5.187529056963363,Total,Total
 19930871,residual,930.4219704552158,53.0,4.876425421673039,Total,Total
@@ -4334,7 +4334,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19931041,mature,226.71539430200207,3.0,20.99216613907428,Total,Total
 =======,,,,,,
-19931041,mature,226.71539430200212,3.0,20.99216613907428,Total,Total
+19931041,mature,226.71539430200207,3.0,20.99216613907428,Total,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19931041,residual,1030.3092877425042,16.0,17.887314023307365,Total,Total
 19931042,decay,1828.655032372683,49.0,10.36652512682927,Total,Total
@@ -4545,7 +4545,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 19931090,intensification,3403.455545959903,36.0,26.261231064505424,Total,Total
 19931090,mature,1367.7337661054569,14.0,27.13757472431461,Total,Total
 =======,,,,,,
-19931090,incipient,226.24605159031972,2.0,31.42306272087775,Total,Total
+19931090,incipient,226.24605159031967,2.0,31.42306272087775,Total,Total
 19931090,intensification,3403.455545959903,36.0,26.261231064505424,Total,Total
 19931090,mature,1367.7337661054569,14.0,27.13757472431461,Total,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
@@ -5083,7 +5083,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930013,intensification,208.8485486866693,31.0,1.8714027660095824,Total,DJF
 =======,,,,,,
-19930013,intensification,208.84854868666932,31.0,1.8714027660095824,Total,DJF
+19930013,intensification,208.8485486866693,31.0,1.8714027660095824,Total,DJF
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930013,mature,199.9517915744535,13.0,4.272474178941314,Total,DJF
 19930014,decay,2690.6502580573115,74.0,10.10003850622114,Total,DJF
@@ -5684,7 +5684,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19931090,incipient,226.24605159031967,2.0,31.42306272087775,Total,DJF
 =======,,,,,,
-19931090,incipient,226.24605159031972,2.0,31.42306272087775,Total,DJF
+19931090,incipient,226.24605159031967,2.0,31.42306272087775,Total,DJF
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19931090,intensification,2909.9835324556225,30.0,26.944291967181687,Total,DJF
 19931090,mature,753.1130117949447,7.0,29.88543697598987,Total,DJF
@@ -8350,7 +8350,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930276,mature 2,189.6304247393305,2.0,26.33755899157369,ARG,Total
 =======,,,,,,
-19930276,mature 2,189.63042473933052,2.0,26.33755899157369,ARG,Total
+19930276,mature 2,189.6304247393305,2.0,26.33755899157369,ARG,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930277,decay,737.9504579530042,25.0,8.199449532811158,ARG,Total
 19930277,intensification,88.47343238453598,3.0,8.191984480049628,ARG,Total
@@ -9196,7 +9196,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930495,mature,193.1147726463365,7.0,7.663284628822881,ARG,Total
 =======,,,,,,
-19930495,mature,193.11477264633652,7.0,7.663284628822881,ARG,Total
+19930495,mature,193.1147726463365,7.0,7.663284628822881,ARG,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930496,decay,997.8346915258268,14.0,19.79830737154418,ARG,Total
 19930496,decay 2,1718.404483264546,15.0,31.822305245639743,ARG,Total
@@ -9273,7 +9273,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930510,mature,240.1911006399017,12.0,5.559979181479208,ARG,Total
 =======,,,,,,
-19930510,mature,240.19110063990172,12.0,5.559979181479208,ARG,Total
+19930510,mature,240.1911006399017,12.0,5.559979181479208,ARG,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930511,incipient,1076.4865738522335,12.0,24.91867069102393,ARG,Total
 19930511,intensification,2733.2849918690786,32.0,23.72643222108575,ARG,Total
@@ -10990,7 +10990,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19931078,intensification 2,187.97402680633127,13.0,4.01653903432332,ARG,Total
 =======,,,,,,
-19931078,intensification 2,187.97402680633132,13.0,4.01653903432332,ARG,Total
+19931078,intensification 2,187.97402680633127,13.0,4.01653903432332,ARG,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19931078,mature,472.0407642706669,13.0,10.086341116894593,ARG,Total
 19931079,decay,3650.082329464139,58.0,17.481237210077296,ARG,Total
@@ -12225,7 +12225,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930510,mature,240.1911006399017,12.0,5.559979181479208,ARG,JJA
 =======,,,,,,
-19930510,mature,240.19110063990172,12.0,5.559979181479208,ARG,JJA
+19930510,mature,240.1911006399017,12.0,5.559979181479208,ARG,JJA
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930511,incipient,1076.4865738522335,12.0,24.91867069102393,ARG,JJA
 19930511,intensification,2733.2849918690786,32.0,23.72643222108575,ARG,JJA
@@ -13253,7 +13253,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 19930808,mature,209.7617061637229,5.0,11.653428120206833,ARG,JJA
 19921177,decay,14.685018732825151,3.0,1.3597239567430697,LA-PLATA,Total
 19921177,incipient,181.06830847267148,5.0,10.059350470703972,LA-PLATA,Total
-19921177,intensification,227.75470496927892,9.0,7.029466202755524,LA-PLATA,Total
+19921177,intensification,227.7547049692789,9.0,7.029466202755524,LA-PLATA,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19921177,mature,44.31826993840956,5.0,2.46212610768942,LA-PLATA,Total
 19921182,incipient,376.0272847778326,5.0,20.89040470987959,LA-PLATA,Total
@@ -13837,7 +13837,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 =======,,,,,,
 19930329,mature,220.40955628646736,3.0,20.40829224874697,LA-PLATA,Total
 19930330,decay,285.8198137717654,3.0,26.46479757145976,LA-PLATA,Total
-19930334,incipient,207.78064370361372,3.0,19.23894849107535,LA-PLATA,Total
+19930334,incipient,207.7806437036137,3.0,19.23894849107535,LA-PLATA,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930334,intensification,867.776123944537,11.0,21.9135384834479,LA-PLATA,Total
 19930335,decay,1676.0606096038807,21.0,22.17011388364922,LA-PLATA,Total
@@ -15437,7 +15437,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19931081,incipient,222.7441154439369,3.0,20.624455133697868,LA-PLATA,Total
 =======,,,,,,
-19931081,incipient,222.74411544393692,3.0,20.624455133697868,LA-PLATA,Total
+19931081,incipient,222.7441154439369,3.0,20.624455133697868,LA-PLATA,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19931081,intensification,1003.2490711962224,41.0,6.797080428158689,LA-PLATA,Total
 19931081,mature,452.7309649367245,19.0,6.618873756384861,LA-PLATA,Total
@@ -15594,7 +15594,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19921177,intensification,227.7547049692789,9.0,7.029466202755524,LA-PLATA,DJF
 =======,,,,,,
-19921177,intensification,227.75470496927892,9.0,7.029466202755524,LA-PLATA,DJF
+19921177,intensification,227.7547049692789,9.0,7.029466202755524,LA-PLATA,DJF
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19921177,mature,44.31826993840956,5.0,2.46212610768942,LA-PLATA,DJF
 19921182,incipient,376.0272847778326,5.0,20.89040470987959,LA-PLATA,DJF
@@ -18224,7 +18224,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 19930846,mature,186.4833251439865,4.0,12.950230912776846,SE-BR,Total
 =======,,,,,,
 19930846,intensification,2396.994029183828,34.0,19.58328455215545,SE-BR,Total
-19930846,mature,186.48332514398652,4.0,12.950230912776846,SE-BR,Total
+19930846,mature,186.4833251439865,4.0,12.950230912776846,SE-BR,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930860,decay,540.4081908541035,11.0,13.646671486214736,SE-BR,Total
 19930861,decay,1221.0574699247315,12.0,28.26521921122064,SE-BR,Total
@@ -21357,7 +21357,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930302,decay 2,234.64618775094647,6.0,10.863249432914191,SE-SAO,Total
 =======,,,,,,
-19930302,decay 2,234.64618775094652,6.0,10.863249432914191,SE-SAO,Total
+19930302,decay 2,234.64618775094647,6.0,10.863249432914191,SE-SAO,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930302,incipient,647.3421495069075,10.0,17.981726375191876,SE-SAO,Total
 19930302,intensification,1586.1308975742786,38.0,11.594524105075136,SE-SAO,Total
@@ -22721,7 +22721,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 19930693,mature,218.9193052641073,5.0,12.162183625783744,SE-SAO,Total
 19930694,decay,1085.0691102229175,13.0,23.1852373979256,SE-SAO,Total
 =======,,,,,,
-19930693,mature,218.91930526410732,5.0,12.162183625783744,SE-SAO,Total
+19930693,mature,218.9193052641073,5.0,12.162183625783744,SE-SAO,Total
 19930694,decay,1085.0691102229175,13.0,23.1852373979256,SE-SAO,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930694,incipient,376.548447317183,7.0,14.942398703062818,SE-SAO,Total
@@ -22868,7 +22868,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930724,decay 2,209.0750986687705,4.0,14.51910407422018,SE-SAO,Total
 =======,,,,,,
-19930724,decay 2,209.07509866877052,4.0,14.51910407422018,SE-SAO,Total
+19930724,decay 2,209.0750986687705,4.0,14.51910407422018,SE-SAO,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930724,intensification,247.5356060091437,6.0,11.45998175968258,SE-SAO,Total
 19930724,mature,857.7158702248764,12.0,19.854534032983253,SE-SAO,Total
@@ -23420,7 +23420,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930862,incipient,223.02075433444327,5.0,12.390041907469076,SE-SAO,Total
 =======,,,,,,
-19930862,incipient,223.02075433444332,5.0,12.390041907469076,SE-SAO,Total
+19930862,incipient,223.02075433444327,5.0,12.390041907469076,SE-SAO,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930862,intensification,1403.1216125301014,20.0,19.48780017402919,SE-SAO,Total
 19930863,incipient,344.5981920932123,5.0,19.14434400517846,SE-SAO,Total
@@ -23986,7 +23986,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19931035,mature,198.6059178503617,5.0,11.033662102797877,SE-SAO,Total
 =======,,,,,,
-19931035,mature,198.60591785036172,5.0,11.033662102797877,SE-SAO,Total
+19931035,mature,198.6059178503617,5.0,11.033662102797877,SE-SAO,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19931035,residual,561.3315256864456,5.0,31.18508476035809,SE-SAO,Total
 19931036,decay,1011.7345661710078,12.0,23.419781624328888,SE-SAO,Total
@@ -26192,7 +26192,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 19930693,mature,218.9193052641073,5.0,12.162183625783744,SE-SAO,JJA
 19930694,decay,1085.0691102229175,13.0,23.1852373979256,SE-SAO,JJA
 =======,,,,,,
-19930693,mature,218.91930526410732,5.0,12.162183625783744,SE-SAO,JJA
+19930693,mature,218.9193052641073,5.0,12.162183625783744,SE-SAO,JJA
 19930694,decay,1085.0691102229175,13.0,23.1852373979256,SE-SAO,JJA
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930694,incipient,376.548447317183,7.0,14.942398703062818,SE-SAO,JJA
@@ -26339,7 +26339,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930724,decay 2,209.0750986687705,4.0,14.51910407422018,SE-SAO,JJA
 =======,,,,,,
-19930724,decay 2,209.07509866877052,4.0,14.51910407422018,SE-SAO,JJA
+19930724,decay 2,209.0750986687705,4.0,14.51910407422018,SE-SAO,JJA
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930724,intensification,247.5356060091437,6.0,11.45998175968258,SE-SAO,JJA
 19930724,mature,857.7158702248764,12.0,19.854534032983253,SE-SAO,JJA
@@ -27322,7 +27322,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930353,decay 2,234.3684946615525,3.0,21.70078654273635,AT-PEN,Total
 =======,,,,,,
-19930353,decay 2,234.36849466155252,3.0,21.70078654273635,AT-PEN,Total
+19930353,decay 2,234.3684946615525,3.0,21.70078654273635,AT-PEN,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930354,decay,125.3769530851142,1.0,34.82693141253172,AT-PEN,Total
 19930354,incipient,87.72975844472457,1.0,24.369377345756824,AT-PEN,Total
@@ -27637,7 +27637,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930564,decay,211.4364897167653,6.0,9.788726375776177,AT-PEN,Total
 =======,,,,,,
-19930564,decay,211.43648971676532,6.0,9.788726375776177,AT-PEN,Total
+19930564,decay,211.4364897167653,6.0,9.788726375776177,AT-PEN,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930564,intensification,67.37114327536395,1.0,18.71420646537888,AT-PEN,Total
 19930564,mature,940.7810720811927,19.0,13.75410924095311,AT-PEN,Total
@@ -27940,7 +27940,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930661,mature,231.8889515155961,6.0,10.735599607203527,AT-PEN,Total
 =======,,,,,,
-19930661,mature,231.88895151559612,6.0,10.735599607203527,AT-PEN,Total
+19930661,mature,231.8889515155961,6.0,10.735599607203527,AT-PEN,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930661,mature 2,300.3863050887764,4.0,20.86016007560947,AT-PEN,Total
 19930662,decay,3371.750879386543,28.0,33.44990951772364,AT-PEN,Total
@@ -28020,7 +28020,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930724,intensification,209.0750986687705,4.0,14.51910407422018,AT-PEN,Total
 =======,,,,,,
-19930724,intensification,209.07509866877052,4.0,14.51910407422018,AT-PEN,Total
+19930724,intensification,209.0750986687705,4.0,14.51910407422018,AT-PEN,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930729,decay,516.5587632403104,28.0,5.12459090516181,AT-PEN,Total
 19930729,decay 2,1591.5959039162788,16.0,27.63187333187984,AT-PEN,Total
@@ -28354,7 +28354,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930870,mature,253.1850881818769,9.0,7.814354573514722,AT-PEN,Total
 =======,,,,,,
-19930870,mature,253.18508818187692,9.0,7.814354573514722,AT-PEN,Total
+19930870,mature,253.1850881818769,9.0,7.814354573514722,AT-PEN,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930871,decay,263.2938702106748,11.0,6.648835106330172,AT-PEN,Total
 19930871,incipient,103.80385931499852,4.0,7.208601341319343,AT-PEN,Total
@@ -28467,7 +28467,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930903,incipient,216.8789027903433,1.0,60.24413966398427,AT-PEN,Total
 =======,,,,,,
-19930903,incipient,216.87890279034332,1.0,60.24413966398427,AT-PEN,Total
+19930903,incipient,216.8789027903433,1.0,60.24413966398427,AT-PEN,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930903,intensification,3538.489507307168,23.0,42.73538052303343,AT-PEN,Total
 19930903,mature,464.7579243779771,4.0,32.27485585958174,AT-PEN,Total
@@ -29434,7 +29434,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930564,decay,211.4364897167653,6.0,9.788726375776177,AT-PEN,JJA
 =======,,,,,,
-19930564,decay,211.43648971676532,6.0,9.788726375776177,AT-PEN,JJA
+19930564,decay,211.4364897167653,6.0,9.788726375776177,AT-PEN,JJA
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930564,intensification,67.37114327536395,1.0,18.71420646537888,AT-PEN,JJA
 19930564,mature,940.7810720811927,19.0,13.75410924095311,AT-PEN,JJA
@@ -29737,7 +29737,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930661,mature,231.8889515155961,6.0,10.735599607203527,AT-PEN,JJA
 =======,,,,,,
-19930661,mature,231.88895151559612,6.0,10.735599607203527,AT-PEN,JJA
+19930661,mature,231.8889515155961,6.0,10.735599607203527,AT-PEN,JJA
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930661,mature 2,300.3863050887764,4.0,20.86016007560947,AT-PEN,JJA
 19930662,decay,3371.750879386543,28.0,33.44990951772364,AT-PEN,JJA
@@ -29817,7 +29817,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930724,intensification,209.0750986687705,4.0,14.51910407422018,AT-PEN,JJA
 =======,,,,,,
-19930724,intensification,209.07509866877052,4.0,14.51910407422018,AT-PEN,JJA
+19930724,intensification,209.0750986687705,4.0,14.51910407422018,AT-PEN,JJA
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930729,decay,516.5587632403104,28.0,5.12459090516181,AT-PEN,JJA
 19930729,decay 2,1591.5959039162788,16.0,27.63187333187984,AT-PEN,JJA
@@ -30076,7 +30076,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930011,intensification,247.5593661336549,11.0,6.251499144789267,WEDDELL,Total
 =======,,,,,,
-19930011,intensification,247.55936613365492,11.0,6.251499144789267,WEDDELL,Total
+19930011,intensification,247.5593661336549,11.0,6.251499144789267,WEDDELL,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930012,decay,4207.984630343855,78.0,14.985700250512306,WEDDELL,Total
 19930012,incipient,439.2539735466704,9.0,13.557221405761434,WEDDELL,Total
@@ -30564,7 +30564,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930392,intensification,255.2002508198433,6.0,11.814826426844602,WEDDELL,Total
 =======,,,,,,
-19930392,intensification,255.20025081984332,6.0,11.814826426844602,WEDDELL,Total
+19930392,intensification,255.2002508198433,6.0,11.814826426844602,WEDDELL,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930393,incipient,101.54592095707096,3.0,9.402400088617682,WEDDELL,Total
 19930393,intensification,451.75577351429735,11.0,11.407974078643871,WEDDELL,Total
@@ -31423,7 +31423,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930825,incipient,251.8655760781137,4.0,17.490665005424567,WEDDELL,Total
 =======,,,,,,
-19930825,incipient,251.86557607811372,4.0,17.490665005424567,WEDDELL,Total
+19930825,incipient,251.8655760781137,4.0,17.490665005424567,WEDDELL,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930825,intensification,1171.8407229229229,17.0,19.14772423076672,WEDDELL,Total
 19930825,mature,453.8542985374422,6.0,21.011773080437138,WEDDELL,Total
@@ -31797,7 +31797,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 <<<<<<< HEAD:periods_species_statistics/70W-no-continental/periods_database_1993.csv,,,,,,
 19930011,intensification,247.5593661336549,11.0,6.251499144789267,WEDDELL,DJF
 =======,,,,,,
-19930011,intensification,247.55936613365492,11.0,6.251499144789267,WEDDELL,DJF
+19930011,intensification,247.5593661336549,11.0,6.251499144789267,WEDDELL,DJF
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930012,decay,4207.984630343855,78.0,14.985700250512306,WEDDELL,DJF
 19930012,incipient,439.2539735466704,9.0,13.557221405761434,WEDDELL,DJF
@@ -33958,7 +33958,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 19930722,decay 2,98.58744486017304,1.0,27.38540135004807,SA-NAM,Total
 19930722,intensification,563.4763184623382,5.0,31.30423991457435,SA-NAM,Total
 19930722,intensification 2,346.7144128021374,4.0,24.07738977792621,SA-NAM,Total
-19930722,mature,230.62635697454652,2.0,32.03143846868703,SA-NAM,Total
+19930722,mature,230.62635697454647,2.0,32.03143846868703,SA-NAM,Total
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930722,mature 2,204.36753147405784,2.0,28.384379371396925,SA-NAM,Total
 19930723,decay,1074.0452626858469,8.0,37.29323828770302,SA-NAM,Total
@@ -35208,7 +35208,7 @@ track_id,phase,Total Distance (km),Total Time (Hours),Mean Speed (m/s),Region,Se
 19930722,decay 2,98.58744486017304,1.0,27.38540135004807,SA-NAM,JJA
 19930722,intensification,563.4763184623382,5.0,31.30423991457435,SA-NAM,JJA
 19930722,intensification 2,346.7144128021374,4.0,24.07738977792621,SA-NAM,JJA
-19930722,mature,230.62635697454652,2.0,32.03143846868703,SA-NAM,JJA
+19930722,mature,230.62635697454647,2.0,32.03143846868703,SA-NAM,JJA
 >>>>>>> 60f2d45aa862e7f81014e013c74d5fb065059617:periods_species_statistics/70W-no-continental/periods_database/periods_database_1993.csv,,,,,,
 19930722,mature 2,204.36753147405784,2.0,28.384379371396925,SA-NAM,JJA
 19930723,decay,1074.0452626858469,8.0,37.29323828770302,SA-NAM,JJA
