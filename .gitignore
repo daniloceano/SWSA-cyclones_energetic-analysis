@@ -19,6 +19,8 @@ LEC_results-q0.99
 LEC_results-0.99
 LEC_results-0.99/*
 src_process-tracks/logfile-automate*
+src_manuscript_life-cycle/.vscode/settings.json
+src_manuscript_life-cycle/.vscode/launch.json
 
 # Debugging
 src_figures/periods.png
@@ -49,4 +51,4 @@ figures/periods_didactic/*48h*/
 figures/tests_filter/test_*
 figures/tests_filter/tests*
 figures/tests_filter/0.99*
-src_manuscript_life-cycle/.vscode/settings.json
+
