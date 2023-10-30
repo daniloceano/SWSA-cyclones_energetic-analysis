@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/30 09:26:27 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/30 10:18:34 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -169,6 +169,7 @@ def main():
     tracks = get_tracks()
     tracks['date'] = pd.to_datetime(tracks['date']) 
     tracks['year'] = tracks['date'].dt.year
+    tracks = tracks[tracks['year'] != 2021]
     unique_years = tracks['year'].unique()
     for year in unique_years:
         print(f"Processing year: {year}")
