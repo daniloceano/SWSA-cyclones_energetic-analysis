@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/28 15:50:34 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/30 09:26:27 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -176,6 +176,7 @@ def main():
             "..",
             "periods_species_statistics",
             analysis_type,
+            "periods_database",
             f"periods_database_{year}.csv"
             )
         tracks_year = tracks[tracks['year'] == year]
