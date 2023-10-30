@@ -1,3 +1,15 @@
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    pdf_phase_time.py                                  :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2023/10/30 19:37:18 by daniloceano       #+#    #+#              #
+#    Updated: 2023/10/30 20:32:16 by daniloceano      ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
 import os
 import glob
 import numpy as np
@@ -11,98 +23,42 @@ from concurrent.futures import ThreadPoolExecutor
 
 # Constants
 SECONDS_IN_AN_HOUR = 3600
+ALPHA = 0.05  # Significance level
+ANALYSIS_TYPE = '70W-no-continental'
+METRICS = ['Total Time (Hours)', 'Total Distance (km)', 'Mean Speed (m/s)']
+PHASES = ['incipient', 'intensification', 'mature', 'decay', 'intensification 2', 'mature 2', 'decay 2', 'residual']
+REGIONS = ['Total', 'ARG', 'LA-PLATA', 'SE-BR', 'SE-SAO', 'AT-PEN', 'WEDDELL', 'SA-NAM']
+PLOT_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
 
-def process_csv_file(csv_file):
-    """
-    Process the CSV file and calculate phase durations.
+def get_database():
+    files = f"../periods_species_statistics/{ANALYSIS_TYPE}/periods_database/periods_database_*.csv"
+    data_frames = []
+    for file in glob.glob(files):
+        data_frames.append(pd.read_csv(file, index_col=0))
+    database = pd.concat(data_frames, ignore_index=True)
     
-    Args:
-    - csv_file (str): Path to the CSV file
-    
-    Returns:
-    - dict: Dictionary containing phase durations
-    """
-    df = pd.read_csv(csv_file, parse_dates=['start', 'end'], index_col=0)
+    # Remove rows where all columns are NaN
+    database = database.dropna(how='all')
+    # Remove rows where "Mean Speed (m/s)" is NaN 
+    # (so we won't compute statistics for the first time steps)
+    database = database.dropna(subset=['Mean Speed (m/s)'])      
+    return database
 
-    # Remove whenever there is only one phase
-    if "mature" not in df.index:
-        return {}
-    
-    else:
-        phase_durations = {
-            phase: ((df.loc[phase, 'end'] - df.loc[phase, 'start']).total_seconds() / SECONDS_IN_AN_HOUR)
-            for phase in df.index
-        }
-        return phase_durations
-    
-def process_phase_data_parallel(data_path):
-    """
-    Process CSV data in parallel.
-    
-    Args:
-    - data_path (str): Path to the data directory
-    
-    Returns:
-    - dict: Aggregated durations for each phase
-    """
-    csv_files = glob.glob(os.path.join(data_path, '*.csv'))
-    durations = defaultdict(list)
-
-    with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
-        results = list(tqdm(executor.map(process_csv_file, csv_files), total=len(csv_files), desc='Processing Files'))
-
-    for result in results:
-        for phase, duration in result.items():
-            durations[phase].append(duration)
-
-    return durations
-
-def ensure_directory_exists(path):
-    """
-    Ensure a directory exists; if not, create it.
-    
-    Args:
-    - path (str): Directory path
-    """
-    if not os.path.exists(path):
-        os.makedirs(path)
-
-def create_seaborn_dataframe(duration_data, region):
-    """
-    Create a dataframe suitable for Seaborn plotting.
-    
-    Args:
-    - duration_data (dict): Data containing phase durations
-    - region (str): Region identifier
-    
-    Returns:
-    - DataFrame: Processed dataframe
-    """
-    data = {
-        'Phase': [],
-        'Duration (hours)': [],
-        'Region': [],
+def metric_to_formatted_string(metric):
+    mapping = {
+        'Total Time (Hours)': 'total_time',
+        'Total Distance (km)': 'total_distance',
+        'Mean Speed (m/s)': 'mean_speed'
     }
+    return mapping.get(metric, '')
 
-    for phase, phase_durations in duration_data.items():
-        if phase != "Season":  # Make sure we don't treat 'Season' as a phase
-            for duration in phase_durations:
-                data['Phase'].append(phase)
-                data['Duration (hours)'].append(duration)
-                data['Region'].append(region)
-
-    return pd.DataFrame(data)
-
-
-def plot_single_ridge(data, regions, figure_path, phase, label):
+def plot_single_ridge(data, figure_path, phase, label, metric):
     """
     Plot a single ridge plot for given data, combining both seasons in one subplot.
     """
     # Create a figure with a row for each region
-    gs = grid_spec.GridSpec(len(regions), 1)
+    gs = grid_spec.GridSpec(len(REGIONS), 1)
     fig = plt.figure(figsize=(10, 10))
-
-    duration = data['Duration (hours)']
 
     # [bandwidth, number of samples, quantile]
     kde_params = {
@@ -117,16 +73,17 @@ def plot_single_ridge(data, regions, figure_path, phase, label):
     }
 
     # Calculate the upper percentile to define the x-axis range
-    upper_percentile = np.percentile(duration, kde_params[phase][2]) 
+    variable = data[metric]
+    upper_percentile = np.percentile(variable, kde_params[phase][2]) 
     
     # Set the x-axis limits based on the percentiles
     xmin, xmax = 0, upper_percentile
     
     x_d = np.linspace(xmin, xmax, kde_params[phase][1])
 
-    for idx, rg in enumerate(regions):
+    for idx, rg in enumerate(REGIONS):
         region_data = data[(data['Region'] == rg)]
-        x = np.array(region_data['Duration (hours)'])
+        x = np.array(region_data['Total Time (Hours)'])
         
         kde = KernelDensity(bandwidth=kde_params[phase][0], kernel='gaussian')
         kde.fit(x[:, None])
@@ -176,7 +133,7 @@ def plot_single_ridge(data, regions, figure_path, phase, label):
         for s in spines:
             ax.spines[s].set_visible(False)
 
-        if idx != len(regions)-1:                
+        if idx != len(REGIONS)-1:                
             ax.set_xticklabels([])
         else:
             ax.tick_params(axis='x', labelsize=14)
@@ -189,7 +146,7 @@ def plot_single_ridge(data, regions, figure_path, phase, label):
                     f"({label}) {phase.capitalize()}", fontweight="bold", fontsize=14, ha="center")
 
     ax.text((xmax - xmin) / 2, np.exp(logprob).min() - 0.025,
-             f'Duration (hours)', ha='center', fontsize=16, fontweight="bold")
+             f'Total Time (Hours)', ha='center', fontsize=16, fontweight="bold")
 
     # Adjust the position of each row of axes to create overlap
     gs.update(hspace=-0.85)
@@ -200,17 +157,14 @@ def plot_single_ridge(data, regions, figure_path, phase, label):
     plt.tight_layout()
 
     # Save the combined figure for the current phase
-    fname = os.path.join(figure_path, f'Ridge_Plot_{phase}.png')
+    metric_formatted = metric_to_formatted_string(metric)
+    fname = os.path.join(figure_path, f'{metric_formatted}_{phase}.png')
     plt.savefig(fname, dpi=200)
     print(f"{fname} created.")
 
-def plot_ridge_phases(data):
+def plot_ridge_phases(data, metric):
     # Only select data for the region "Total"
     data = data[data['Region'] == 'Total']
-
-    phases = ['incipient', 'mature 2', 'mature', 'residual', 'decay 2',
-              'intensification',  'intensification 2', 'decay']
-    
     colors_phases = {'incipient': '#65a1e6',
                      'intensification': '#f7b538',
                      'intensification 2': '#dc9209',
@@ -220,10 +174,19 @@ def plot_ridge_phases(data):
                      'decay 2': '#5d6a48',
                      'residual': 'gray'}
 
-    duration = data['Duration (hours)']
+    duration = data['Total Time (Hours)']
+
+    # Calculate mean values for each phase
+    means = {}
+    for phase in PHASES:
+        phase_data = data[data['phase'] == phase]
+        means[phase] = np.mean(phase_data['Total Time (Hours)'])
+
+    # Order the phases by their mean values
+    sorted_phases = sorted(means, key=means.get)
     
-    gs = grid_spec.GridSpec(len(phases), 1)
-    fig = plt.figure(figsize=(12, len(phases) * 1.5))  # Adjusted figure height based on number of phases
+    gs = grid_spec.GridSpec(len(PHASES), 1)
+    fig = plt.figure(figsize=(12, len(PHASES) * 1.5))  # Adjusted figure height based on number of phases
 
     # Set the x-axis limits based on the percentiles
     upper_percentile = np.percentile(duration, 99) 
@@ -231,9 +194,12 @@ def plot_ridge_phases(data):
     
     x_d = np.linspace(xmin, xmax, 1000)
 
-    for idx, phase in enumerate(phases):
-        phase_data = data[data['Phase'] == phase]
-        x = np.array(phase_data['Duration (hours)'])
+    overall_mean = np.mean(data['Total Time (Hours)'])
+    overall_std = np.std(data['Total Time (Hours)'])
+
+    for idx, phase in enumerate(sorted_phases):
+        phase_data = data[data['phase'] == phase]
+        x = np.array(phase_data['Total Time (Hours)'])
         
         kde = KernelDensity(bandwidth=3, kernel='gaussian')
         kde.fit(x[:, None])
@@ -294,7 +260,7 @@ def plot_ridge_phases(data):
         for s in spines:
             ax.spines[s].set_visible(False)
 
-        if idx != len(phases)-1:                
+        if idx != len(PHASES)-1:                
             ax.set_xticklabels([])
         else:
             ax.tick_params(axis='x', labelsize=14)
@@ -302,8 +268,9 @@ def plot_ridge_phases(data):
         ax.text(0.99, 0.01, f"{phase}\n({mean_value:.1f} ± {std:.1f})", fontweight="bold", fontsize=14,
                  ha="right", transform=ax.transAxes)
 
+    metric_formatted = metric_to_formatted_string(metric)
     ax.text((xmax - xmin) / 2, np.exp(logprob).min() - 0.025,
-            'Duration (hours)', ha='center', fontsize=16, fontweight="bold")
+            metric_formatted, ha='center', fontsize=16, fontweight="bold")
 
     # Adjust the position of each row of axes to create overlap
     gs.update(hspace=-0.82)
@@ -314,62 +281,25 @@ def plot_ridge_phases(data):
     plt.tight_layout()
 
     figure_path = os.path.join('..', 'figures', 'manuscript_life-cycle')
-    fname = os.path.join(figure_path, 'duration_PDF_total_all_phases.png')
+    fname = os.path.join(figure_path, f'{metric_formatted}_PDF_total_all_phases.png')
     plt.savefig(fname, dpi=200)
     print(f"{fname} created.")
 
 
-def plot_ridge_plots(dfs, figure_path, phases, labels):
-    regions = dfs['Region'].unique()
-    for phase, label in zip(phases, labels):
-        print('\n-----------------')
-        print(f"Plotting for phase: {phase}")
-        data = dfs[dfs['Phase'] == phase]
-        plot_single_ridge(data, regions, figure_path, phase, label)
-
-    plot_ridge_phases(dfs)
+def plot_ridge_plots(database):
+    for metric in METRICS:
+        figure_path = os.path.join('..', 'figures', 'manuscript_life-cycle', 'PDFs')
+        os.makedirs(figure_path, exist_ok=True)
+        for phase, label in zip(PHASES, PLOT_LABELS):
+            print('\n-----------------')
+            print(f"Plotting for phase: {phase}")
+            data = database[(database['phase'] == phase) & (database['Season'] == 'Total')]
+            plot_single_ridge(data, figure_path, phase, label, metric)
+        plot_ridge_phases(database, metric)
 
 def main():
-    analysis_type_to_regions = {
-        'BY_RG-all': ['RG1', 'RG2', 'RG3', 'all_RG'],
-        '70W-no-continental': [False, "ARG", "LA-PLATA", "SE-BR", "SE-SAO", "AT-PEN", "WEDDELL", "SA-NAM"],
-        'default': ['']
-    }
-
-    analysis_type = '70W-no-continental'
-    regions = analysis_type_to_regions.get(analysis_type, analysis_type_to_regions['default'])
-    
-    figure_path = os.path.join('..', 'figures', 'manuscript_life-cycle', 'phase_time_all_seasons')
-    ensure_directory_exists(figure_path)
-
-    phase_time_database = f"../periods_species_statistics/{analysis_type}/phase_time/phase_time_database.csv"
-
-    try:
-        dfs = pd.read_csv(phase_time_database)
-
-    except:
-        print(f"{phase_time_database} not found, creating it...")
-        data_frames = []
-        for region in regions:
-            region_str = f'_{region}' if region else ''
-            data_path = os.path.join('..', 'periods-energetics', analysis_type + region_str)
-            
-            duration_data = process_phase_data_parallel(data_path)
-            print(f'Processed data for region: {region}')
-
-            df = create_seaborn_dataframe(duration_data, region if region else 'Total')
-            data_frames.append(df)
-
-        dfs = pd.concat(data_frames)
-        dfs.to_csv(phase_time_database)
-        print(f"{phase_time_database} created.")
-
-    phases = ['incipient', 'intensification', 'mature', 'decay',
-        'intensification 2', 'mature 2', 'decay 2', 'residual']
-    
-    labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
-    
-    plot_ridge_plots(dfs, figure_path, phases, labels)
+    database = get_database()    
+    plot_ridge_plots(database)
 
 if __name__ == '__main__':
     main()
