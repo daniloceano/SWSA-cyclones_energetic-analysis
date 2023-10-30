@@ -6,7 +6,7 @@
 #    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 16:09:48 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/30 18:25:59 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/10/30 19:28:56 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -29,17 +29,48 @@ ALPHA = 0.05  # Significance level
 ANALYSIS_TYPE = '70W-no-continental'
 METRICS = ['Total Time (Hours)', 'Total Distance (km)', 'Mean Speed (m/s)']
 
+KDE_PARAMS = {
+        'Total Time (Hours)':
+    {"incipient": [1, 1000, 99], # [bandwidth, number of samples, quantile]
+    "intensification": [2, 100, 98],
+    "mature": [1, 1000, 99.9],
+    "decay": [2, 1000, 95],
+    "intensification 2": [3, 70, 99],
+    "mature 2": [1, 1000, 99.9],
+    "decay 2": [2, 1000, 97],
+    "residual": [2, 500, 99]},
+        'Total Distance (km)':
+    {"incipient": [1.5, 1000, 3],
+    "intensification": [1.5, 100, 3],
+    "mature": [1.5, 1000, 3],
+    "decay": [1.5, 1000, 3],
+    "intensification 2": [1.5, 70, 3],
+    "mature 2": [1.5, 1000, 3],
+    "decay 2": [1.5, 1000, 3],
+    "residual": [1.5, 500, 3]},
+        'Mean Speed (m/s)':
+    {"incipient": [2, 1000, 96],
+    "intensification": [1.5, 100, 100],
+    "mature": [2, 1000, 96],
+    "decay": [1, 1000, 100],
+    "intensification 2": [2, 70, 100],
+    "mature 2": [2, 1000, 93],
+    "decay 2": [2, 1000, 98],
+    "residual": [2, 500, 99]},
+}
+
 def get_database():
     files = f"../periods_species_statistics/{ANALYSIS_TYPE}/periods_database/periods_database_*.csv"
     data_frames = []
     for file in glob.glob(files):
         data_frames.append(pd.read_csv(file, index_col=0))
     database = pd.concat(data_frames, ignore_index=True)
+    
     # Remove rows where all columns are NaN
     database = database.dropna(how='all')
     # Remove rows where "Mean Speed (m/s)" is NaN 
     # (so we won't compute statistics for the first time steps)
-    database = database.dropna(subset=['Mean Speed (m/s)'])
+    database = database.dropna(subset=['Mean Speed (m/s)'])      
     return database
 
 def metric_to_formatted_string(metric):
@@ -86,27 +117,15 @@ def plot_single_ridge(data, regions, figure_path, phase, metric):
     gs = grid_spec.GridSpec(len(regions), 2)
     fig = plt.figure(figsize=(12, 9))
 
-    variable = data['Total Time (Hours)']
-
-    # [bandwidth, number of samples, quantile]
-    kde_params = {
-        "incipient": [1, 1000, 99],
-        "intensification": [2, 100, 98],
-        "mature": [1, 1000, 99.9],
-        "decay": [2, 1000, 95],
-        "intensification 2": [3, 70, 99],
-        "mature 2": [1, 1000, 99.9],
-        "decay 2": [2, 1000, 97],
-        "residual": [2, 500, 99]
-    }
+    variable = data[metric]
 
     # Calculate the upper percentile to define the x-axis range
-    upper_percentile = np.percentile(variable, kde_params[phase][2]) 
+    upper_percentile = np.percentile(variable, KDE_PARAMS[metric][phase][2]) 
     
     # Set the x-axis limits based on the percentiles
     xmin, xmax = 0, upper_percentile
     
-    x_d = np.linspace(xmin, xmax, kde_params[phase][1])
+    x_d = np.linspace(xmin, xmax, KDE_PARAMS[metric][phase][1])
 
     red_shades = ['#9d0208', '#b30109', '#c7010a', '#d9000b', '#dc2f02', '#e14c03', '#e56904', '#ff9066']
     blue_shades = ['#023e8a', '#0251a0', '#0264b6', '#0077b6', '#0091c3', '#00abd0', '#00c5dd', '#48cae4']
@@ -125,7 +144,7 @@ def plot_single_ridge(data, regions, figure_path, phase, metric):
             season_data = data[(data['Region'] == rg) & (data['Season'] == season)]
             x = np.array(season_data['Total Time (Hours)'])
             
-            kde = KernelDensity(bandwidth=kde_params[phase][0], kernel='gaussian')
+            kde = KernelDensity(bandwidth=KDE_PARAMS[metric][phase][0], kernel='gaussian')
             kde.fit(x[:, None])
 
             color = color_djf if season == "DJF" else color_jja
