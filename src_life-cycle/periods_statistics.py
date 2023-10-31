@@ -6,7 +6,7 @@
 #    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 16:09:48 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/31 10:26:36 by Danilo           ###   ########.fr        #
+#    Updated: 2023/10/31 10:55:01 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -99,10 +99,10 @@ def metric_to_formatted_string(metric):
     }
     return mapping.get(metric, '')
 
-def compare_djf_jja(data_for_region):
+def compare_djf_jja(data_for_region, metric):
     # Extract DJF and JJA data
-    djf_data = data_for_region[data_for_region['Season'] == 'DJF']['Total Time (Hours)'].dropna().values
-    jja_data = data_for_region[data_for_region['Season'] =='JJA']['Total Time (Hours)'].dropna().values
+    djf_data = data_for_region[data_for_region['Season'] == 'DJF'][metric].dropna().values
+    jja_data = data_for_region[data_for_region['Season'] =='JJA'][metric].dropna().values
 
     # Check if lengths are same, if not, trim to shorter length
     min_len = min(len(djf_data), len(jja_data))
@@ -156,11 +156,11 @@ def plot_single_ridge_season(data, regions, figure_path, phase, metric):
         data_for_region = data[data['Region'] == rg]
 
         # Compare DJF and JJA data for the region
-        test_used, p_value = compare_djf_jja(data_for_region)
+        test_used, p_value = compare_djf_jja(data_for_region, metric)
         
         for season, col in zip(['DJF', 'JJA'], [0, 1]):                
             season_data = data[(data['Region'] == rg) & (data['Season'] == season)]
-            x = np.array(season_data['Total Time (Hours)'])
+            x = np.array(season_data[metric])
             
             kde = KernelDensity(bandwidth=KDE_PARAMS[metric][phase][0], kernel='gaussian')
             kde.fit(x[:, None])
@@ -267,7 +267,7 @@ def plot_single_ridge(data, figure_path, phase, metric):
 
     for idx, rg in enumerate(REGIONS):
         region_data = data[(data['Region'] == rg)]
-        x = np.array(region_data['Total Time (Hours)'])
+        x = np.array(region_data[metric])
         
         kde = KernelDensity(bandwidth=KDE_PARAMS[metric]["Total"][0], kernel='gaussian')
         kde.fit(x[:, None])
@@ -330,7 +330,7 @@ def plot_single_ridge(data, figure_path, phase, metric):
                     f"{phase.capitalize()}", fontweight="bold", fontsize=14, ha="center")
 
     ax.text((xmax - xmin) / 2, np.exp(logprob).min() - 0.025,
-             f'Total Time (Hours)', ha='center', fontsize=16, fontweight="bold")
+             metric, ha='center', fontsize=16, fontweight="bold")
 
     # Adjust the position of each row of axes to create overlap
     gs.update(hspace=-0.85)
