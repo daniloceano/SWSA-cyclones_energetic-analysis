@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    periods_statistics.py                              :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 16:09:48 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/30 19:28:56 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/10/31 10:08:52 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,8 +27,21 @@ from concurrent.futures import ThreadPoolExecutor
 SECONDS_IN_AN_HOUR = 3600
 ALPHA = 0.05  # Significance level
 ANALYSIS_TYPE = '70W-no-continental'
-METRICS = ['Total Time (Hours)', 'Total Distance (km)', 'Mean Speed (m/s)']
-
+METRICS = ['Total Distance ($10^2$ km)', 'Total Time (Hours)', 'Mean Speed (m/s)']
+PHASES = ['incipient', 'intensification', 'mature', 'decay', 'intensification 2', 'mature 2', 'decay 2', 'residual']
+REGIONS = ['Total', 'ARG', 'LA-PLATA', 'SE-BR', 'SE-SAO', 'AT-PEN', 'WEDDELL', 'SA-NAM']
+PLOT_LABELS = ['(A)', '(B)', '(C)']
+COLOR_PHASES = {
+        'incipient': '#65a1e6',
+        'intensification': '#f7b538',
+        'intensification 2': '#ca6702',
+        'mature': '#d62828',
+        'mature 2': '#9b2226',
+        'decay': '#9aa981',
+        'decay 2': '#386641',
+        'residual': 'gray',
+        'Total': '#1d3557'
+    }
 KDE_PARAMS = {
         'Total Time (Hours)':
     {"incipient": [1, 1000, 99], # [bandwidth, number of samples, quantile]
@@ -38,16 +51,18 @@ KDE_PARAMS = {
     "intensification 2": [3, 70, 99],
     "mature 2": [1, 1000, 99.9],
     "decay 2": [2, 1000, 97],
-    "residual": [2, 500, 99]},
-        'Total Distance (km)':
-    {"incipient": [1.5, 1000, 3],
-    "intensification": [1.5, 100, 3],
-    "mature": [1.5, 1000, 3],
-    "decay": [1.5, 1000, 3],
-    "intensification 2": [1.5, 70, 3],
-    "mature 2": [1.5, 1000, 3],
-    "decay 2": [1.5, 1000, 3],
-    "residual": [1.5, 500, 3]},
+    "residual": [2, 500, 99],
+    "Total": [2, 1000, 98]},
+        'Total Distance ($10^2$ km)':
+    {"incipient": [2, 1000, 98],
+    "intensification": [2, 100, 98],
+    "mature": [2, 1000, 98],
+    "decay": [2, 1000, 98],
+    "intensification 2": [1.5, 70, 98],
+    "mature 2": [2, 1000, 98],
+    "decay 2": [2, 1000, 98],
+    "residual": [2, 500, 98],
+    "Total":  [2, 1000, 98]},
         'Mean Speed (m/s)':
     {"incipient": [2, 1000, 96],
     "intensification": [1.5, 100, 100],
@@ -56,7 +71,8 @@ KDE_PARAMS = {
     "intensification 2": [2, 70, 100],
     "mature 2": [2, 1000, 93],
     "decay 2": [2, 1000, 98],
-    "residual": [2, 500, 99]},
+    "residual": [2, 500, 99],
+    "Total": [1.5, 1000, 99]},
 }
 
 def get_database():
@@ -70,13 +86,15 @@ def get_database():
     database = database.dropna(how='all')
     # Remove rows where "Mean Speed (m/s)" is NaN 
     # (so we won't compute statistics for the first time steps)
-    database = database.dropna(subset=['Mean Speed (m/s)'])      
+    database = database.dropna(subset=['Mean Speed (m/s)'])  
+    # Simplify units
+    database['Total Distance ($10^2$ km)'] = database['Total Distance (km)'] / 100    
     return database
 
 def metric_to_formatted_string(metric):
     mapping = {
         'Total Time (Hours)': 'total_time',
-        'Total Distance (km)': 'total_distance',
+        'Total Distance ($10^2$ km)': 'total_distance',
         'Mean Speed (m/s)': 'mean_speed'
     }
     return mapping.get(metric, '')
@@ -109,7 +127,7 @@ def compare_djf_jja(data_for_region):
 
     return test_used, p_value
 
-def plot_single_ridge(data, regions, figure_path, phase, metric):
+def plot_single_ridge_season(data, regions, figure_path, phase, metric):
     """
     Plot a single ridge plot for given data, combining both seasons in one subplot.
     """
@@ -230,6 +248,104 @@ def plot_single_ridge(data, regions, figure_path, phase, metric):
     plt.savefig(fname, dpi=200)
     print(f"{fname} created.")
 
+def plot_single_ridge(data, figure_path, phase, label, metric):
+    """
+    Plot a single ridge plot for given data, combining both seasons in one subplot.
+    """
+    # Create a figure with a row for each region
+    gs = grid_spec.GridSpec(len(REGIONS), 1)
+    fig = plt.figure(figsize=(10, 10))
+
+    # Calculate the upper percentile to define the x-axis range
+    variable = data[metric]
+    upper_percentile = np.percentile(variable, KDE_PARAMS[metric][2]) 
+    
+    # Set the x-axis limits based on the percentiles
+    xmin, xmax = 0, upper_percentile
+    
+    x_d = np.linspace(xmin, xmax, KDE_PARAMS[metric][1])
+
+    for idx, rg in enumerate(REGIONS):
+        region_data = data[(data['Region'] == rg)]
+        x = np.array(region_data['Total Time (Hours)'])
+        
+        kde = KernelDensity(bandwidth=KDE_PARAMS[metric][0], kernel='gaussian')
+        kde.fit(x[:, None])
+
+        ax = fig.add_subplot(gs[idx:idx+1, 0])
+
+        logprob = kde.score_samples(x_d[:, None])
+        ax.plot(x_d, np.exp(logprob), color="#f0f0f0", lw=1, linestyle='-')
+        ax.fill_between(x_d, np.exp(logprob), alpha=1, color='b', linestyle='-')
+        
+        # setting uniform x and y lims
+        ax.set_xlim(xmin, xmax)
+        ax.set_ylim(0, np.exp(logprob).max() + 0.2)  # added a bit of padding
+
+        # make background transparent
+        rect = ax.patch
+        rect.set_alpha(0)
+
+        # remove borders, axis ticks, and labels
+        ax.set_yticklabels([])
+        ax.yaxis.set_ticks([])  # Remove y-axis ticks
+
+        # Determine the y-limits for the grid lines, which would be confined to the KDE
+        y_limit = np.exp(logprob).max() + 0.2
+
+        # Calculate grid line positions
+        num_lines = 10
+        interval = int(round(xmax, -1)) // num_lines
+        interval = max(1, interval) + 1
+
+        # Set x-ticks based on the calculated positions
+        x_ticks = list(range(0, int(round(xmax, -1)), interval))
+        ax.set_xticks(x_ticks)
+
+        # Draw each grid line manually using axvline
+        for grid_x in x_ticks:
+            ax.axvline(x=grid_x, ymin=0, ymax=y_limit, color='grey', linestyle='--', linewidth=0.5)
+
+        # Calculate the mean of the data for the current region
+        meadian_value = np.median(x)
+
+        # Draw a vertical line at the mean value
+        ax.axvline(x=meadian_value, ymin=0, ymax=np.exp(logprob).max() + 0.08,
+                            color='grey', linestyle='-', linewidth=4, label="Median")
+
+        spines = ["top", "right", "left", "bottom"]
+        for s in spines:
+            ax.spines[s].set_visible(False)
+
+        if idx != len(REGIONS)-1:                
+            ax.set_xticklabels([])
+        else:
+            ax.tick_params(axis='x', labelsize=14)
+
+        ax.text(-0.5, 0, rg, fontweight="bold", fontsize=14, ha="right")
+        
+        # season
+        if idx == 0:
+            ax.text((xmax - xmin) / 2, np.exp(logprob).max() + 0.025, 
+                    f"({label}) {phase.capitalize()}", fontweight="bold", fontsize=14, ha="center")
+
+    ax.text((xmax - xmin) / 2, np.exp(logprob).min() - 0.025,
+             f'Total Time (Hours)', ha='center', fontsize=16, fontweight="bold")
+
+    # Adjust the position of each row of axes to create overlap
+    gs.update(hspace=-0.85)
+    
+    # Reduce top margin to remove excess white space
+    fig.subplots_adjust(top=1.35)
+    
+    plt.tight_layout()
+
+    # Save the combined figure for the current phase
+    metric_formatted = metric_to_formatted_string(metric)
+    fname = os.path.join(figure_path, f'{metric_formatted}_{phase}.png')
+    plt.savefig(fname, dpi=200)
+    print(f"{fname} created.")
+
 def plot_ridge_plots(database, phases):
     for metric in METRICS:
         for phase in phases:    
@@ -239,7 +355,8 @@ def plot_ridge_plots(database, phases):
             print(f"\n-----------------\nPlotting phase: {phase} for {metric}")
             data = database[database['phase'] == phase]
             regions = database['Region'].unique()
-            plot_single_ridge(data, regions, figure_path, phase, metric) 
+            plot_single_ridge_season(data, regions, figure_path, phase, metric) 
+            plot_single_ridge(data, figure_path, phase, label, metric)
 
 def phases_statistics(database):
     # Specified order for 'Region'
