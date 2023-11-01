@@ -6,7 +6,7 @@
 #    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 19:37:18 by daniloceano       #+#    #+#              #
-#    Updated: 2023/11/01 16:01:48 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/01 20:55:05 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -285,6 +285,9 @@ def compare_phases_by_region(data, n_bins=10):
 
         fig, axes = plt.subplots(2, 4, figsize=(12, 9))
 
+        # Determine the global max x-axis value for the current metric across all regions and phases
+        global_max_value = round(data[metric].quantile(QUANTILE_VALUES[metric]), -1)
+
         idx = 0
         for row in range(2):
             for column in range(4):
@@ -320,10 +323,10 @@ def compare_phases_by_region(data, n_bins=10):
                                 color=COLOR_PHASES[phase], linestyle=ls,
                                 linewidth=3, alpha=.8)
                 
-                # Set the x-axis limit
-                max_quantile_value = np.max(max_values)
-                ax.set_xlim(0, max_quantile_value)
-
+                # Set the x-axis limit and ticks
+                ax.set_xlim(0, global_max_value)
+                ax.set_xticks(np.linspace(0, global_max_value, 5))
+                
                 # Set titles, labels
                 ax.xaxis.set_tick_params(labelsize=12)
                 ax.set_yticklabels([])
@@ -361,7 +364,7 @@ def main():
     djf_data = database[database['Season'] == 'DJF']
     # plot_histograms_with_kde(jja_data, djf_data)
     
-    plot_histograms_for_total_season(total_data)
+    # plot_histograms_for_total_season(total_data)
 
     compare_phases_by_region(database)
 
