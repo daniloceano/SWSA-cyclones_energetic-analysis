@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_periods_database.py                         :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
+#    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/30 10:18:34 by Danilo           ###   ########.fr        #
+#    Updated: 2023/11/01 14:59:47 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -138,6 +138,30 @@ def process_data(tracks_distance_periods):
     print("Done")
     return merged_df
 
+
+def compute_totals(df):
+    # Group by track_id and sum up the 'Total Distance (km)' and 'Duration'
+    total_distance_duration = df.groupby('track_id').agg({
+        'Total Distance (km)': 'sum',
+        'Total Time (Hours)': 'sum'
+    }).reset_index()
+
+    # Group by track_id and compute mean of 'Mean Speed (m/s)'
+    mean_speed = df.groupby('track_id').agg({
+        'Mean Speed (m/s)': 'mean'
+    }).reset_index()
+
+    # Merge the two dataframes on 'track_id'
+    merged_df = pd.merge(total_distance_duration, mean_speed, on='track_id')
+
+    # Add a new column 'phase' with value 'Total'
+    merged_df['phase'] = 'Total'
+
+    # Append the new dataframe to the original dataframe
+    df = pd.concat([df, merged_df], ignore_index=True, sort=False)
+
+    return df
+
 def create_database(tracks, regions, analysis_type):
     data_frames = []
     for region in regions:
@@ -154,6 +178,7 @@ def create_database(tracks, regions, analysis_type):
             tracks_season_distance = compute_distance_parallel(tracks_season)
             tracks_season_distance_periods = process_phase_data_parallel(tracks_season_distance, periods_directory)
             df = process_data(tracks_season_distance_periods)
+            df = compute_totals(df)
             df['Region'] = 'Total' if not region else region
             df['Season'] = season
             data_frames.append(df)
