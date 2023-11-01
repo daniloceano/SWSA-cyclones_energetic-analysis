@@ -6,7 +6,7 @@
 #    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 19:37:18 by daniloceano       #+#    #+#              #
-#    Updated: 2023/10/31 23:57:26 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/01 16:01:48 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,10 +23,11 @@ SECONDS_IN_AN_HOUR = 3600
 ALPHA = 0.05  # Significance level
 ANALYSIS_TYPE = '70W-no-continental'
 METRICS = ['Total Distance ($10^2$ km)', 'Total Time (Hours)', 'Mean Speed (m/s)']
-PHASES = ['incipient', 'intensification', 'mature', 'decay', 'intensification 2', 'mature 2', 'decay 2', 'residual']
+PHASES = ['Total', 'incipient', 'intensification', 'mature', 'decay', 'intensification 2', 'mature 2', 'decay 2', 'residual']
 REGIONS = ['Total', 'ARG', 'LA-PLATA', 'SE-BR', 'SE-SAO', 'AT-PEN', 'WEDDELL', 'SA-NAM']
 PLOT_LABELS = ['(A)', '(B)', '(C)', '(D)', '(E)', '(F)', '(G)', '(H)']
 COLOR_PHASES = {
+        'Total': 'k',
         'incipient': '#65a1e6',
         'intensification': '#f7b538',
         'intensification 2': '#ca6702',
@@ -360,7 +361,7 @@ def main():
     djf_data = database[database['Season'] == 'DJF']
     # plot_histograms_with_kde(jja_data, djf_data)
     
-    # plot_histograms_for_total_season(total_data)
+    plot_histograms_for_total_season(total_data)
 
     compare_phases_by_region(database)
 
