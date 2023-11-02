@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    periods_statistics.py                              :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
+#    By: danilocoutodsouza <danilocoutodsouza@st    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 16:09:48 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/31 10:55:01 by Danilo           ###   ########.fr        #
+#    Updated: 2023/11/02 18:27:29 by danilocouto      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,7 +27,9 @@ from concurrent.futures import ThreadPoolExecutor
 SECONDS_IN_AN_HOUR = 3600
 ALPHA = 0.05  # Significance level
 ANALYSIS_TYPE = '70W-no-continental'
-METRICS = ['Total Distance ($10^2$ km)', 'Total Time (Hours)', 'Mean Speed (m/s)']
+METRICS = ['Total Distance ($10^2$ km)', 'Total Time (Hours)', 'Mean Speed (m/s)',
+            'Mean Growth rate  (−1 × 10−2 s−1 day-1)', 'Mean Growth rate  (−1 × 10−2 s−1 day-1)']
+# METRICS = ['Mean Growth rate  (−1 × 10−2 s−1 day-1)', 'Mean Growth rate  (−1 × 10−2 s−1 day-1)']            
 PHASES = ['incipient', 'intensification', 'mature', 'decay', 'intensification 2', 'mature 2', 'decay 2', 'residual']
 REGIONS = ['Total', 'ARG', 'LA-PLATA', 'SE-BR', 'SE-SAO', 'AT-PEN', 'WEDDELL', 'SA-NAM']
 PLOT_LABELS = ['(A)', '(B)', '(C)', '(D)', '(E)', '(F)', '(G)', '(H)', '(I)']
@@ -43,37 +45,12 @@ COLOR_PHASES = {
         'Total': '#1d3557'
     }
 KDE_PARAMS = {
-        'Total Time (Hours)':
-    {"incipient": [1, 1000, 99], # [bandwidth, number of samples, quantile]
-    "intensification": [2, 100, 98],
-    "mature": [1, 1000, 99.9],
-    "decay": [2, 1000, 95],
-    "intensification 2": [3, 70, 99],
-    "mature 2": [1, 1000, 99.9],
-    "decay 2": [2, 1000, 97],
-    "residual": [2, 500, 99],
-    "Total": [2, 1000, 98]},
-        'Total Distance ($10^2$ km)':
-    {"incipient": [2, 1000, 98],
-    "intensification": [2, 100, 98],
-    "mature": [2, 1000, 98],
-    "decay": [2, 1000, 98],
-    "intensification 2": [1.5, 70, 98],
-    "mature 2": [2, 1000, 98],
-    "decay 2": [2, 1000, 98],
-    "residual": [2, 500, 98],
-    "Total":  [2, 1000, 98]},
-        'Mean Speed (m/s)':
-    {"incipient": [2, 1000, 96],
-    "intensification": [1.5, 100, 100],
-    "mature": [2, 1000, 96],
-    "decay": [1, 1000, 100],
-    "intensification 2": [2, 70, 100],
-    "mature 2": [2, 1000, 93],
-    "decay 2": [2, 1000, 98],
-    "residual": [2, 500, 99],
-    "Total": [1.5, 1000, 99]},
-}
+        'Total Time (Hours)': [3, 1000, 95],
+        'Total Distance ($10^2$ km)': [2, 1000, 95],
+        'Mean Speed (m/s)': [2, 100, 97],
+        'Mean Growth rate  (−1 × 10−2 s−1 day-1)': [1.5, 100, 99],
+        'Mean Growth rate  (−1 × 10−2 s−1 day-1)': [20, 100, 99] 
+    }  # [bandwidth, number of samples, quantile]
 
 def get_database():
     files = f"../periods_species_statistics/{ANALYSIS_TYPE}/periods_database/periods_database_*.csv"
@@ -86,7 +63,7 @@ def get_database():
     database = database.dropna(how='all')
     # Remove rows where "Mean Speed (m/s)" is NaN 
     # (so we won't compute statistics for the first time steps)
-    database = database.dropna(subset=['Mean Speed (m/s)'])  
+    database = database.dropna(subset=['Mean Speed (m/s)', 'Mean Growth rate  (−1 × 10−2 s−1 day-1)', 'Mean Growth rate  (−1 × 10−2 s−1 day-1)'])  
     # Simplify units
     database['Total Distance ($10^2$ km)'] = database['Total Distance (km)'] / 100    
     return database
@@ -95,7 +72,9 @@ def metric_to_formatted_string(metric):
     mapping = {
         'Total Time (Hours)': 'total_time',
         'Total Distance ($10^2$ km)': 'total_distance',
-        'Mean Speed (m/s)': 'mean_speed'
+        'Mean Speed (m/s)': 'mean_speed',
+        'Mean Growth rate  (−1 × 10−2 s−1 day-1)': 'mean_intensity',
+        'Mean Growth rate  (−1 × 10−2 s−1 day-1)': 'mean_growth'
     }
     return mapping.get(metric, '')
 
@@ -132,18 +111,19 @@ def plot_single_ridge_season(data, regions, figure_path, phase, metric):
     Plot a single ridge plot for given data, combining both seasons in one subplot.
     """
     # Create a figure with a row for each region
+    plt.close("all")
     gs = grid_spec.GridSpec(len(regions), 2)
     fig = plt.figure(figsize=(12, 9))
 
     variable = data[metric]
 
     # Calculate the upper percentile to define the x-axis range
-    upper_percentile = np.percentile(variable, KDE_PARAMS[metric][phase][2]) 
+    upper_percentile = np.percentile(variable,KDE_PARAMS[metric][2]) 
     
     # Set the x-axis limits based on the percentiles
     xmin, xmax = 0, upper_percentile
     
-    x_d = np.linspace(xmin, xmax, KDE_PARAMS[metric][phase][1])
+    x_d = np.linspace(xmin, xmax,KDE_PARAMS[metric][1])
 
     red_shades = ['#9d0208', '#b30109', '#c7010a', '#d9000b', '#dc2f02', '#e14c03', '#e56904', '#ff9066']
     blue_shades = ['#023e8a', '#0251a0', '#0264b6', '#0077b6', '#0091c3', '#00abd0', '#00c5dd', '#48cae4']
@@ -162,7 +142,7 @@ def plot_single_ridge_season(data, regions, figure_path, phase, metric):
             season_data = data[(data['Region'] == rg) & (data['Season'] == season)]
             x = np.array(season_data[metric])
             
-            kde = KernelDensity(bandwidth=KDE_PARAMS[metric][phase][0], kernel='gaussian')
+            kde = KernelDensity(bandwidth=KDE_PARAMS[metric][0], kernel='gaussian')
             kde.fit(x[:, None])
 
             color = color_djf if season == "DJF" else color_jja
@@ -210,8 +190,7 @@ def plot_single_ridge_season(data, regions, figure_path, phase, metric):
             ax.axvline(x=mean_value, ymin=0, ymax=np.exp(logprob).max() + 0.2, 
                                 color='k', linestyle='-', linewidth=2, label="Mean")
             ax.axvline(x=meadian_value, ymin=0, ymax=np.exp(logprob).max() + 0.2,
-                                color='k', linestyle='--', alpha=0.8, linewidth=2, label="Median")
-                       
+                                color='k', linestyle='--', alpha=0.8, linewidth=2, label="Median")        
 
             spines = ["top", "right", "left", "bottom"]
             for s in spines:
@@ -253,23 +232,24 @@ def plot_single_ridge(data, figure_path, phase, metric):
     Plot a single ridge plot for given data, combining both seasons in one subplot.
     """
     # Create a figure with a row for each region
+    plt.close("all")
     gs = grid_spec.GridSpec(len(REGIONS), 1)
     fig = plt.figure(figsize=(10, 10))
 
     # Calculate the upper percentile to define the x-axis range
     variable = data[metric]
-    upper_percentile = np.percentile(variable, KDE_PARAMS[metric]["Total"][2]) 
+    upper_percentile = np.percentile(variable,KDE_PARAMS[metric][2]) 
     
     # Set the x-axis limits based on the percentiles
     xmin, xmax = 0, upper_percentile
     
-    x_d = np.linspace(xmin, xmax, KDE_PARAMS[metric]["Total"][1])
+    x_d = np.linspace(xmin, xmax,KDE_PARAMS[metric][1])
 
     for idx, rg in enumerate(REGIONS):
         region_data = data[(data['Region'] == rg)]
         x = np.array(region_data[metric])
         
-        kde = KernelDensity(bandwidth=KDE_PARAMS[metric]["Total"][0], kernel='gaussian')
+        kde = KernelDensity(bandwidth=KDE_PARAMS[metric][0], kernel='gaussian')
         kde.fit(x[:, None])
 
         ax = fig.add_subplot(gs[idx:idx+1, 0])
@@ -354,7 +334,10 @@ def plot_single_phase(ax, x, x_d, kde, phase, xmin, xmax, metric):
     ax.plot(x_d, np.exp(logprob), color="#f0f0f0", lw=1, linestyle='-')
     ax.fill_between(x_d, np.exp(logprob), alpha=1, color=COLOR_PHASES.get(phase, 'gray'), linestyle='-')
     # setting uniform x and y lims
-    ax.set_xlim(xmin, xmax)
+    if metric == 'Mean Growth rate  (−1 × 10−2 s−1 day-1)':
+        ax.set_xlim(xmin, -xmin)
+    else:
+        ax.set_xlim(xmin, xmax)
     logprob = kde.score_samples(x_d[:, None])
     ax.plot(x_d, np.exp(logprob), color="#f0f0f0", lw=1, linestyle='-')
     ax.fill_between(x_d, np.exp(logprob), alpha=1, color=COLOR_PHASES[phase],
@@ -375,13 +358,22 @@ def plot_single_phase(ax, x, x_d, kde, phase, xmin, xmax, metric):
     elif metric == "Mean Speed (m/s)":
         y_limit = np.exp(logprob).max() + 0.1
         ymax_fraction = 1
+    elif metric == "Mean Vorticity (−1 × 10−5 s−1)":
+        y_limit = np.exp(logprob).max() + 0.3
+        ymax_fraction = 0.6
+    elif metric == "Mean Growth rate  (−1 × 10−2 s−1 day-1)":
+        y_limit = np.exp(logprob).max() + 0.01
+        ymax_fraction = 10
     ax.set_ylim(0, y_limit)
     # Calculate grid line positions
     num_lines = 10
     interval = int(round(xmax, -1)) // num_lines
     interval = max(1, interval) + 1
     # Set x-ticks based on the calculated positions
-    x_ticks = list(range(0, int(round(xmax, -1)), interval))
+    if metric == 'Mean Growth rate  (−1 × 10−2 s−1 day-1)':
+        x_ticks = list(range(int(round(xmin, -1)), int(round(xmax, -1)), int(interval * 6)))
+    else:
+        x_ticks = list(range(0, int(round(xmax, -1)), interval))
     ax.set_xticks(x_ticks)
     # Draw each grid line manually using axvline
     for grid_x in x_ticks:
@@ -410,6 +402,7 @@ def plot_ridge_phases(data, figure_path):
     data = data[data['Region'] == 'Total']
 
     # Define a grid layout with one row for each phase and one column for each metric
+    plt.close("all")
     gs = grid_spec.GridSpec(len(PHASES) + 1, len(METRICS))
     fig = plt.figure(figsize=(4 * len(METRICS), len(PHASES) * 1.2))
 
@@ -424,14 +417,20 @@ def plot_ridge_phases(data, figure_path):
 
     for metric_idx, metric in enumerate(METRICS):
         variable = data[metric]
-        upper_percentile = np.percentile(variable, KDE_PARAMS[metric]["Total"][2])
-        xmin, xmax = 0, upper_percentile
-        x_d = np.linspace(xmin, xmax, KDE_PARAMS[metric]["Total"][1])
+        upper_percentile = np.percentile(variable,KDE_PARAMS[metric][2])
+        if metric == 'Mean Growth rate  (−1 × 10−2 s−1 day-1)':
+            xmin = np.percentile(variable, 0.5)
+        elif metric == 'Mean Growth rate  (−1 × 10−2 s−1 day-1)':
+            xmin = np.min(variable)
+        else:
+            xmin = 0
+        xmax = upper_percentile
+        x_d = np.linspace(xmin, xmax,KDE_PARAMS[metric][1])
         for idx, phase in enumerate(sorted_phases):
             ax = fig.add_subplot(gs[idx, metric_idx])
             phase_data = data[data['phase'] == phase]
             x = np.array(phase_data[metric])
-            kde = KernelDensity(bandwidth=KDE_PARAMS[metric]["Total"][0], kernel='gaussian')
+            kde = KernelDensity(bandwidth=KDE_PARAMS[metric][0], kernel='gaussian')
             kde.fit(x[:, None])
             ax = plot_single_phase(ax, x, x_d, kde, phase, xmin, xmax, metric)
             if idx != len(PHASES)-1:
