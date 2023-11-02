@@ -6,7 +6,7 @@
 #    By: danilocoutodsouza <danilocoutodsouza@st    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 16:09:48 by Danilo            #+#    #+#              #
-#    Updated: 2023/11/02 18:27:29 by danilocouto      ###   ########.fr        #
+#    Updated: 2023/11/02 19:59:20 by danilocouto      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -28,8 +28,7 @@ SECONDS_IN_AN_HOUR = 3600
 ALPHA = 0.05  # Significance level
 ANALYSIS_TYPE = '70W-no-continental'
 METRICS = ['Total Distance ($10^2$ km)', 'Total Time (Hours)', 'Mean Speed (m/s)',
-            'Mean Growth rate  (−1 × 10−2 s−1 day-1)', 'Mean Growth rate  (−1 × 10−2 s−1 day-1)']
-# METRICS = ['Mean Growth rate  (−1 × 10−2 s−1 day-1)', 'Mean Growth rate  (−1 × 10−2 s−1 day-1)']            
+            'Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth rate  (-1 × 10−2 s−1 day-1)']
 PHASES = ['incipient', 'intensification', 'mature', 'decay', 'intensification 2', 'mature 2', 'decay 2', 'residual']
 REGIONS = ['Total', 'ARG', 'LA-PLATA', 'SE-BR', 'SE-SAO', 'AT-PEN', 'WEDDELL', 'SA-NAM']
 PLOT_LABELS = ['(A)', '(B)', '(C)', '(D)', '(E)', '(F)', '(G)', '(H)', '(I)']
