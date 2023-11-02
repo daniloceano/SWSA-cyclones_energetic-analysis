@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_periods_database.py                         :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
+#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/11/01 14:59:47 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/02 01:03:51 by Danilo           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -131,10 +131,17 @@ def process_data(tracks_distance_periods):
     tracks_distance_periods['time_diff'] = tracks_distance_periods.groupby('track_id')['date'].diff().dt.total_seconds() / SECONDS_IN_AN_HOUR
     total_distance = tracks_distance_periods.groupby(['track_id', 'phase'])['Distance'].sum().reset_index(name='Total Distance (km)')
     total_time = tracks_distance_periods.groupby(['track_id', 'phase'])['time_diff'].sum().reset_index(name='Total Time (Hours)')
+    mean_vorticity = (tracks_distance_periods.groupby(['track_id', 'phase'])['vor42'].mean().reset_index(name='Mean Vorticity (−1 × 10−5 s−1)'))
+    tracks_distance_periods['vor42_diff'] = tracks_distance_periods.groupby('track_id')['vor42'].diff()
+    growth_rate = (tracks_distance_periods.groupby(['track_id', 'phase'])['vor42_diff'].mean().reset_index(name='Mean Growth rate (s−1 day-1)'))
+    growth_rate['Mean Growth rate (s−1 day-1)'] = growth_rate['Mean Growth rate (s−1 day-1)'] * 1e5 / (24 *  SECONDS_IN_AN_HOUR)
     merged_df = pd.merge(total_distance, total_time, on=['track_id', 'phase'])
+    merged_df = pd.merge(merged_df, mean_vorticity, on=['track_id', 'phase'])
+    merged_df = pd.merge(merged_df, growth_rate, on=['track_id', 'phase'])
     merged_df['Mean Speed (km/h)'] = merged_df['Total Distance (km)'] / merged_df['Total Time (Hours)']
     merged_df['Mean Speed (m/s)'] = merged_df['Mean Speed (km/h)'] * (1000 / 3600)
     merged_df.drop(columns=['Mean Speed (km/h)'], inplace=True)
+    tracks_distance_periods.drop(columns=['vor42_diff'], inplace=True)
     print("Done")
     return merged_df
 
