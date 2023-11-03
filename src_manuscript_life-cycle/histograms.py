@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    histograms.py                                      :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
+#    By: danilocoutodsouza <danilocoutodsouza@st    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 19:37:18 by daniloceano       #+#    #+#              #
-#    Updated: 2023/11/01 20:55:05 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/02 20:39:19 by danilocouto      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,7 +22,8 @@ from scipy.stats import levene, ttest_ind, mannwhitneyu, anderson, ks_2samp
 SECONDS_IN_AN_HOUR = 3600
 ALPHA = 0.05  # Significance level
 ANALYSIS_TYPE = '70W-no-continental'
-METRICS = ['Total Distance ($10^2$ km)', 'Total Time (Hours)', 'Mean Speed (m/s)']
+METRICS = ['Total Distance ($10^2$ km)', 'Total Time (Hours)', 'Mean Speed (m/s)',
+            'Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth rate  (−1 × 10−2 s−1 day-1)']
 PHASES = ['Total', 'incipient', 'intensification', 'mature', 'decay', 'intensification 2', 'mature 2', 'decay 2', 'residual']
 REGIONS = ['Total', 'ARG', 'LA-PLATA', 'SE-BR', 'SE-SAO', 'AT-PEN', 'WEDDELL', 'SA-NAM']
 PLOT_LABELS = ['(A)', '(B)', '(C)', '(D)', '(E)', '(F)', '(G)', '(H)']
@@ -67,7 +68,9 @@ LABEL_MAPPING = {
 QUANTILE_VALUES = {
         'Total Distance ($10^2$ km)': 0.9,
         'Total Time (Hours)': 0.95,
-        'Mean Speed (m/s)': 0.999
+        'Mean Speed (m/s)': 0.999,
+        'Mean Growth rate  (-1 x 10-2 s-1 day-1)': 1,
+        'Mean Vorticity (−1 × 10−5 s−1)': 0.98
     }
 
 def get_database():
@@ -81,7 +84,8 @@ def get_database():
     database = database.dropna(how='all')
     # Remove rows where "Mean Speed (m/s)" is NaN 
     # (so we won't compute statistics for the first time steps)
-    database = database.dropna(subset=['Mean Speed (m/s)']) 
+    database = database.dropna(subset=['Mean Speed (m/s)',
+                                       'Mean Growth rate  (−1 × 10−2 s−1 day-1)']) 
     database['Total Distance ($10^2$ km)'] = database['Total Distance (km)'] / 100     
     return database
 
@@ -90,7 +94,9 @@ def metric_to_formatted_string(metric):
     mapping = {
         'Total Time (Hours)': 'total_time',
         'Total Distance ($10^2$ km)': 'total_distance',
-        'Mean Speed (m/s)': 'mean_speed'
+        'Mean Speed (m/s)': 'mean_speed',
+        'Mean Growth rate  (−1 × 10−2 s−1 day-1)': 'mean_intensity',
+        'Mean Growth rate  (−1 × 10−2 s−1 day-1)': 'mean_growth'
     }
     return mapping.get(metric, '')
 
@@ -148,9 +154,9 @@ def apply_statistical_tests(ax, jja_metric_data, djf_metric_data):
     if p_value_ks < 0.001: ks_significance_str += "*"
 
     # Annotate the plot with mean values, t-test/Mann-Whitney significance, and KS significance
-    ax.text(0.99, 0.94, f'{djf_metric_data.mean().round(1)}',
+    ax.text(0.99, 0.94, f'{round(djf_metric_data.mean(), 1)}',
             c=COLOR_SEASONS['DJF'], fontsize=11, transform=ax.transAxes, ha='right', va='top') 
-    ax.text(0.99, 0.71, f'{jja_metric_data.mean().round(1)}',
+    ax.text(0.99, 0.71, f'{round(jja_metric_data.mean(), 1)}',
             c=COLOR_SEASONS['JJA'], fontsize=11, transform=ax.transAxes, ha='right', va='top')
     ax.text(0.99, 0.45, f'{significance_str}',
             c='k', fontsize=9, transform=ax.transAxes, ha='right', va='top')
@@ -362,9 +368,9 @@ def main():
     
     jja_data = database[database['Season'] == 'JJA']
     djf_data = database[database['Season'] == 'DJF']
-    # plot_histograms_with_kde(jja_data, djf_data)
+    plot_histograms_with_kde(jja_data, djf_data)
     
-    # plot_histograms_for_total_season(total_data)
+    plot_histograms_for_total_season(total_data)
 
     compare_phases_by_region(database)
 

@@ -6,7 +6,7 @@
 #    By: danilocoutodsouza <danilocoutodsouza@st    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/11/02 13:02:46 by danilocouto      ###   ########.fr        #
+#    Updated: 2023/11/02 20:58:12 by danilocouto      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -133,8 +133,8 @@ def process_data(tracks_distance_periods):
     total_time = tracks_distance_periods.groupby(['track_id', 'phase'])['time_diff'].sum().reset_index(name='Total Time (Hours)')
     mean_vorticity = (tracks_distance_periods.groupby(['track_id', 'phase'])['vor42'].mean().reset_index(name='Mean Vorticity (−1 × 10−5 s−1)'))
     tracks_distance_periods['vor42_diff'] = tracks_distance_periods.groupby('track_id')['vor42'].diff()
-    growth_rate = (tracks_distance_periods.groupby(['track_id', 'phase'])['vor42_diff'].mean().reset_index(name='Mean Growth rate  (−1 × 10−2 s−1 day-1)'))
-    growth_rate['Mean Growth rate  (−1 × 10−2 s−1 day-1)'] = growth_rate['Mean Growth rate  (−1 × 10−2 s−1 day-1)'] * 1e8 / (24 *  SECONDS_IN_AN_HOUR)
+    growth_rate = (tracks_distance_periods.groupby(['track_id', 'phase'])['vor42_diff'].mean().reset_index(name='Mean Growth rate (−1 × 10^−2 s−1 day-1)'))
+    growth_rate['Mean Growth rate (−1 × 10^−2 s−1 day-1)'] = growth_rate['Mean Growth rate (−1 × 10^−2 s−1 day-1)'] * 1e8 / (24 *  SECONDS_IN_AN_HOUR)
     merged_df = pd.merge(total_distance, total_time, on=['track_id', 'phase'])
     merged_df = pd.merge(merged_df, mean_vorticity, on=['track_id', 'phase'])
     merged_df = pd.merge(merged_df, growth_rate, on=['track_id', 'phase'])
@@ -145,27 +145,21 @@ def process_data(tracks_distance_periods):
     print("Done")
     return merged_df
 
-
 def compute_totals(df):
     # Group by track_id and sum up the 'Total Distance (km)' and 'Duration'
-    total_distance_duration = df.groupby('track_id').agg({
+    total_phase = df.groupby('track_id').agg({
         'Total Distance (km)': 'sum',
-        'Total Time (Hours)': 'sum'
+        'Total Time (Hours)': 'sum',
+        'Mean Speed (m/s)': 'mean',
+        'Mean Vorticity (−1 × 10−5 s−1)': 'mean',
+        'Mean Growth rate (−1 × 10^−2 s−1 day-1)': 'mean'
     }).reset_index()
-
-    # Group by track_id and compute mean of 'Mean Speed (m/s)'
-    mean_speed = df.groupby('track_id').agg({
-        'Mean Speed (m/s)': 'mean'
-    }).reset_index()
-
-    # Merge the two dataframes on 'track_id'
-    merged_df = pd.merge(total_distance_duration, mean_speed, on='track_id')
 
     # Add a new column 'phase' with value 'Total'
-    merged_df['phase'] = 'Total'
+    total_phase['phase'] = 'Total'
 
     # Append the new dataframe to the original dataframe
-    df = pd.concat([df, merged_df], ignore_index=True, sort=False)
+    df = pd.concat([df, total_phase], ignore_index=True, sort=False)
 
     return df
 
