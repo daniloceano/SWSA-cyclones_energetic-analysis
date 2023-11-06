@@ -6,7 +6,7 @@
 #    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 19:37:18 by daniloceano       #+#    #+#              #
-#    Updated: 2023/11/06 16:52:21 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/06 17:16:29 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -419,9 +419,9 @@ def main():
     
     jja_data = database[database['Season'] == 'JJA']
     djf_data = database[database['Season'] == 'DJF']
-    # plot_histograms_with_kde(jja_data, djf_data)
+    plot_histograms_with_kde(jja_data, djf_data)
     
-    # compare_phases_by_region(database)
+    compare_phases_by_region(database)
 
     compare_phases_for_total_region(total_data)
 
