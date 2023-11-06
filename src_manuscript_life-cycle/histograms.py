@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    histograms.py                                      :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: danilocoutodsouza <danilocoutodsouza@st    +#+  +:+       +#+         #
+#    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 19:37:18 by daniloceano       #+#    #+#              #
-#    Updated: 2023/11/06 12:09:36 by danilocouto      ###   ########.fr        #
+#    Updated: 2023/11/06 13:47:58 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,6 +24,7 @@ ALPHA = 0.05  # Significance level
 ANALYSIS_TYPE = '70W-no-continental'
 METRICS = ['Total Distance ($10^2$ km)', 'Total Time (Hours)', 'Mean Speed (m/s)',
             'Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth rate (−1 × 10^−2 s−1 day-1)']
+METRICS = ['Mean Growth rate (−1 × 10^−2 s−1 day-1)']
 PHASES = ['Total', 'incipient', 'intensification', 'mature', 'decay', 'intensification 2', 'mature 2', 'decay 2', 'residual']
 REGIONS = ['Total', 'ARG', 'LA-PLATA', 'SE-BR', 'SE-SAO', 'AT-PEN', 'WEDDELL', 'SA-NAM']
 PLOT_LABELS = ['(A)', '(B)', '(C)', '(D)', '(E)', '(F)', '(G)', '(H)']
@@ -77,7 +78,7 @@ QUANTILE_VALUES = {
         'Total Distance ($10^2$ km)': 0.9,
         'Total Time (Hours)': 0.95,
         'Mean Speed (m/s)': 0.999,
-        'Mean Growth rate (−1 × 10^−2 s−1 day-1)': 0.99,
+        'Mean Growth rate (−1 × 10^−2 s−1 day-1)': 0.9,
         'Mean Vorticity (−1 × 10−5 s−1)': 0.99
     }
 
@@ -310,6 +311,7 @@ def compare_phases_by_region(data, n_bins=10):
                 
                 # Variables to help position the text neatly
                 y_position = 0.99
+                x_position = 0.95
                 y_offset = 0.05
                 
                 # Collecting maximum values among all phases for the given metric in the given region
@@ -320,7 +322,7 @@ def compare_phases_by_region(data, n_bins=10):
                     std_value = subset[metric].std()
                     
                     text_str = f"{mean_value:.2f} ± {std_value:.2f}"
-                    ax.text(0.95, y_position, text_str, transform=ax.transAxes,
+                    ax.text(x_position, y_position, text_str, transform=ax.transAxes,
                             fontsize=10, verticalalignment='top', horizontalalignment='right',
                             color=COLOR_PHASES[phase], weight='bold')
                     
@@ -338,8 +340,14 @@ def compare_phases_by_region(data, n_bins=10):
                                 linewidth=3, alpha=.8)
                 
                 # Set the x-axis limit and ticks
-                ax.set_xlim(0, global_max_value)
-                ax.set_xticks(np.linspace(0, global_max_value, 5))
+                if metric != 'Mean Growth rate (−1 × 10^−2 s−1 day-1)':
+                    ax.set_xlim(0, global_max_value)
+                    ax.set_xticks(np.linspace(0, global_max_value, 5))
+                else:
+                    global_min_value = round(data[metric].quantile(0.1), -1)
+                    ax.set_xlim(global_min_value, global_max_value)
+                    ax.axvline(0, color='k', linestyle='--', linewidth=0.5, alpha=0.7)
+                    ax.set_xticks(np.linspace(global_min_value-20, global_max_value, 5))
                 
                 # Set titles, labels
                 ax.xaxis.set_tick_params(labelsize=12)
