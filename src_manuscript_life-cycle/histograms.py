@@ -6,7 +6,7 @@
 #    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 19:37:18 by daniloceano       #+#    #+#              #
-#    Updated: 2023/11/06 15:19:06 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/06 16:52:21 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -224,67 +224,6 @@ def plot_histograms_with_kde(jja_data, djf_data):
         plt.savefig(fname, dpi=300)
         plt.close()  # Close the figure to free up memory
         print(f"{fname} created.")
-        
-def plot_histograms_for_total_season(total_data):
-    """Plot histograms for 'Total' season with each subplot being a different phase."""
-    
-    # Number of rows (phases) and columns (metrics)
-    num_rows = len(PHASES)
-    num_cols = len(METRICS)
-
-    fig, axes = plt.subplots(num_rows, num_cols, figsize=(12, 10), tight_layout=True)
-
-    for i, phase in enumerate(PHASES):
-        for j, metric in enumerate(METRICS):
-            ax = axes[i, j]
-            # Extract data for the current phase
-            phase_data = total_data[total_data['phase'] == phase]
-            
-            # Determine upper bound for the current metric
-            upper_bound = phase_data[metric].quantile(0.95)
-
-            # Loop through each region and plot data on the same subplot
-            for region in REGIONS:
-                region_data = phase_data[phase_data['Region'] == region]
-                metric_data = region_data[metric].dropna()
-
-                # Plotting only KDE
-                sns.kdeplot(metric_data, ax=ax, label=region,
-                            color=COLOR_REGIONS[region], linewidth=2)
-
-            ax.set_xlim(0, upper_bound)
-
-            # Set titles, labels
-            ax.xaxis.set_tick_params(labelsize=12)
-            ax.set_yticklabels([])
-            ax.set_xlabel("")
-            if i == 0:
-                ax.set_title(f"{PLOT_LABELS[j]} {metric}", fontsize=14, loc='left')
-            if j == 0:
-                label = LABEL_MAPPING.get(phase, phase)
-                ax.set_ylabel(label, fontsize=14)
-            elif j == 2:
-                ax.yaxis.set_label_position("right")
-                ax.yaxis.tick_right()
-                ax.set_ylabel('Count', fontsize=12)
-            else:
-                ax.set_ylabel("")
-
-    # Placing a single legend outside the plotting area on the right
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc='center left', fontsize=12, title="Regions", 
-               title_fontsize=14, bbox_to_anchor=(1.15, 6))
-
-    # Adjust layout to make space for the legend
-    fig.tight_layout()
-    plt.subplots_adjust(right=0.8, hspace=0.5)
-
-    # Save the plot with a unique filename for the "Total" season
-    fname = f"../figures/manuscript_life-cycle/histograms/histograms_total_season.png"
-    plt.savefig(fname, dpi=300)
-    print(f"{fname} created.")
-    plt.close()
-
 
 def compare_phases_by_region(data, n_bins=10):
     """Compare each phase for each region by plotting KDE for given metrics.
@@ -376,10 +315,103 @@ def compare_phases_by_region(data, n_bins=10):
 
         # Save the plot with a unique filename for the "Total" season
         metric_string = metric_to_formatted_string(metric)
-        fname = f"../figures/manuscript_life-cycle/histograms_phases_regions_{metric_string}.png"
+        fname = f"../figures/manuscript_life-cycle/histograms/histograms_phases_regions_{metric_string}.png"
         plt.savefig(fname, dpi=300)
         print(f"{fname} created.")
         plt.close()
+
+def compare_phases_for_total_region(data):
+    """Compare each phase for the 'Total' region by plotting KDE for each metric.
+    
+    Parameters:
+    - data (pd.DataFrame): The dataset containing the values to plot.
+    """
+
+    # Filter data for the 'Total' region
+    data_total_region = data[data['Region'] == 'Total']
+
+    # Determine number of rows and columns based on the number of metrics
+    num_metrics = len(METRICS)
+    num_rows = (num_metrics + 1) // 2  # Adjusted for 2 columns layout
+    num_cols = 2
+
+    # Create subplots
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(10, 5 * num_rows))
+
+    # Flatten the axes array for easy iteration
+    axes = axes.flatten()
+
+    for i, metric in enumerate(METRICS):
+        ax = axes[i]
+
+        # Variables to help position the text neatly
+        y_position = 0.99  # Starting y position for text annotations
+        x_position = 0.98  # x position for text annotations
+        y_offset = 0.07  # Spacing between text annotations
+
+        # Collecting maximum values among all phases for the given metric in the 'Total' region
+        max_values = []
+        for phase in PHASES[:-1]:
+            subset = data_total_region[data_total_region['phase'] == phase]
+            mean_value = subset[metric].mean()
+            std_value = subset[metric].std()
+            text_str = f"{mean_value:.2f} ± {std_value:.2f}"
+
+            # Annotate the mean and std deviation on the plot
+            ax.text(x_position, y_position, text_str, transform=ax.transAxes,
+                    horizontalalignment='right', verticalalignment='top',
+                    color=COLOR_PHASES[phase], fontsize=12, weight='bold')
+            y_position -= y_offset  # Update the y position for the next annotation
+
+            # Plot the KDE for the phase
+            if "2" in phase:
+                ls = '--'
+            else:
+                ls = '-'
+            sns.kdeplot(subset[metric], ax=ax, label=phase, linestyle=ls,
+                        color=COLOR_PHASES[phase], linewidth=5, alpha=.8)
+            max_values.append(subset[metric].quantile(QUANTILE_VALUES[metric]))
+
+        # Set the x-axis limit
+        if any(term in metric for term in ["Distance", "Time"]):
+            upper_bound = np.quantile(data_total_region[metric], 0.95)
+        elif metric == 'Mean Growth rate (−1 × 10^−2 s−1 day-1)':
+            upper_bound = max(max_values) + 20
+        else:
+            upper_bound = max(max_values)        
+        lower_bound = min(data[metric].quantile(0.05), 0)
+        ax.set_xlim(lower_bound, upper_bound)
+
+        # Set title and labels
+        ax.set_ylabel('Density', fontsize=14)
+        ax.yaxis.labelpad = 10
+        ax.set_xlabel(METRICS_LATEX_MAPPING[metric], fontsize=16)
+        ax.yaxis.set_tick_params(labelsize=14)
+        ax.xaxis.set_tick_params(labelsize=14)
+
+        if metric == 'Mean Growth rate (−1 × 10^−2 s−1 day-1)':
+            ax.axvline(0, color='gray', linestyle='-', linewidth=2, alpha=0.7)
+
+        # Place the legend
+        if i == num_metrics - 1:
+            # Adjust the bbox_to_anchor parameters and increase the bbox size
+            handles, labels = ax.get_legend_handles_labels()
+            legend = ax.legend(handles, labels, loc='center left', fontsize=18, 
+                            title="Phases", title_fontsize=20, bbox_to_anchor=(1.4, 0.5), frameon=False)
+
+
+        # Hide unused subplots if METRICS is an odd number
+        if num_metrics % 2 != 0 and i == num_metrics - 1:
+            fig.delaxes(axes[i + 1])
+
+    # Adjust the layout
+    fig.tight_layout(w_pad=-25)
+
+    # Save the plot with a unique filename for the 'Total' region
+    fname = "../figures/manuscript_life-cycle/histograms_phases_total_region.png"
+    plt.savefig(fname, dpi=300)
+    plt.close()
+    print(f"{fname} created.")
 
 def main():
     database = get_database()
@@ -389,9 +421,9 @@ def main():
     djf_data = database[database['Season'] == 'DJF']
     # plot_histograms_with_kde(jja_data, djf_data)
     
-    # plot_histograms_for_total_season(total_data)
+    # compare_phases_by_region(database)
 
-    compare_phases_by_region(database)
+    compare_phases_for_total_region(total_data)
 
 if __name__ == '__main__':
     main()

@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    periods_statistics.py                              :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: danilocoutodsouza <danilocoutodsouza@st    +#+  +:+       +#+         #
+#    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 16:09:48 by Danilo            #+#    #+#              #
-#    Updated: 2023/11/06 09:14:47 by danilocouto      ###   ########.fr        #
+#    Updated: 2023/11/06 17:13:33 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -29,6 +29,7 @@ ALPHA = 0.05  # Significance level
 ANALYSIS_TYPE = '70W-no-continental'
 METRICS = ['Total Distance ($10^2$ km)', 'Total Time (Hours)', 'Mean Speed (m/s)',
             'Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth rate (−1 × 10^−2 s−1 day-1)']
+METRICS = ['Mean Vorticity (−1 × 10−5 s−1)']
 PHASES = ['incipient', 'intensification', 'mature', 'decay', 'intensification 2', 'mature 2', 'decay 2', 'residual']
 REGIONS = ['Total', 'ARG', 'LA-PLATA', 'SE-BR', 'SE-SAO', 'AT-PEN', 'WEDDELL', 'SA-NAM']
 PLOT_LABELS = ['(A)', '(B)', '(C)', '(D)', '(E)', '(F)', '(G)', '(H)', '(I)']
@@ -47,7 +48,7 @@ KDE_PARAMS = {
         'Total Time (Hours)': [3, 1000, 95],
         'Total Distance ($10^2$ km)': [2, 1000, 95],
         'Mean Speed (m/s)': [2, 100, 97],
-        'Mean Growth rate (−1 × 10^−2 s−1 day-1)': [1.5, 100, 99],
+        'Mean Vorticity (−1 × 10−5 s−1)': [1.5, 100, 99],
         'Mean Growth rate (−1 × 10^−2 s−1 day-1)': [20, 100, 99] 
     }  # [bandwidth, number of samples, quantile]
 
@@ -72,7 +73,7 @@ def metric_to_formatted_string(metric):
         'Total Time (Hours)': 'total_time',
         'Total Distance ($10^2$ km)': 'total_distance',
         'Mean Speed (m/s)': 'mean_speed',
-        'Mean Growth rate (−1 × 10^−2 s−1 day-1)': 'mean_intensity',
+        'Mean Vorticity (−1 × 10−5 s−1)': 'mean_intensity',
         'Mean Growth rate (−1 × 10^−2 s−1 day-1)': 'mean_growth'
     }
     return mapping.get(metric, '')
@@ -487,7 +488,7 @@ def phases_statistics(database):
         pivot_df.columns = ['_'.join(col).strip() for col in pivot_df.columns.values]
         pivot_df.reset_index(inplace=True)
         # Given phases in the desired order
-        phase_order = ["incipient", "intensification", "mature", "decay", 
+        phase_order = ["Total", "incipient", "intensification", "mature", "decay", 
                     "intensification 2", "mature 2", "decay 2", "residual"]
         # Create an ordered list of columns based on the desired order with mean followed by std
         ordered_columns = ["Region", "Season"]
