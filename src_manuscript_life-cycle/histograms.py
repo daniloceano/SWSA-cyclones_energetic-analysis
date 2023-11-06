@@ -6,7 +6,7 @@
 #    By: danilocoutodsouza <danilocoutodsouza@st    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 19:37:18 by daniloceano       #+#    #+#              #
-#    Updated: 2023/11/02 20:39:19 by danilocouto      ###   ########.fr        #
+#    Updated: 2023/11/06 12:09:36 by danilocouto      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,7 +23,7 @@ SECONDS_IN_AN_HOUR = 3600
 ALPHA = 0.05  # Significance level
 ANALYSIS_TYPE = '70W-no-continental'
 METRICS = ['Total Distance ($10^2$ km)', 'Total Time (Hours)', 'Mean Speed (m/s)',
-            'Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth rate  (−1 × 10−2 s−1 day-1)']
+            'Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth rate (−1 × 10^−2 s−1 day-1)']
 PHASES = ['Total', 'incipient', 'intensification', 'mature', 'decay', 'intensification 2', 'mature 2', 'decay 2', 'residual']
 REGIONS = ['Total', 'ARG', 'LA-PLATA', 'SE-BR', 'SE-SAO', 'AT-PEN', 'WEDDELL', 'SA-NAM']
 PLOT_LABELS = ['(A)', '(B)', '(C)', '(D)', '(E)', '(F)', '(G)', '(H)']
@@ -65,12 +65,20 @@ LABEL_MAPPING = {
         'decay 2': 'D2',
     }
 
+METRICS_LATEX_MAPPING = {
+    'Total Time (Hours)': r'Total Time [hours]',
+    'Total Distance ($10^2$ km)': r'Total Distance [$10^2$ km]',
+    'Mean Speed (m/s)': r'Mean Speed [m$\cdot$s$^{-1}$]',
+    'Mean Vorticity (−1 × 10−5 s−1)': r'Mean Vorticity [$-1 \times 10^{-5}$ s$^{-1}$]',
+    'Mean Growth rate (−1 × 10^−2 s−1 day-1)': r'Mean Growth rate [$-1 \times 10^{-2}$ s$^{-1}$ day$^{-1}$]'
+}
+
 QUANTILE_VALUES = {
         'Total Distance ($10^2$ km)': 0.9,
         'Total Time (Hours)': 0.95,
         'Mean Speed (m/s)': 0.999,
-        'Mean Growth rate  (-1 x 10-2 s-1 day-1)': 1,
-        'Mean Vorticity (−1 × 10−5 s−1)': 0.98
+        'Mean Growth rate (−1 × 10^−2 s−1 day-1)': 0.99,
+        'Mean Vorticity (−1 × 10−5 s−1)': 0.99
     }
 
 def get_database():
@@ -85,7 +93,7 @@ def get_database():
     # Remove rows where "Mean Speed (m/s)" is NaN 
     # (so we won't compute statistics for the first time steps)
     database = database.dropna(subset=['Mean Speed (m/s)',
-                                       'Mean Growth rate  (−1 × 10−2 s−1 day-1)']) 
+                                       'Mean Growth rate (−1 × 10^−2 s−1 day-1)']) 
     database['Total Distance ($10^2$ km)'] = database['Total Distance (km)'] / 100     
     return database
 
@@ -95,8 +103,8 @@ def metric_to_formatted_string(metric):
         'Total Time (Hours)': 'total_time',
         'Total Distance ($10^2$ km)': 'total_distance',
         'Mean Speed (m/s)': 'mean_speed',
-        'Mean Growth rate  (−1 × 10−2 s−1 day-1)': 'mean_intensity',
-        'Mean Growth rate  (−1 × 10−2 s−1 day-1)': 'mean_growth'
+        'Mean Vorticity (−1 × 10−5 s−1)': 'mean_intensity',
+        'Mean Growth rate (−1 × 10^−2 s−1 day-1)': 'mean_growth'
     }
     return mapping.get(metric, '')
 
@@ -201,7 +209,7 @@ def plot_histograms_with_kde(jja_data, djf_data):
                 ax.set_yticklabels([])
                 ax.set_xlabel("")
                 if i == 0:
-                    ax.set_title(metric, fontsize=14)
+                    ax.set_title(metric_to_formatted_string(metric), fontsize=14)
                 if j == 0:
                     ax.set_ylabel(region, fontsize=14)
                 elif j == 2:
@@ -212,8 +220,10 @@ def plot_histograms_with_kde(jja_data, djf_data):
                     ax.set_ylabel("")
 
         # Save the plot with a unique filename based on the current phase
-        plt.savefig(f"../figures/manuscript_life-cycle/histograms/histograms_statistics_seasonal_{phase}.png", dpi=300)
+        fname = f"../figures/manuscript_life-cycle/histograms/histograms_statistics_seasonal_{phase}.png"
+        plt.savefig(fname, dpi=300)
         plt.close()  # Close the figure to free up memory
+        print(f"{fname} created.")
         
 def plot_histograms_for_total_season(total_data):
     """Plot histograms for 'Total' season with each subplot being a different phase."""
@@ -270,7 +280,10 @@ def plot_histograms_for_total_season(total_data):
     plt.subplots_adjust(right=0.8, hspace=0.5)
 
     # Save the plot with a unique filename for the "Total" season
-    plt.savefig(f"../figures/manuscript_life-cycle/histograms/histograms_total_season.png", dpi=300)
+    fname = f"../figures/manuscript_life-cycle/histograms/histograms_total_season.png"
+    plt.savefig(fname, dpi=300)
+    print(f"{fname} created.")
+    plt.close()
 
 
 def compare_phases_by_region(data, n_bins=10):
@@ -280,11 +293,6 @@ def compare_phases_by_region(data, n_bins=10):
     - data (pd.DataFrame): The dataset containing the values to plot.
     - n_bins (int): Number of bins for the histograms (unused but retained for possible future use).
     """
-    # QUANTILE_VALUES = {
-    #     'Total Distance ($10^2$ km)': 0.85,
-    #     'Total Time (Hours)': 0.9,
-    #     'Mean Speed (m/s)': 0.99
-    # }
 
     # Create subplots
     for metric in METRICS:
@@ -344,7 +352,8 @@ def compare_phases_by_region(data, n_bins=10):
                 else:
                     ax.set_ylabel("")
                 if row == 1:
-                    ax.set_xlabel(metric, fontsize=14)
+                    metric_name, metric_unit = METRICS_LATEX_MAPPING[metric].split(' [')
+                    ax.set_xlabel(f"{metric_name}\n[{metric_unit}", fontsize=14)
 
                 if row == 1 and column == 3:
                     # Placing a single legend outside the plotting area on the right
@@ -360,7 +369,10 @@ def compare_phases_by_region(data, n_bins=10):
 
         # Save the plot with a unique filename for the "Total" season
         metric_string = metric_to_formatted_string(metric)
-        plt.savefig(f"../figures/manuscript_life-cycle/histograms_phases_regions_{metric_string}.png", dpi=300)
+        fname = f"../figures/manuscript_life-cycle/histograms_phases_regions_{metric_string}.png"
+        plt.savefig(fname, dpi=300)
+        print(f"{fname} created.")
+        plt.close()
 
 def main():
     database = get_database()
@@ -368,9 +380,9 @@ def main():
     
     jja_data = database[database['Season'] == 'JJA']
     djf_data = database[database['Season'] == 'DJF']
-    plot_histograms_with_kde(jja_data, djf_data)
+    # plot_histograms_with_kde(jja_data, djf_data)
     
-    plot_histograms_for_total_season(total_data)
+    # plot_histograms_for_total_season(total_data)
 
     compare_phases_by_region(database)
 
