@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    periods_statistics.py                              :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
+#    By: danilocoutodsouza <danilocoutodsouza@st    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 16:09:48 by Danilo            #+#    #+#              #
-#    Updated: 2023/11/06 22:48:08 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/07 11:11:40 by danilocouto      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,8 +27,9 @@ from concurrent.futures import ThreadPoolExecutor
 SECONDS_IN_AN_HOUR = 3600
 ALPHA = 0.05  # Significance level
 ANALYSIS_TYPE = '70W-no-continental'
-METRICS = ['Total Distance ($10^2$ km)', 'Total Time (Hours)', 'Mean Speed (m/s)',
-            'Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth rate (−1 × 10^−2 s−1 day-1)']
+METRICS = ['Total Time (h)', 'Total Distance (km)', 'Mean Speed (m/s)',
+            'Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth Rate (10^−5 s^−1 day-1)']
+METRICS = ['Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth Rate (10^−5 s^−1 day-1)']
 PHASES = ['incipient', 'intensification', 'mature', 'decay', 'intensification 2', 'mature 2', 'decay 2', 'residual']
 REGIONS = ['Total', 'ARG', 'LA-PLATA', 'SE-BR', 'SE-SAO', 'AT-PEN', 'WEDDELL', 'SA-NAM']
 PLOT_LABELS = ['(A)', '(B)', '(C)', '(D)', '(E)', '(F)', '(G)', '(H)', '(I)']
@@ -44,11 +45,11 @@ COLOR_PHASES = {
         'Total': '#1d3557'
     }
 KDE_PARAMS = {
-        'Total Time (Hours)': [3, 1000, 95],
-        'Total Distance ($10^2$ km)': [2, 1000, 95],
+        'Total Time (h)': [3, 1000, 95],
+        'Total Distance (km)': [2, 1000, 95],
         'Mean Speed (m/s)': [2, 100, 97],
-        'Mean Vorticity (−1 × 10−5 s−1)': [1.5, 100, 99],
-        'Mean Growth rate (−1 × 10^−2 s−1 day-1)': [20, 100, 99] 
+        'Mean Vorticity (−1 × 10−5 s−1)': [1.5, 100, 100],
+        'Mean Growth Rate (10^−5 s^−1 day-1)': [2, 100, 100] 
     }  # [bandwidth, number of samples, quantile]
 
 def get_database():
@@ -62,18 +63,18 @@ def get_database():
     database = database.dropna(how='all')
     # Remove rows where "Mean Speed (m/s)" is NaN 
     # (so we won't compute statistics for the first time steps)
-    database = database.dropna(subset=['Mean Speed (m/s)', 'Mean Growth rate (−1 × 10^−2 s−1 day-1)', 'Mean Growth rate (−1 × 10^−2 s−1 day-1)'])  
+    database = database.dropna(subset=['Mean Speed (m/s)', 'Mean Growth Rate (10^−5 s^−1 day-1)'])  
     # Simplify units
-    database['Total Distance ($10^2$ km)'] = database['Total Distance (km)'] / 100    
+    database['Total Distance (km)'] = database['Total Distance (km)'] / 100    
     return database
 
 def metric_to_formatted_string(metric):
     mapping = {
-        'Total Time (Hours)': 'total_time',
-        'Total Distance ($10^2$ km)': 'total_distance',
+        'Total Time (h)': 'total_time',
+        'Total Distance (km)': 'total_distance',
         'Mean Speed (m/s)': 'mean_speed',
         'Mean Vorticity (−1 × 10−5 s−1)': 'mean_intensity',
-        'Mean Growth rate (−1 × 10^−2 s−1 day-1)': 'mean_growth'
+        'Mean Growth Rate (10^−5 s^−1 day-1)': 'mean_growth'
     }
     return mapping.get(metric, '')
 
@@ -333,7 +334,7 @@ def plot_single_phase(ax, x, x_d, kde, phase, xmin, xmax, metric):
     ax.plot(x_d, np.exp(logprob), color="#f0f0f0", lw=1, linestyle='-')
     ax.fill_between(x_d, np.exp(logprob), alpha=1, color=COLOR_PHASES.get(phase, 'gray'), linestyle='-')
     # setting uniform x and y lims
-    if metric == 'Mean Growth rate (−1 × 10^−2 s−1 day-1)':
+    if metric == 'Mean Growth Rate (10^−5 s^−1 day-1)':
         ax.set_xlim(xmin, -xmin)
     else:
         ax.set_xlim(xmin, xmax)
@@ -348,10 +349,10 @@ def plot_single_phase(ax, x, x_d, kde, phase, xmin, xmax, metric):
     ax.set_yticklabels([])
     ax.yaxis.set_ticks([])  # Remove y-axis ticks
     # Determine the y-limits for the grid lines, which would be confined to the KDE
-    if metric == 'Total Distance ($10^2$ km)':
+    if metric == 'Total Distance (km)':
         y_limit = np.exp(logprob).max() + 0.2
         ymax_fraction = 0.6
-    elif metric == "Total Time (Hours)":
+    elif metric == "Total Time (h)":
         y_limit = np.exp(logprob).max() + 0.15
         ymax_fraction = 0.8
     elif metric == "Mean Speed (m/s)":
@@ -360,16 +361,16 @@ def plot_single_phase(ax, x, x_d, kde, phase, xmin, xmax, metric):
     elif metric == "Mean Vorticity (−1 × 10−5 s−1)":
         y_limit = np.exp(logprob).max() + 0.3
         ymax_fraction = 0.6
-    elif metric == "Mean Growth rate (−1 × 10^−2 s−1 day-1)":
-        y_limit = np.exp(logprob).max() + 0.01
-        ymax_fraction = 10
+    elif metric == "Mean Growth Rate (10^−5 s^−1 day-1)":
+        y_limit = np.exp(logprob).max() + 0.1
+        ymax_fraction = 1
     ax.set_ylim(0, y_limit)
     # Calculate grid line positions
     num_lines = 10
     interval = int(round(xmax, -1)) // num_lines
     interval = max(1, interval) + 1
     # Set x-ticks based on the calculated positions
-    if metric == 'Mean Growth rate (−1 × 10^−2 s−1 day-1)':
+    if metric == 'Mean Growth Rate (10^−5 s^−1 day-1)':
         x_ticks = list(range(int(round(xmin, -1)), int(round(xmax, -1)), int(interval * 6)))
     else:
         x_ticks = list(range(0, int(round(xmax, -1)), interval))
@@ -417,9 +418,10 @@ def plot_ridge_phases(data, figure_path):
     for metric_idx, metric in enumerate(METRICS):
         variable = data[metric]
         upper_percentile = np.percentile(variable,KDE_PARAMS[metric][2])
-        if metric == 'Mean Growth rate (−1 × 10^−2 s−1 day-1)':
+        if metric == 'Mean Growth Rate (10^−5 s^−1 day-1)':
             xmin = np.percentile(variable, 0.5)
-        elif metric == 'Mean Growth rate (−1 × 10^−2 s−1 day-1)':
+            xmin = 0
+        elif metric == 'Mean Vorticity (−1 × 10−5 s−1)':
             xmin = np.min(variable)
         else:
             xmin = 0
