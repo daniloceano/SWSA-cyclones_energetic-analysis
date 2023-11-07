@@ -6,7 +6,7 @@
 #    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 19:37:18 by daniloceano       #+#    #+#              #
-#    Updated: 2023/11/06 21:29:43 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/06 22:17:19 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -461,7 +461,7 @@ def format_summary_table(grouped_stats, season, comparison_p_values):
     for metric in METRICS:
         metrics_table[metric] = [
             f"{grouped_stats[phase].loc[season, (metric, 'mean')]:.2f} ± {grouped_stats[phase].loc[season, (metric, 'std')]:.2f}"
-            + ('*' if comparison_p_values.get((phase, metric)) < ALPHA else '')
+            + ('*' if season != 'Total' and comparison_p_values.get((phase, metric)) < ALPHA else '')
             for phase in PHASES[:-1]
         ]
     return metrics_table
