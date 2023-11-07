@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_periods_database.py                         :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: danilocoutodsouza <danilocoutodsouza@st    +#+  +:+       +#+         #
+#    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/11/02 20:58:12 by danilocouto      ###   ########.fr        #
+#    Updated: 2023/11/06 23:30:40 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -128,31 +128,59 @@ def process_data(tracks_distance_periods):
     Process data for analysis.
     """
     print("Processing data...")
+    # Time difference in hours for each track
     tracks_distance_periods['time_diff'] = tracks_distance_periods.groupby('track_id')['date'].diff().dt.total_seconds() / SECONDS_IN_AN_HOUR
+    
+    # Total distance per phase
     total_distance = tracks_distance_periods.groupby(['track_id', 'phase'])['Distance'].sum().reset_index(name='Total Distance (km)')
-    total_time = tracks_distance_periods.groupby(['track_id', 'phase'])['time_diff'].sum().reset_index(name='Total Time (Hours)')
-    mean_vorticity = (tracks_distance_periods.groupby(['track_id', 'phase'])['vor42'].mean().reset_index(name='Mean Vorticity (−1 × 10−5 s−1)'))
+    
+    # Total time per phase
+    total_time = tracks_distance_periods.groupby(['track_id', 'phase'])['time_diff'].sum().reset_index(name='Total Time (h)')
+    
+    # Mean vorticity per phase
+    mean_vorticity = tracks_distance_periods.groupby(['track_id', 'phase'])['vor42'].mean().reset_index(name='Mean Vorticity (−1 × 10−5 s−1)')
+    
+    # Calculate the difference in vorticity over time to find the growth rate
+    # Assuming 'vor42' column is the vorticity and has units [−1 × 10^−5 s^−1]
+    # Calculate the rolling 3-hour difference (3 previous rows including the current row)
     tracks_distance_periods['vor42_diff'] = tracks_distance_periods.groupby('track_id')['vor42'].diff()
-    growth_rate = (tracks_distance_periods.groupby(['track_id', 'phase'])['vor42_diff'].mean().reset_index(name='Mean Growth rate (−1 × 10^−2 s−1 day-1)'))
-    growth_rate['Mean Growth rate (−1 × 10^−2 s−1 day-1)'] = growth_rate['Mean Growth rate (−1 × 10^−2 s−1 day-1)'] * 1e8 / (24 *  SECONDS_IN_AN_HOUR)
+    
+    # Here we assume 'date' column is spaced at 1-hour intervals
+    # Use a rolling window to calculate the mean over 3-hour periods
+    tracks_distance_periods['vor42_3h_diff'] = tracks_distance_periods.groupby('track_id')['vor42_diff'].rolling(window=3).sum().reset_index(0,drop=True)
+    
+    # Compute the growth rate as the mean of these 3-hour differences
+    # Dividing by 3 to convert the sum into an average over the 3-hour window
+    growth_rate = (tracks_distance_periods.groupby(['track_id', 'phase'])['vor42_3h_diff'].mean() / 3).reset_index(name='Mean Growth Rate (10^−5 s^−1 3h-1)')
+
+    # Convert the mean growth rate from per 3-hour to per day
+    growth_rate['Mean Growth Rate (10^−5 s^−1 day-1)'] = growth_rate['Mean Growth Rate (10^−5 s^−1 3h-1)'] * (24 / 3)
+
+    # Merge all the calculated metrics back into a single dataframe
     merged_df = pd.merge(total_distance, total_time, on=['track_id', 'phase'])
     merged_df = pd.merge(merged_df, mean_vorticity, on=['track_id', 'phase'])
     merged_df = pd.merge(merged_df, growth_rate, on=['track_id', 'phase'])
-    merged_df['Mean Speed (km/h)'] = merged_df['Total Distance (km)'] / merged_df['Total Time (Hours)']
+
+    # Calculate the mean speed
+    merged_df['Mean Speed (km/h)'] = merged_df['Total Distance (km)'] / merged_df['Total Time (h)']
     merged_df['Mean Speed (m/s)'] = merged_df['Mean Speed (km/h)'] * (1000 / 3600)
+
+    # Drop the temporary column used for calculations
     merged_df.drop(columns=['Mean Speed (km/h)'], inplace=True)
-    tracks_distance_periods.drop(columns=['vor42_diff'], inplace=True)
+    tracks_distance_periods.drop(columns=['vor42_diff', 'vor42_3h_diff'], inplace=True)
+
     print("Done")
     return merged_df
+
 
 def compute_totals(df):
     # Group by track_id and sum up the 'Total Distance (km)' and 'Duration'
     total_phase = df.groupby('track_id').agg({
         'Total Distance (km)': 'sum',
-        'Total Time (Hours)': 'sum',
+        'Total Time (h)': 'sum',
         'Mean Speed (m/s)': 'mean',
         'Mean Vorticity (−1 × 10−5 s−1)': 'mean',
-        'Mean Growth rate (−1 × 10^−2 s−1 day-1)': 'mean'
+        'Mean Growth Rate (10^−5 s^−1 day-1)': 'mean'
     }).reset_index()
 
     # Add a new column 'phase' with value 'Total'
