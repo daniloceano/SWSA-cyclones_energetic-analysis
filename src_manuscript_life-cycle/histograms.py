@@ -6,7 +6,7 @@
 #    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 19:37:18 by daniloceano       #+#    #+#              #
-#    Updated: 2023/11/06 22:17:19 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/06 22:38:18 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,7 +22,7 @@ from scipy.stats import levene, ttest_ind, mannwhitneyu, anderson, ks_2samp
 SECONDS_IN_AN_HOUR = 3600
 ALPHA = 0.05  # Significance level
 ANALYSIS_TYPE = '70W-no-continental'
-METRICS = ['Total Distance ($10^2$ km)', 'Total Time (Hours)', 'Mean Speed (m/s)',
+METRICS = ['Total Time (Hours)', 'Total Distance ($10^2$ km)', 'Mean Speed (m/s)',
             'Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth rate (−1 × 10^−2 s−1 day-1)']
 PHASES = ['Total', 'incipient', 'intensification', 'mature', 'decay', 'intensification 2', 'mature 2', 'decay 2', 'residual']
 REGIONS = ['Total', 'ARG', 'LA-PLATA', 'SE-BR', 'SE-SAO', 'AT-PEN', 'WEDDELL', 'SA-NAM']
@@ -480,15 +480,15 @@ def main():
     database = get_database()
     total_season_data = database[database['Season'] == 'Total']
     
-    jja_data = database[database['Season'] == 'JJA']
-    djf_data = database[database['Season'] == 'DJF']
-    plot_histograms_with_kde(jja_data, djf_data)
+    # jja_data = database[database['Season'] == 'JJA']
+    # djf_data = database[database['Season'] == 'DJF']
+    # plot_histograms_with_kde(jja_data, djf_data)
     
-    compare_phases_by_region(database)
+    # compare_phases_by_region(database)
 
     compare_phases_for_total_region(total_season_data)
 
-    create_statistics_table(database)
+    # create_statistics_table(database)
 
 if __name__ == '__main__':
     main()
