@@ -6,7 +6,7 @@
 #    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 19:37:18 by daniloceano       #+#    #+#              #
-#    Updated: 2023/11/06 17:16:29 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/06 21:29:43 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -372,6 +372,10 @@ def compare_phases_for_total_region(data):
                         color=COLOR_PHASES[phase], linewidth=5, alpha=.8)
             max_values.append(subset[metric].quantile(QUANTILE_VALUES[metric]))
 
+        ax.text(x_position, y_position, PLOT_LABELS[i], transform=ax.transAxes,
+                    horizontalalignment='right', verticalalignment='top',
+                    color="k", fontsize=20, weight='bold')
+
         # Set the x-axis limit
         if any(term in metric for term in ["Distance", "Time"]):
             upper_bound = np.quantile(data_total_region[metric], 0.95)
@@ -413,9 +417,68 @@ def compare_phases_for_total_region(data):
     plt.close()
     print(f"{fname} created.")
 
+def compare_seasonal_phases(data):
+    # Dictionary to store the summary statistics and p-values for the tests
+    grouped_stats = {}
+    comparison_p_values = {}  # Dictionary to store p-values for the tests
+
+    # Iterate over each phase
+    for phase in PHASES[:-1]:  # Assuming the last phase is not needed
+        # Filter data for the current phase
+        phase_data = data[data['phase'] == phase]
+        
+        # Calculate mean and std for each season and metric
+        grouped_stats[phase] = phase_data.groupby('Season').agg(['mean', 'std'])
+        
+        # Perform statistical tests for DJF and JJA for each metric
+        for metric in METRICS:
+            jja_values = phase_data[phase_data['Season'] == 'JJA'][metric]
+            djf_values = phase_data[phase_data['Season'] == 'DJF'][metric]
+
+            # Ensure there are enough data points to perform the test
+            if len(jja_values) > 1 and len(djf_values) > 1:
+                # Perform the t-test or Mann-Whitney U test depending on data distribution
+                if stats.shapiro(jja_values).pvalue > ALPHA and stats.shapiro(djf_values).pvalue > ALPHA:
+                    _, p_value = stats.ttest_ind(jja_values, djf_values, equal_var=False)
+                else:
+                    _, p_value = stats.mannwhitneyu(jja_values, djf_values)
+                # Store the p-value in the dictionary with a tuple key (phase, metric)
+                comparison_p_values[(phase, metric)] = p_value
+            else:
+                # If there are not enough data points, fill the p-value with NaN
+                comparison_p_values[(phase, metric)] = np.nan
+
+    # Create formatted tables for each season
+    total_table = format_summary_table(grouped_stats, 'Total', comparison_p_values)
+    djf_table = format_summary_table(grouped_stats, 'DJF', comparison_p_values)
+    jja_table = format_summary_table(grouped_stats, 'JJA', comparison_p_values)
+
+    return total_table, djf_table, jja_table
+
+def format_summary_table(grouped_stats, season, comparison_p_values):
+    # Create the metrics table with phases and their corresponding metrics
+    metrics_table = pd.DataFrame({'Phase': PHASES[:-1]})
+    for metric in METRICS:
+        metrics_table[metric] = [
+            f"{grouped_stats[phase].loc[season, (metric, 'mean')]:.2f} ± {grouped_stats[phase].loc[season, (metric, 'std')]:.2f}"
+            + ('*' if comparison_p_values.get((phase, metric)) < ALPHA else '')
+            for phase in PHASES[:-1]
+        ]
+    return metrics_table
+
+def create_statistics_table(database):
+    total_region_data = database[database['Region'] == 'Total']
+    total_table, djf_table, jja_table = compare_seasonal_phases(total_region_data)
+
+    results_path = '../periods_species_statistics/70W-no-continental/statistics/'
+
+    # Save the tables to CSV files
+    for table, table_name in [(total_table, 'total'), (djf_table, 'djf'), (jja_table, 'jja')]:
+        table.to_csv(f'{results_path}/statistics_summary_{table_name}.csv', index=False)
+
 def main():
     database = get_database()
-    total_data = database[database['Season'] == 'Total']
+    total_season_data = database[database['Season'] == 'Total']
     
     jja_data = database[database['Season'] == 'JJA']
     djf_data = database[database['Season'] == 'DJF']
@@ -423,7 +486,9 @@ def main():
     
     compare_phases_by_region(database)
 
-    compare_phases_for_total_region(total_data)
+    compare_phases_for_total_region(total_season_data)
+
+    create_statistics_table(database)
 
 if __name__ == '__main__':
     main()
