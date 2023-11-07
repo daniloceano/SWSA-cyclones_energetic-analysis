@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    periods_statistics.py                              :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: danilocoutodsouza <danilocoutodsouza@st    +#+  +:+       +#+         #
+#    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 16:09:48 by Danilo            #+#    #+#              #
-#    Updated: 2023/11/07 11:11:40 by danilocouto      ###   ########.fr        #
+#    Updated: 2023/11/07 16:25:48 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -29,7 +29,6 @@ ALPHA = 0.05  # Significance level
 ANALYSIS_TYPE = '70W-no-continental'
 METRICS = ['Total Time (h)', 'Total Distance (km)', 'Mean Speed (m/s)',
             'Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth Rate (10^−5 s^−1 day-1)']
-METRICS = ['Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth Rate (10^−5 s^−1 day-1)']
 PHASES = ['incipient', 'intensification', 'mature', 'decay', 'intensification 2', 'mature 2', 'decay 2', 'residual']
 REGIONS = ['Total', 'ARG', 'LA-PLATA', 'SE-BR', 'SE-SAO', 'AT-PEN', 'WEDDELL', 'SA-NAM']
 PLOT_LABELS = ['(A)', '(B)', '(C)', '(D)', '(E)', '(F)', '(G)', '(H)', '(I)']
@@ -48,8 +47,8 @@ KDE_PARAMS = {
         'Total Time (h)': [3, 1000, 95],
         'Total Distance (km)': [2, 1000, 95],
         'Mean Speed (m/s)': [2, 100, 97],
-        'Mean Vorticity (−1 × 10−5 s−1)': [1.5, 100, 100],
-        'Mean Growth Rate (10^−5 s^−1 day-1)': [2, 100, 100] 
+        'Mean Vorticity (−1 × 10−5 s−1)': [1, 100, 100],
+        'Mean Growth Rate (10^−5 s^−1 day-1)': [0.5, 1000, 99] 
     }  # [bandwidth, number of samples, quantile]
 
 def get_database():
@@ -362,8 +361,8 @@ def plot_single_phase(ax, x, x_d, kde, phase, xmin, xmax, metric):
         y_limit = np.exp(logprob).max() + 0.3
         ymax_fraction = 0.6
     elif metric == "Mean Growth Rate (10^−5 s^−1 day-1)":
-        y_limit = np.exp(logprob).max() + 0.1
-        ymax_fraction = 1
+        y_limit = np.exp(logprob).max() + 1.5
+        ymax_fraction = 0.08
     ax.set_ylim(0, y_limit)
     # Calculate grid line positions
     num_lines = 10
@@ -372,6 +371,7 @@ def plot_single_phase(ax, x, x_d, kde, phase, xmin, xmax, metric):
     # Set x-ticks based on the calculated positions
     if metric == 'Mean Growth Rate (10^−5 s^−1 day-1)':
         x_ticks = list(range(int(round(xmin, -1)), int(round(xmax, -1)), int(interval * 6)))
+        x_ticks = np.linspace(xmin, xmax, 5)
     else:
         x_ticks = list(range(0, int(round(xmax, -1)), interval))
     ax.set_xticks(x_ticks)
@@ -393,7 +393,11 @@ def plot_single_phase(ax, x, x_d, kde, phase, xmin, xmax, metric):
     spines = ["top", "right", "left", "bottom"]
     for s in spines:
         ax.spines[s].set_visible(False)
-    ax.text(1.05, 0.12, f"{mean_value:.1f} ± {std:.1f}", fontweight="bold",
+    if metric == 'Mean Growth Rate (10^−5 s^−1 day-1)':
+        ax.text(1.2, 0.12, f"{mean_value:.3f} ± {std:.3f}", fontweight="bold",
+                fontsize=12, ha="right", transform=ax.transAxes)
+    else:
+        ax.text(1.05, 0.12, f"{mean_value:.1f} ± {std:.1f}", fontweight="bold",
             fontsize=12, ha="right", transform=ax.transAxes)
     return ax
 
@@ -418,14 +422,11 @@ def plot_ridge_phases(data, figure_path):
     for metric_idx, metric in enumerate(METRICS):
         variable = data[metric]
         upper_percentile = np.percentile(variable,KDE_PARAMS[metric][2])
+        xmax = upper_percentile
         if metric == 'Mean Growth Rate (10^−5 s^−1 day-1)':
-            xmin = np.percentile(variable, 0.5)
-            xmin = 0
-        elif metric == 'Mean Vorticity (−1 × 10−5 s−1)':
-            xmin = np.min(variable)
+            xmin = - xmax
         else:
             xmin = 0
-        xmax = upper_percentile
         x_d = np.linspace(xmin, xmax,KDE_PARAMS[metric][1])
         for idx, phase in enumerate(sorted_phases):
             ax = fig.add_subplot(gs[idx, metric_idx])
@@ -462,16 +463,16 @@ def plot_ridge_phases(data, figure_path):
     print(f"{fname} created.")
 
 def plot_ridge_plots(database, phases):
-    for metric in METRICS:
-        for phase in PHASES:   
-            metric_formatted = metric_to_formatted_string(metric)
-            figure_path = os.path.join('..', 'figures', 'periods_statistics', ANALYSIS_TYPE, metric_formatted)
-            os.makedirs(figure_path, exist_ok=True)
-            print(f"\n-----------------\nPlotting phase: {phase} for {metric}")
-            data = database[database['phase'] == phase]
-            regions = database['Region'].unique()
-            plot_single_ridge_season(data, regions, figure_path, phase, metric) 
-            plot_single_ridge(data, figure_path, phase, metric)
+    # for metric in METRICS:
+    #     for phase in PHASES:   
+    #         metric_formatted = metric_to_formatted_string(metric)
+    #         figure_path = os.path.join('..', 'figures', 'periods_statistics', ANALYSIS_TYPE, metric_formatted)
+    #         os.makedirs(figure_path, exist_ok=True)
+    #         print(f"\n-----------------\nPlotting phase: {phase} for {metric}")
+    #         data = database[database['phase'] == phase]
+    #         regions = database['Region'].unique()
+    #         plot_single_ridge_season(data, regions, figure_path, phase, metric) 
+    #         plot_single_ridge(data, figure_path, phase, metric)
     figure_path = os.path.join('..', 'figures', 'periods_statistics', ANALYSIS_TYPE)
     plot_ridge_phases(database, figure_path)
 
@@ -520,7 +521,7 @@ def main():
     # Make plots
     plot_ridge_plots(database, phases)
     # Export statistics
-    phases_statistics(database)
+    #phases_statistics(database)
 
 if __name__ == '__main__':
     main()
