@@ -6,7 +6,7 @@
 #    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 19:37:18 by daniloceano       #+#    #+#              #
-#    Updated: 2023/11/06 22:38:18 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/07 21:58:25 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,8 +22,8 @@ from scipy.stats import levene, ttest_ind, mannwhitneyu, anderson, ks_2samp
 SECONDS_IN_AN_HOUR = 3600
 ALPHA = 0.05  # Significance level
 ANALYSIS_TYPE = '70W-no-continental'
-METRICS = ['Total Time (Hours)', 'Total Distance ($10^2$ km)', 'Mean Speed (m/s)',
-            'Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth rate (−1 × 10^−2 s−1 day-1)']
+METRICS = ['Total Time (h)', 'Total Distance (km)', 'Mean Speed (m/s)',
+            'Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth Rate (10^−5 s^−1 day-1)']
 PHASES = ['Total', 'incipient', 'intensification', 'mature', 'decay', 'intensification 2', 'mature 2', 'decay 2', 'residual']
 REGIONS = ['Total', 'ARG', 'LA-PLATA', 'SE-BR', 'SE-SAO', 'AT-PEN', 'WEDDELL', 'SA-NAM']
 PLOT_LABELS = ['(A)', '(B)', '(C)', '(D)', '(E)', '(F)', '(G)', '(H)']
@@ -66,18 +66,18 @@ LABEL_MAPPING = {
     }
 
 METRICS_LATEX_MAPPING = {
-    'Total Time (Hours)': r'Total Time [hours]',
-    'Total Distance ($10^2$ km)': r'Total Distance [$10^2$ km]',
+    'Total Time (h)': r'Total Time [h]',
+    'Total Distance (km)': r'Total Distance [$10^2$ km]',
     'Mean Speed (m/s)': r'Mean Speed [m$\cdot$s$^{-1}$]',
     'Mean Vorticity (−1 × 10−5 s−1)': r'Mean Vorticity [$-1 \times 10^{-5}$ s$^{-1}$]',
-    'Mean Growth rate (−1 × 10^−2 s−1 day-1)': r'Mean Growth rate [$-1 \times 10^{-2}$ s$^{-1}$ day$^{-1}$]'
+    'Mean Growth Rate (10^−5 s^−1 day-1)': r'Mean Growth rate [$10^{-5}$ s$^{-1}$ day$^{-1}$]'
 }
 
 QUANTILE_VALUES = {
-        'Total Distance ($10^2$ km)': 0.9,
-        'Total Time (Hours)': 0.95,
+        'Total Distance (km)': 0.9,
+        'Total Time (h)': 0.95,
         'Mean Speed (m/s)': 0.999,
-        'Mean Growth rate (−1 × 10^−2 s−1 day-1)': 0.9,
+        'Mean Growth Rate (10^−5 s^−1 day-1)': 0.99,
         'Mean Vorticity (−1 × 10−5 s−1)': 0.99
     }
 
@@ -93,18 +93,18 @@ def get_database():
     # Remove rows where "Mean Speed (m/s)" is NaN 
     # (so we won't compute statistics for the first time steps)
     database = database.dropna(subset=['Mean Speed (m/s)',
-                                       'Mean Growth rate (−1 × 10^−2 s−1 day-1)']) 
-    database['Total Distance ($10^2$ km)'] = database['Total Distance (km)'] / 100     
+                                       'Mean Growth Rate (10^−5 s^−1 day-1)']) 
+    database['Total Distance (km)'] = database['Total Distance (km)'] / 100     
     return database
 
 def metric_to_formatted_string(metric):
     """Converts metric name to a shorter formatted string."""
     mapping = {
-        'Total Time (Hours)': 'total_time',
-        'Total Distance ($10^2$ km)': 'total_distance',
+        'Total Time (h)': 'total_time',
+        'Total Distance (km)': 'total_distance',
         'Mean Speed (m/s)': 'mean_speed',
         'Mean Vorticity (−1 × 10−5 s−1)': 'mean_intensity',
-        'Mean Growth rate (−1 × 10^−2 s−1 day-1)': 'mean_growth'
+        'Mean Growth Rate (10^−5 s^−1 day-1)': 'mean_growth'
     }
     return mapping.get(metric, '')
 
@@ -112,8 +112,13 @@ def plot_histogram_for_metric(ax, jja_metric_data, djf_metric_data, metric):
     """Plots histogram and KDE for a specific metric on a given axis."""
     # Compute the upper quantile value across both JJA and DJF data for each metric
     
-    upper_bound = max(jja_metric_data.quantile(QUANTILE_VALUES[metric]),
-                      djf_metric_data.quantile(QUANTILE_VALUES[metric]))
+    if metric == 'Mean Growth Rate (10^−5 s^−1 day-1)':
+        upper_bound = max(jja_metric_data.quantile(QUANTILE_VALUES[metric]),
+                        djf_metric_data.quantile(QUANTILE_VALUES[metric]))
+        lower_bound = -upper_bound
+    else:
+        upper_bound = max(jja_metric_data.max(), djf_metric_data.max())
+        lower_bound = min(jja_metric_data.min(), djf_metric_data.min())
 
     # Compute combined bin edges for both datasets
     combined_data = np.concatenate([jja_metric_data, djf_metric_data])
@@ -127,9 +132,9 @@ def plot_histogram_for_metric(ax, jja_metric_data, djf_metric_data, metric):
     ax.axvline(jja_metric_data.mean(), color=COLOR_SEASONS['JJA'], linestyle='--', linewidth=2)
     ax.axvline(djf_metric_data.mean(), color=COLOR_SEASONS['DJF'], linestyle='--', linewidth=2)
 
-    ax.set_xlim(0, upper_bound)
+    ax.set_xlim(lower_bound, upper_bound)
 
-def apply_statistical_tests(ax, jja_metric_data, djf_metric_data):
+def apply_statistical_tests(ax, jja_metric_data, djf_metric_data, metric):
     """Applies statistical tests and annotates the plot with the results."""
     # Anderson-Darling test for normality
     result_djf = anderson(djf_metric_data)
@@ -161,10 +166,14 @@ def apply_statistical_tests(ax, jja_metric_data, djf_metric_data):
     if p_value_ks < 0.01: ks_significance_str += "*"
     if p_value_ks < 0.001: ks_significance_str += "*"
 
+    if metric == 'Mean Growth Rate (10^−5 s^−1 day-1)':
+        round_factor = 3
+    else:
+        round_factor = 1
     # Annotate the plot with mean values, t-test/Mann-Whitney significance, and KS significance
-    ax.text(0.99, 0.94, f'{round(djf_metric_data.mean(), 1)}',
+    ax.text(0.99, 0.94, f'{round(djf_metric_data.mean(), round_factor)}',
             c=COLOR_SEASONS['DJF'], fontsize=11, transform=ax.transAxes, ha='right', va='top') 
-    ax.text(0.99, 0.71, f'{round(jja_metric_data.mean(), 1)}',
+    ax.text(0.99, 0.71, f'{round(jja_metric_data.mean(), round_factor)}',
             c=COLOR_SEASONS['JJA'], fontsize=11, transform=ax.transAxes, ha='right', va='top')
     ax.text(0.99, 0.45, f'{significance_str}',
             c='k', fontsize=9, transform=ax.transAxes, ha='right', va='top')
@@ -202,7 +211,7 @@ def plot_histograms_with_kde(jja_data, djf_data):
                 plot_histogram_for_metric(ax, jja_metric_data, djf_metric_data, metric)
 
                 # Apply statistical tests and annotate the plot
-                apply_statistical_tests(ax, jja_metric_data, djf_metric_data)
+                apply_statistical_tests(ax, jja_metric_data, djf_metric_data, metric)
 
                 # Set titles, labels
                 ax.xaxis.set_tick_params(labelsize=12)
@@ -239,7 +248,7 @@ def compare_phases_by_region(data, n_bins=10):
         fig, axes = plt.subplots(2, 4, figsize=(12, 9))
 
         # Determine the global max x-axis value for the current metric across all regions and phases
-        global_max_value = round(data[metric].quantile(QUANTILE_VALUES[metric]), -1)
+        global_max_value = data[metric].quantile(QUANTILE_VALUES[metric])
 
         idx = 0
         for row in range(2):
@@ -251,6 +260,9 @@ def compare_phases_by_region(data, n_bins=10):
                 y_position = 0.99
                 x_position = 0.95
                 y_offset = 0.05
+
+                if metric == 'Mean Growth Rate (10^−5 s^−1 day-1)':
+                    x_position = 0.3
                 
                 # Collecting maximum values among all phases for the given metric in the given region
                 max_values = []
@@ -259,7 +271,10 @@ def compare_phases_by_region(data, n_bins=10):
                     mean_value = subset[metric].mean()
                     std_value = subset[metric].std()
                     
-                    text_str = f"{mean_value:.2f} ± {std_value:.2f}"
+                    if metric == 'Mean Growth Rate (10^−5 s^−1 day-1)':
+                        text_str = f"{mean_value:.3f} ± {std_value:.3f}"
+                    else:
+                        text_str = f"{mean_value:.2f} ± {std_value:.2f}"
                     ax.text(x_position, y_position, text_str, transform=ax.transAxes,
                             fontsize=10, verticalalignment='top', horizontalalignment='right',
                             color=COLOR_PHASES[phase], weight='bold')
@@ -278,14 +293,13 @@ def compare_phases_by_region(data, n_bins=10):
                                 linewidth=3, alpha=.8)
                 
                 # Set the x-axis limit and ticks
-                if metric != 'Mean Growth rate (−1 × 10^−2 s−1 day-1)':
+                if metric != 'Mean Growth Rate (10^−5 s^−1 day-1)':
                     ax.set_xlim(0, global_max_value)
                     ax.set_xticks(np.linspace(0, global_max_value, 5))
                 else:
-                    global_min_value = round(data[metric].quantile(0.1), -1)
-                    ax.set_xlim(global_min_value, global_max_value)
+                    ax.set_xlim(-global_max_value, global_max_value)
                     ax.axvline(0, color='k', linestyle='--', linewidth=0.5, alpha=0.7)
-                    ax.set_xticks(np.linspace(global_min_value-20, global_max_value, 5))
+                    ax.set_xticks(np.linspace(-global_max_value*1.1, global_max_value, 3))
                 
                 # Set titles, labels
                 ax.xaxis.set_tick_params(labelsize=12)
@@ -356,6 +370,9 @@ def compare_phases_for_total_region(data):
             mean_value = subset[metric].mean()
             std_value = subset[metric].std()
             text_str = f"{mean_value:.2f} ± {std_value:.2f}"
+            if metric == "Mean Growth Rate (10^−5 s^−1 day-1)":
+                text_str = f"{mean_value:.3f} ± {std_value:.3f}"
+            
 
             # Annotate the mean and std deviation on the plot
             ax.text(x_position, y_position, text_str, transform=ax.transAxes,
@@ -377,13 +394,14 @@ def compare_phases_for_total_region(data):
                     color="k", fontsize=20, weight='bold')
 
         # Set the x-axis limit
+        lower_bound = 0
         if any(term in metric for term in ["Distance", "Time"]):
             upper_bound = np.quantile(data_total_region[metric], 0.95)
-        elif metric == 'Mean Growth rate (−1 × 10^−2 s−1 day-1)':
-            upper_bound = max(max_values) + 20
+        elif metric == 'Mean Growth Rate (10^−5 s^−1 day-1)':
+            upper_bound = data_total_region[metric].quantile(QUANTILE_VALUES[metric])
+            lower_bound = -upper_bound
         else:
             upper_bound = max(max_values)        
-        lower_bound = min(data[metric].quantile(0.05), 0)
         ax.set_xlim(lower_bound, upper_bound)
 
         # Set title and labels
@@ -393,7 +411,7 @@ def compare_phases_for_total_region(data):
         ax.yaxis.set_tick_params(labelsize=14)
         ax.xaxis.set_tick_params(labelsize=14)
 
-        if metric == 'Mean Growth rate (−1 × 10^−2 s−1 day-1)':
+        if metric == 'Mean Growth Rate (10^−5 s^−1 day-1)':
             ax.axvline(0, color='gray', linestyle='-', linewidth=2, alpha=0.7)
 
         # Place the legend
@@ -459,11 +477,18 @@ def format_summary_table(grouped_stats, season, comparison_p_values):
     # Create the metrics table with phases and their corresponding metrics
     metrics_table = pd.DataFrame({'Phase': PHASES[:-1]})
     for metric in METRICS:
-        metrics_table[metric] = [
-            f"{grouped_stats[phase].loc[season, (metric, 'mean')]:.2f} ± {grouped_stats[phase].loc[season, (metric, 'std')]:.2f}"
-            + ('*' if season != 'Total' and comparison_p_values.get((phase, metric)) < ALPHA else '')
-            for phase in PHASES[:-1]
-        ]
+        if metric == 'Mean Growth Rate (10^−5 s^−1 day-1)':
+            metrics_table[metric] = [
+                f"{grouped_stats[phase].loc[season, (metric, 'mean')]:.3f} ± {grouped_stats[phase].loc[season, (metric, 'std')]:.3f}"
+                + ('*' if season != 'Total' and comparison_p_values.get((phase, metric)) < ALPHA else '')
+                for phase in PHASES[:-1]
+            ]
+        else:
+            metrics_table[metric] = [
+                f"{grouped_stats[phase].loc[season, (metric, 'mean')]:.2f} ± {grouped_stats[phase].loc[season, (metric, 'std')]:.2f}"
+                + ('*' if season != 'Total' and comparison_p_values.get((phase, metric)) < ALPHA else '')
+                for phase in PHASES[:-1]
+            ]
     return metrics_table
 
 def create_statistics_table(database):
@@ -480,15 +505,15 @@ def main():
     database = get_database()
     total_season_data = database[database['Season'] == 'Total']
     
-    # jja_data = database[database['Season'] == 'JJA']
-    # djf_data = database[database['Season'] == 'DJF']
-    # plot_histograms_with_kde(jja_data, djf_data)
+    jja_data = database[database['Season'] == 'JJA']
+    djf_data = database[database['Season'] == 'DJF']
+    plot_histograms_with_kde(jja_data, djf_data)
     
-    # compare_phases_by_region(database)
+    compare_phases_by_region(database)
 
     compare_phases_for_total_region(total_season_data)
 
-    # create_statistics_table(database)
+    create_statistics_table(database)
 
 if __name__ == '__main__':
     main()
