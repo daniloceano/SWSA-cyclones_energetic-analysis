@@ -6,7 +6,7 @@
 #    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/11/06 23:30:40 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/08 15:17:11 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -131,6 +131,21 @@ def process_data(tracks_distance_periods):
     # Time difference in hours for each track
     tracks_distance_periods['time_diff'] = tracks_distance_periods.groupby('track_id')['date'].diff().dt.total_seconds() / SECONDS_IN_AN_HOUR
     
+    # Calculate the Maximum Distance (km) for each phase
+    # First, sort the dataframe by track_id and date to ensure the order is correct
+    tracks_distance_periods.sort_values(by=['track_id', 'date'], inplace=True)
+    
+    # Define a function to calculate the distance between the first and last point of each phase
+    def calculate_max_distance(group):
+        if len(group) > 1:
+            return haversine_distance(group.iloc[-1]['lon vor'], group.iloc[-1]['lat vor'],
+                                      group.iloc[0]['lon vor'], group.iloc[0]['lat vor'])
+        else:
+            return 0
+
+    # Apply the function to each group
+    max_distance = tracks_distance_periods.groupby(['track_id', 'phase']).apply(calculate_max_distance).reset_index(name='Maximum Distance (km)')
+
     # Total distance per phase
     total_distance = tracks_distance_periods.groupby(['track_id', 'phase'])['Distance'].sum().reset_index(name='Total Distance (km)')
     
@@ -160,6 +175,7 @@ def process_data(tracks_distance_periods):
     merged_df = pd.merge(total_distance, total_time, on=['track_id', 'phase'])
     merged_df = pd.merge(merged_df, mean_vorticity, on=['track_id', 'phase'])
     merged_df = pd.merge(merged_df, growth_rate, on=['track_id', 'phase'])
+    merged_df = pd.merge(merged_df, max_distance, on=['track_id', 'phase'])
 
     # Calculate the mean speed
     merged_df['Mean Speed (km/h)'] = merged_df['Total Distance (km)'] / merged_df['Total Time (h)']
@@ -177,6 +193,7 @@ def compute_totals(df):
     # Group by track_id and sum up the 'Total Distance (km)' and 'Duration'
     total_phase = df.groupby('track_id').agg({
         'Total Distance (km)': 'sum',
+        'Maximum Distance (km)': 'sum',
         'Total Time (h)': 'sum',
         'Mean Speed (m/s)': 'mean',
         'Mean Vorticity (−1 × 10−5 s−1)': 'mean',
