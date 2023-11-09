@@ -6,7 +6,7 @@
 #    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 19:37:18 by daniloceano       #+#    #+#              #
-#    Updated: 2023/11/07 21:58:25 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/09 17:44:25 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -430,7 +430,7 @@ def compare_phases_for_total_region(data):
     fig.tight_layout(w_pad=-25)
 
     # Save the plot with a unique filename for the 'Total' region
-    fname = "../figures/manuscript_life-cycle/histograms_phases_total_region.png"
+    fname = f"../figures/manuscript_life-cycle/histograms_phases_total_region.png"
     plt.savefig(fname, dpi=300)
     plt.close()
     print(f"{fname} created.")
@@ -495,7 +495,7 @@ def create_statistics_table(database):
     total_region_data = database[database['Region'] == 'Total']
     total_table, djf_table, jja_table = compare_seasonal_phases(total_region_data)
 
-    results_path = '../periods_species_statistics/70W-no-continental/statistics/'
+    results_path = f'../periods_species_statistics/{ANALYSIS_TYPE}/statistics/'
 
     # Save the tables to CSV files
     for table, table_name in [(total_table, 'total'), (djf_table, 'djf'), (jja_table, 'jja')]:
@@ -505,15 +505,15 @@ def main():
     database = get_database()
     total_season_data = database[database['Season'] == 'Total']
     
-    jja_data = database[database['Season'] == 'JJA']
-    djf_data = database[database['Season'] == 'DJF']
-    plot_histograms_with_kde(jja_data, djf_data)
+    # jja_data = database[database['Season'] == 'JJA']
+    # djf_data = database[database['Season'] == 'DJF']
+    # plot_histograms_with_kde(jja_data, djf_data)
     
-    compare_phases_by_region(database)
+    # compare_phases_by_region(database)
 
     compare_phases_for_total_region(total_season_data)
 
-    create_statistics_table(database)
+    # create_statistics_table(database)
 
 if __name__ == '__main__':
     main()
