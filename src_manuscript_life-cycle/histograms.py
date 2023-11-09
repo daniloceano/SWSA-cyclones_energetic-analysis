@@ -6,7 +6,7 @@
 #    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 19:37:18 by daniloceano       #+#    #+#              #
-#    Updated: 2023/11/09 17:44:25 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/09 19:16:27 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,7 +22,7 @@ from scipy.stats import levene, ttest_ind, mannwhitneyu, anderson, ks_2samp
 SECONDS_IN_AN_HOUR = 3600
 ALPHA = 0.05  # Significance level
 ANALYSIS_TYPE = '70W-no-continental'
-METRICS = ['Total Time (h)', 'Total Distance (km)', 'Mean Speed (m/s)',
+METRICS = ['Total Time (h)', 'Maximum Distance (km)', 'Mean Speed (m/s)',
             'Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth Rate (10^−5 s^−1 day-1)']
 PHASES = ['Total', 'incipient', 'intensification', 'mature', 'decay', 'intensification 2', 'mature 2', 'decay 2', 'residual']
 REGIONS = ['Total', 'ARG', 'LA-PLATA', 'SE-BR', 'SE-SAO', 'AT-PEN', 'WEDDELL', 'SA-NAM']
@@ -67,14 +67,14 @@ LABEL_MAPPING = {
 
 METRICS_LATEX_MAPPING = {
     'Total Time (h)': r'Total Time [h]',
-    'Total Distance (km)': r'Total Distance [$10^2$ km]',
+    'Maximum Distance (km)': r'Maximum Distance [$10^2$ km]',
     'Mean Speed (m/s)': r'Mean Speed [m$\cdot$s$^{-1}$]',
     'Mean Vorticity (−1 × 10−5 s−1)': r'Mean Vorticity [$-1 \times 10^{-5}$ s$^{-1}$]',
     'Mean Growth Rate (10^−5 s^−1 day-1)': r'Mean Growth rate [$10^{-5}$ s$^{-1}$ day$^{-1}$]'
 }
 
 QUANTILE_VALUES = {
-        'Total Distance (km)': 0.9,
+        'Maximum Distance (km)': 0.9,
         'Total Time (h)': 0.95,
         'Mean Speed (m/s)': 0.999,
         'Mean Growth Rate (10^−5 s^−1 day-1)': 0.99,
@@ -94,14 +94,14 @@ def get_database():
     # (so we won't compute statistics for the first time steps)
     database = database.dropna(subset=['Mean Speed (m/s)',
                                        'Mean Growth Rate (10^−5 s^−1 day-1)']) 
-    database['Total Distance (km)'] = database['Total Distance (km)'] / 100     
+    database['Maximum Distance (km)'] = database['Maximum Distance (km)'] / 100     
     return database
 
 def metric_to_formatted_string(metric):
     """Converts metric name to a shorter formatted string."""
     mapping = {
         'Total Time (h)': 'total_time',
-        'Total Distance (km)': 'total_distance',
+        'Maximum Distance (km)': 'total_distance',
         'Mean Speed (m/s)': 'mean_speed',
         'Mean Vorticity (−1 × 10−5 s−1)': 'mean_intensity',
         'Mean Growth Rate (10^−5 s^−1 day-1)': 'mean_growth'
