@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    periods_statistics.py                              :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
+#    By: danilocoutodsouza <danilocoutodsouza@st    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 16:09:48 by Danilo            #+#    #+#              #
-#    Updated: 2023/11/07 16:25:48 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/09 08:43:04 by danilocouto      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,7 +26,7 @@ from concurrent.futures import ThreadPoolExecutor
 # Constants
 SECONDS_IN_AN_HOUR = 3600
 ALPHA = 0.05  # Significance level
-ANALYSIS_TYPE = '70W-no-continental'
+ANALYSIS_TYPE = '70W'
 METRICS = ['Total Time (h)', 'Total Distance (km)', 'Mean Speed (m/s)',
             'Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth Rate (10^−5 s^−1 day-1)']
 PHASES = ['incipient', 'intensification', 'mature', 'decay', 'intensification 2', 'mature 2', 'decay 2', 'residual']
@@ -463,16 +463,16 @@ def plot_ridge_phases(data, figure_path):
     print(f"{fname} created.")
 
 def plot_ridge_plots(database, phases):
-    # for metric in METRICS:
-    #     for phase in PHASES:   
-    #         metric_formatted = metric_to_formatted_string(metric)
-    #         figure_path = os.path.join('..', 'figures', 'periods_statistics', ANALYSIS_TYPE, metric_formatted)
-    #         os.makedirs(figure_path, exist_ok=True)
-    #         print(f"\n-----------------\nPlotting phase: {phase} for {metric}")
-    #         data = database[database['phase'] == phase]
-    #         regions = database['Region'].unique()
-    #         plot_single_ridge_season(data, regions, figure_path, phase, metric) 
-    #         plot_single_ridge(data, figure_path, phase, metric)
+    for metric in METRICS:
+        for phase in PHASES:   
+            metric_formatted = metric_to_formatted_string(metric)
+            figure_path = os.path.join('..', 'figures', 'periods_statistics', ANALYSIS_TYPE, metric_formatted)
+            os.makedirs(figure_path, exist_ok=True)
+            print(f"\n-----------------\nPlotting phase: {phase} for {metric}")
+            data = database[database['phase'] == phase]
+            regions = database['Region'].unique()
+            plot_single_ridge_season(data, regions, figure_path, phase, metric) 
+            plot_single_ridge(data, figure_path, phase, metric)
     figure_path = os.path.join('..', 'figures', 'periods_statistics', ANALYSIS_TYPE)
     plot_ridge_phases(database, figure_path)
 
@@ -521,7 +521,7 @@ def main():
     # Make plots
     plot_ridge_plots(database, phases)
     # Export statistics
-    #phases_statistics(database)
+    phases_statistics(database)
 
 if __name__ == '__main__':
     main()
