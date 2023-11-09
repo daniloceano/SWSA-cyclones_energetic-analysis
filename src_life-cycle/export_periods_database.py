@@ -234,7 +234,7 @@ def create_database(tracks, regions, analysis_type):
     return merged_data_frames
 
 def main():
-    analysis_type = '70W-no-continental'
+    analysis_type = '70W'
     print(f"Analysis type: {analysis_type}")
     regions = [False, "ARG", "LA-PLATA", "SE-BR", "SE-SAO", "AT-PEN", "WEDDELL", "SA-NAM"]
     tracks = get_tracks()
