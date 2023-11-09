@@ -296,8 +296,8 @@ def filter_tracks(tracks, analysis_type):
 
 testing = False
 # analysis_type = 'BY_RG-all'
-# analysis_type = 'all'
-analysis_type = '70W' 
+analysis_type = 'all'
+# analysis_type = '70W' 
 # analysis_type = '48h'
 # analysis_type = '70W-48h'
 # analysis_type = '70W-1000km'
