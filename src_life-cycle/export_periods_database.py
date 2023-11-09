@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_periods_database.py                         :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: danilocoutodsouza <danilocoutodsouza@st    +#+  +:+       +#+         #
+#    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/11/09 10:59:56 by danilocouto      ###   ########.fr        #
+#    Updated: 2023/11/09 19:59:03 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -196,22 +196,49 @@ def process_data(tracks_distance_periods):
     print("Done")
     return merged_df
 
-def compute_totals(df):
+def compute_maximum_distance_for_track(track_group):
+    """
+    Compute the maximum distance for a track group, which is the distance
+    between the first and last positions.
+    """
+    if len(track_group) > 1:
+        first_row = track_group.iloc[0]
+        last_row = track_group.iloc[-1]
+        return haversine_distance(last_row['lon vor'], last_row['lat vor'],
+                                  first_row['lon vor'], first_row['lat vor'])
+    else:
+        return 0
+
+def compute_totals(tracks_df, tracks_season_distance_periods):
     # Group by track_id and sum up the 'Total Distance (km)' and 'Duration'
-    total_phase = df.groupby('track_id').agg({
+    total_phase = tracks_df.groupby('track_id').agg({
         'Total Distance (km)': 'sum',
-        'Maximum Distance (km)': 'sum',
         'Total Time (h)': 'sum',
         'Mean Speed (m/s)': 'mean',
         'Mean Vorticity (−1 × 10−5 s−1)': 'mean',
         'Mean Growth Rate (10^−5 s^−1 day-1)': 'mean'
     }).reset_index()
 
+    # Extract the first and last positions for each track from the original tracks dataframe
+    first_positions = tracks_season_distance_periods.groupby('track_id').first().reset_index()
+    last_positions = tracks_season_distance_periods.groupby('track_id').last().reset_index()
+
+    # Compute the Maximum Distance for the "total" phase for each track
+    max_distances = []
+    for _, first_row in first_positions.iterrows():
+        track_id = first_row['track_id']
+        last_row = last_positions[last_positions['track_id'] == track_id].iloc[0]
+        max_distance = compute_maximum_distance_for_track(pd.DataFrame([first_row, last_row]))
+        max_distances.append(max_distance)
+
+    # Add a new column 'Maximum Distance (km)' to total_phase
+    total_phase['Maximum Distance (km)'] = max_distances
+
     # Add a new column 'phase' with value 'Total'
     total_phase['phase'] = 'Total'
 
     # Append the new dataframe to the original dataframe
-    df = pd.concat([df, total_phase], ignore_index=True, sort=False)
+    df = pd.concat([tracks_df, total_phase], ignore_index=True, sort=False)
 
     return df
 
@@ -231,7 +258,7 @@ def create_database(tracks, regions, analysis_type):
             tracks_season_distance = compute_distance_parallel(tracks_season)
             tracks_season_distance_periods = process_phase_data_parallel(tracks_season_distance, periods_directory)
             df = process_data(tracks_season_distance_periods)
-            df = compute_totals(df)
+            df = compute_totals(df, tracks_season_distance_periods)
             df['Region'] = 'Total' if not region else region
             df['Season'] = season
             data_frames.append(df)
@@ -260,7 +287,7 @@ def main():
             )
         tracks_year = tracks[tracks['year'] == year]
         try:
-            merged_data_frames = pd.read_csv(duration_database+"ff")
+            merged_data_frames = pd.read_csv(duration_database)
         except FileNotFoundError:
             print(f"{duration_database} not found, creating it...")
             merged_data_frames = create_database(tracks_year, regions, analysis_type)
