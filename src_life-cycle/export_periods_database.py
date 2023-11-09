@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_periods_database.py                         :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
+#    By: danilocoutodsouza <danilocoutodsouza@st    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/11/08 15:17:11 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/09 10:59:56 by danilocouto      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -128,13 +128,21 @@ def process_data(tracks_distance_periods):
     Process data for analysis.
     """
     print("Processing data...")
+    # Remove whenever the phase is NaN
+    tracks_distance_periods = tracks_distance_periods[~pd.isna(tracks_distance_periods['phase'])]
+
+    # First, sort the dataframe by track_id and date to ensure the order is correct
+    tracks_distance_periods.sort_values(by=['track_id', 'date'], inplace=True)
+
+    # Set Distance to NaN for the first occurrence of each phase for each track_id
+    tracks_distance_periods['is_first_occurrence'] = ~tracks_distance_periods.duplicated(subset=['track_id', 'phase'])
+    tracks_distance_periods.loc[tracks_distance_periods['is_first_occurrence'], 'Distance'] = np.nan
+    tracks_distance_periods.drop(columns=['is_first_occurrence'], inplace=True)  # Clean up the temporary column
+
     # Time difference in hours for each track
     tracks_distance_periods['time_diff'] = tracks_distance_periods.groupby('track_id')['date'].diff().dt.total_seconds() / SECONDS_IN_AN_HOUR
     
     # Calculate the Maximum Distance (km) for each phase
-    # First, sort the dataframe by track_id and date to ensure the order is correct
-    tracks_distance_periods.sort_values(by=['track_id', 'date'], inplace=True)
-    
     # Define a function to calculate the distance between the first and last point of each phase
     def calculate_max_distance(group):
         if len(group) > 1:
@@ -188,7 +196,6 @@ def process_data(tracks_distance_periods):
     print("Done")
     return merged_df
 
-
 def compute_totals(df):
     # Group by track_id and sum up the 'Total Distance (km)' and 'Duration'
     total_phase = df.groupby('track_id').agg({
@@ -234,7 +241,7 @@ def create_database(tracks, regions, analysis_type):
     return merged_data_frames
 
 def main():
-    analysis_type = '70W'
+    analysis_type = 'all'
     print(f"Analysis type: {analysis_type}")
     regions = [False, "ARG", "LA-PLATA", "SE-BR", "SE-SAO", "AT-PEN", "WEDDELL", "SA-NAM"]
     tracks = get_tracks()
@@ -253,7 +260,7 @@ def main():
             )
         tracks_year = tracks[tracks['year'] == year]
         try:
-            merged_data_frames = pd.read_csv(duration_database)
+            merged_data_frames = pd.read_csv(duration_database+"ff")
         except FileNotFoundError:
             print(f"{duration_database} not found, creating it...")
             merged_data_frames = create_database(tracks_year, regions, analysis_type)
