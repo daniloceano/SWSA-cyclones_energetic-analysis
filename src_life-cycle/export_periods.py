@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_periods.py                                  :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo  <danilo.oceano@gmail.com>          +#+  +:+       +#+         #
+#    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/03 16:45:03 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/17 19:15:20 by Danilo           ###   ########.fr        #
+#    Updated: 2023/11/09 20:58:03 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,6 +26,8 @@ import geopandas as gpd
 
 from cyclophaser import determine_periods
 from multiprocessing import Pool
+from functools import partial
+
 from glob import glob
 from tqdm import tqdm
 
@@ -72,28 +74,26 @@ def check_last_position_on_continent(cyclone_id, tracks, continent_gdf):
     return cyclone_id, not last_position_on_continent.all()
 
 def check_on_continent_percentage(cyclone_id, tracks, continent_gdf, threshold_percentage):
-    print(f"Checking cyclone {cyclone_id}...")
-
     try:
         cyclone_track = tracks[tracks['track_id'] == cyclone_id]
-        # Calculate the number of time steps where the cyclone is on the continent
         positions_on_continent = gpd.points_from_xy(cyclone_track['lon vor'], cyclone_track['lat vor'])
         positions_on_continent = gpd.GeoSeries(positions_on_continent, crs=continent_gdf.crs)
         positions_on_continent = positions_on_continent.within(continent_gdf.unary_union)
         on_continent_count = positions_on_continent.sum()
         
-        # Calculate the total number of time steps in the cyclone's lifetime
         total_time_steps = len(cyclone_track)
-        
-        # Calculate the percentage of time on the continent
         percentage_on_continent = (on_continent_count / total_time_steps) * 100
-        print(f"Cyclone {cyclone_id} is on the continent {percentage_on_continent}% of the time.")
         
         return cyclone_id, percentage_on_continent < threshold_percentage
 
     except Exception as e:
-            print(f"Error in worker for cyclone {cyclone_id}: {str(e)}")
-            return None  # Return a sentinel value to indicate an error
+        return cyclone_id, None  # Return a sentinel value to indicate an error
+
+def process_with_progress(pool, func, args_list):
+    results = []
+    for result in tqdm(pool.imap_unordered(func, args_list), total=len(args_list)):
+        results.append(result)
+    return results
 
 def process_cyclone(args):
     id_cyclone, tracks, periods_outfile_path, periods_didatic_outfile_path, periods_csv_outfile_path, RG_str = args
@@ -280,7 +280,18 @@ def filter_tracks(tracks, analysis_type):
         unique_cyclone_ids = tracks['track_id'].unique()
 
         with multiprocessing.Pool() as pool:
-            results = pool.starmap(check_on_continent_percentage, [(cyclone_id, tracks, continent_gdf, threshold_percentage) for cyclone_id in unique_cyclone_ids])
+            partial_func = partial(check_on_continent_percentage, 
+                                tracks=tracks, 
+                                continent_gdf=continent_gdf, 
+                                threshold_percentage=threshold_percentage)
+            
+            # Create a tuple list of just the cyclone_id as this is the only parameter that varies
+            args_list = [(cyclone_id,) for cyclone_id in unique_cyclone_ids]
+            
+            # Use imap_unordered with tqdm for the progress bar
+            results = []
+            for result in tqdm(pool.imap_unordered(partial_func, args_list), total=len(args_list)):
+                results.append(result)
 
         # Extract valid cyclone IDs from the results
         valid_track_ids = [cyclone_id for cyclone_id, is_valid in results if is_valid]
@@ -296,8 +307,8 @@ def filter_tracks(tracks, analysis_type):
 
 testing = False
 # analysis_type = 'BY_RG-all'
-# analysis_type = 'all'
-analysis_type = '70W' 
+analysis_type = 'all'
+# analysis_type = '70W' 
 # analysis_type = '48h'
 # analysis_type = '70W-48h'
 # analysis_type = '70W-1000km'

@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_periods_database.py                         :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: danilocoutodsouza <danilocoutodsouza@st    +#+  +:+       +#+         #
+#    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/11/09 10:59:56 by danilocouto      ###   ########.fr        #
+#    Updated: 2023/11/09 21:12:55 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from export_density_all import get_tracks
+from export_periods import filter_tracks
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import ProcessPoolExecutor
 
@@ -37,12 +38,17 @@ def haversine_distance(lon1, lat1, lon2, lat2):
 def process_csv_file(csv_file, tracks):
     """
     Process a single CSV file and update the tracks dataframe.
+    Only include systems that have a "mature" phase.
     """
-    df_phases = pd.read_csv(csv_file, parse_dates=['start', 'end'], index_col=0)
+    df_phases = pd.read_csv(csv_file, parse_dates=['start', 'end'])
+    df_phases.columns = ['phase', 'start', 'end']
+    if 'mature' not in df_phases['phase'].values:
+        return None  # If there is no mature phase, skip this CSV file
+
     updates = {}
-    for phase, row in df_phases.iterrows():
+    for _, row in df_phases.iterrows():
         mask = (tracks['date'] >= row['start']) & (tracks['date'] <= row['end'])
-        updates[phase] = mask
+        updates[row['phase']] = mask
     return updates
 
 def filter_csv_file(f, track_id_set):
@@ -75,14 +81,29 @@ def process_phase_data_parallel(tracks, data_path):
     track_ids = tracks['track_id'].unique()
     year = tracks['year'].unique()[0]
     filtered_csv_files = get_filtered_csv_files_parallel(csv_files, track_ids, year)
-    tracks['date'] = pd.to_datetime(tracks['date'])    
+    tracks['date'] = pd.to_datetime(tracks['date'])
+
+    valid_ids = [int(os.path.basename(csv_file).split('.')[0].split('_')[1]) for csv_file in filtered_csv_files] + [os.path.basename(csv_file).split('.')[0].split('_')[1] for csv_file in filtered_csv_files]
+    tracks = tracks[tracks['track_id'].isin(valid_ids)]
+
+    # Use a dictionary to collect phase updates for each file
+    phase_updates = {}
     with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
         results = list(tqdm(executor.map(lambda csv_file: process_csv_file(csv_file, tracks),
                                           filtered_csv_files), total=len(filtered_csv_files),
                                             desc='Processing Files'))
-    for result in results:
-        for phase, mask in result.items():
-            tracks.loc[mask, 'phase'] = phase
+        # Consolidate results
+        for update in filter(None, results):  # filter out the None results
+            for phase, mask in update.items():
+                phase_updates[phase] = phase_updates.get(phase, []) + [mask]
+
+    # Apply phase updates
+    for phase, masks in phase_updates.items():
+        combined_mask = pd.Series(False, index=tracks.index)
+        for mask in masks:
+            combined_mask = combined_mask | mask  # Combine masks with logical OR
+        tracks.loc[combined_mask, 'phase'] = phase  # Update the phase for the combined mask
+
     print("Done.")
     return tracks
 
@@ -196,22 +217,49 @@ def process_data(tracks_distance_periods):
     print("Done")
     return merged_df
 
-def compute_totals(df):
+def compute_maximum_distance_for_track(track_group):
+    """
+    Compute the maximum distance for a track group, which is the distance
+    between the first and last positions.
+    """
+    if len(track_group) > 1:
+        first_row = track_group.iloc[0]
+        last_row = track_group.iloc[-1]
+        return haversine_distance(last_row['lon vor'], last_row['lat vor'],
+                                  first_row['lon vor'], first_row['lat vor'])
+    else:
+        return 0
+
+def compute_totals(tracks_df, tracks_season_distance_periods):
     # Group by track_id and sum up the 'Total Distance (km)' and 'Duration'
-    total_phase = df.groupby('track_id').agg({
+    total_phase = tracks_df.groupby('track_id').agg({
         'Total Distance (km)': 'sum',
-        'Maximum Distance (km)': 'sum',
         'Total Time (h)': 'sum',
         'Mean Speed (m/s)': 'mean',
         'Mean Vorticity (−1 × 10−5 s−1)': 'mean',
         'Mean Growth Rate (10^−5 s^−1 day-1)': 'mean'
     }).reset_index()
 
+    # Extract the first and last positions for each track from the original tracks dataframe
+    first_positions = tracks_season_distance_periods.groupby('track_id').first().reset_index()
+    last_positions = tracks_season_distance_periods.groupby('track_id').last().reset_index()
+
+    # Compute the Maximum Distance for the "total" phase for each track
+    max_distances = []
+    for _, first_row in first_positions.iterrows():
+        track_id = first_row['track_id']
+        last_row = last_positions[last_positions['track_id'] == track_id].iloc[0]
+        max_distance = compute_maximum_distance_for_track(pd.DataFrame([first_row, last_row]))
+        max_distances.append(max_distance)
+
+    # Add a new column 'Maximum Distance (km)' to total_phase
+    total_phase['Maximum Distance (km)'] = max_distances
+
     # Add a new column 'phase' with value 'Total'
     total_phase['phase'] = 'Total'
 
     # Append the new dataframe to the original dataframe
-    df = pd.concat([df, total_phase], ignore_index=True, sort=False)
+    df = pd.concat([tracks_df, total_phase], ignore_index=True, sort=False)
 
     return df
 
@@ -231,7 +279,7 @@ def create_database(tracks, regions, analysis_type):
             tracks_season_distance = compute_distance_parallel(tracks_season)
             tracks_season_distance_periods = process_phase_data_parallel(tracks_season_distance, periods_directory)
             df = process_data(tracks_season_distance_periods)
-            df = compute_totals(df)
+            df = compute_totals(df, tracks_season_distance_periods)
             df['Region'] = 'Total' if not region else region
             df['Season'] = season
             data_frames.append(df)
@@ -241,7 +289,7 @@ def create_database(tracks, regions, analysis_type):
     return merged_data_frames
 
 def main():
-    analysis_type = 'all'
+    analysis_type = '70W-no-continental'
     print(f"Analysis type: {analysis_type}")
     regions = [False, "ARG", "LA-PLATA", "SE-BR", "SE-SAO", "AT-PEN", "WEDDELL", "SA-NAM"]
     tracks = get_tracks()
@@ -259,8 +307,9 @@ def main():
             f"periods_database_{year}.csv"
             )
         tracks_year = tracks[tracks['year'] == year]
+        # tracks_year = filter_tracks(tracks_year, analysis_type)
         try:
-            merged_data_frames = pd.read_csv(duration_database+"ff")
+            merged_data_frames = pd.read_csv(duration_database)
         except FileNotFoundError:
             print(f"{duration_database} not found, creating it...")
             merged_data_frames = create_database(tracks_year, regions, analysis_type)
