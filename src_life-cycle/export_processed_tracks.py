@@ -91,8 +91,8 @@ def compute_distances(tracks):
     valid_rows = tracks['prev_lon vor'].notnull()
     coords1 = tracks.loc[valid_rows, ['prev_lat vor', 'prev_lon vor']]
     coords2 = tracks.loc[valid_rows, ['lat vor', 'lon vor']]
-    tracks['Distance (m)'] = tracks.apply(
-    lambda row: compute_distance(row['prev_lon vor'], row['prev_lat vor'], row['lon vor'], row['lat vor']) * 1000
+    tracks['Distance (km)'] = tracks.apply(
+    lambda row: compute_distance(row['prev_lon vor'], row['prev_lat vor'], row['lon vor'], row['lat vor'])
     if pd.notnull(row['prev_lon vor']) else np.nan,
     axis=1
 )
@@ -105,10 +105,29 @@ def compute_speeds(tracks):
     tracks['time_diff'] = tracks.groupby('track_id')['date'].diff().dt.total_seconds() / 3600  # convert seconds to hours
 
     # Calculate speed by dividing the distance by the time difference and convert from km/h to m/s
-    tracks['Speed (m/s)'] = (tracks['Distance (m)'] / (tracks['time_diff'] * 3600)).replace([np.inf, -np.inf], np.nan)
+    tracks['Speed (m/s)'] = (tracks['Distance (km)'] / (tracks['time_diff'] * 3600)).replace([np.inf, -np.inf], np.nan)
 
     # Drop the temporary column used for calculation
     tracks.drop('time_diff', axis=1, inplace=True)
+
+    return tracks
+
+def compute_vorticity_rate(tracks):
+    """
+    Computes the rate of change in vorticity ('vor42') between each time step for each track_id.
+    For the first occurrence of each track_id, the vorticity rate is set to NaN.
+    """
+    # Ensure the DataFrame is sorted by track_id and date for correct calculation
+    tracks.sort_values(by=['track_id', 'date'], inplace=True)
+
+    # Shift the 'vor42' column to align each row with its predecessor
+    tracks['prev_vor42'] = tracks.groupby('track_id')['vor42'].shift(1)
+
+    # Calculate the vorticity rate using the shifted values
+    tracks['Vorticity Rate'] = tracks['vor42'] - tracks['prev_vor42']
+
+    # Drop the temporary column used for calculation
+    tracks.drop('prev_vor42', axis=1, inplace=True)
 
     return tracks
 
@@ -174,9 +193,12 @@ def create_database(tracks_year):
     # Now we will calculate the speeds.
     tracks_year = compute_speeds(tracks_year)
 
+    # Apply the function to compute vorticity rates
+    tracks_year = compute_vorticity_rate(tracks_year)
+
     # Sanity checks
-    tracks_distance_sum = tracks_year.groupby('track_id')['Distance (m)'].sum().reset_index(name='Total Distance (m)')
-    global_mean_distance = tracks_distance_sum['Total Distance (m)'].mean()
+    tracks_distance_sum = tracks_year.groupby('track_id')['Distance (km)'].sum().reset_index(name='Total Distance (km)')
+    global_mean_distance = tracks_distance_sum['Total Distance (km)'].mean()
     tracks_speed_mean = tracks_year.groupby('track_id')['Speed (m/s)'].mean().reset_index(name='Speed (m/s)')
     global_mean_speed = tracks_speed_mean['Speed (m/s)'].mean()
     print(f"Global Mean Speed: {global_mean_speed:.2f} m/s, Global Mean Distance: {global_mean_distance/1000:.2f} km")
