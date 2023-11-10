@@ -105,29 +105,34 @@ def compute_speeds(tracks):
     tracks['time_diff'] = tracks.groupby('track_id')['date'].diff().dt.total_seconds() / 3600  # convert seconds to hours
 
     # Calculate speed by dividing the distance by the time difference and convert from km/h to m/s
-    tracks['Speed (m/s)'] = (tracks['Distance (km)'] / (tracks['time_diff'] * 3600)).replace([np.inf, -np.inf], np.nan)
+    tracks['Speed (m/s)'] = ((tracks['Distance (km)'] * 1000) / (tracks['time_diff'] * 3600)).replace([np.inf, -np.inf], np.nan)
 
     # Drop the temporary column used for calculation
     tracks.drop('time_diff', axis=1, inplace=True)
 
     return tracks
 
-def compute_vorticity_rate(tracks):
+def compute_growth_rate(tracks):
     """
     Computes the rate of change in vorticity ('vor42') between each time step for each track_id.
-    For the first occurrence of each track_id, the vorticity rate is set to NaN.
+    For the first occurrence of each track_id, the growth rate is set to NaN.
+    Assumes vor42 units are 10^−5 s^−1 and converts growth rate to 10^−5 s^−1 day^-1.
     """
     # Ensure the DataFrame is sorted by track_id and date for correct calculation
     tracks.sort_values(by=['track_id', 'date'], inplace=True)
 
-    # Shift the 'vor42' column to align each row with its predecessor
+    # Shift the 'vor42' column and 'date' column to align each row with its predecessor
     tracks['prev_vor42'] = tracks.groupby('track_id')['vor42'].shift(1)
+    tracks['prev_date'] = tracks.groupby('track_id')['date'].shift(1)
 
-    # Calculate the vorticity rate using the shifted values
-    tracks['Vorticity Rate'] = tracks['vor42'] - tracks['prev_vor42']
+    # Calculate the time difference in days
+    tracks['time_diff_days'] = (tracks['date'] - tracks['prev_date']).dt.total_seconds() / (24 * 3600)
 
-    # Drop the temporary column used for calculation
-    tracks.drop('prev_vor42', axis=1, inplace=True)
+    # Calculate the vorticity growth rate in 10^−5 s^−1 day^-1
+    tracks['Growth Rate (10^−5 s^−1 day^-1)'] = (tracks['vor42'] - tracks['prev_vor42']) / tracks['time_diff_days']
+
+    # Drop the temporary columns used for calculation
+    tracks.drop(['prev_vor42', 'prev_date', 'time_diff_days'], axis=1, inplace=True)
 
     return tracks
 
@@ -143,7 +148,7 @@ def process_csv_file(csv_file, tracks):
         print(f"Error processing file {csv_file}: {e}")
         return {}
 
-def process_phase_data_parallel(tracks, year):
+def process_phase_data_parallel(tracks):
     print("Reading periods...")
     data_path = "../periods-energetics/all"
     csv_files = glob(os.path.join(data_path, '*.csv'))
@@ -193,41 +198,46 @@ def create_database(tracks_year):
     # Now we will calculate the speeds.
     tracks_year = compute_speeds(tracks_year)
 
-    # Apply the function to compute vorticity rates
-    tracks_year = compute_vorticity_rate(tracks_year)
+    # Apply the function to compute growth rates
+    tracks_year = compute_growth_rate(tracks_year)
 
     # Sanity checks
     tracks_distance_sum = tracks_year.groupby('track_id')['Distance (km)'].sum().reset_index(name='Total Distance (km)')
     global_mean_distance = tracks_distance_sum['Total Distance (km)'].mean()
     tracks_speed_mean = tracks_year.groupby('track_id')['Speed (m/s)'].mean().reset_index(name='Speed (m/s)')
     global_mean_speed = tracks_speed_mean['Speed (m/s)'].mean()
-    print(f"Global Mean Speed: {global_mean_speed:.2f} m/s, Global Mean Distance: {global_mean_distance/1000:.2f} km")
+    print(f"Global Mean Speed: {global_mean_speed:.2f} m/s, Global Mean Distance: {global_mean_distance:.2f} km")
 
-    tracks_year = process_phase_data_parallel(tracks_year, year)
+    tracks_year = process_phase_data_parallel(tracks_year)
 
     return tracks_year
 
-tracks_pattern = "ff_cyc_SAt_era5_"
-raw_tracks = sorted(glob(os.path.join(PATH_TO_RAW_DATA, f"{tracks_pattern}*.csv")))
-years = np.unique([int(os.path.basename(raw_track).split(tracks_pattern)[1].split(".")[0][:4]) for raw_track in raw_tracks])
+def main():
+    tracks_pattern = "ff_cyc_SAt_era5_"
+    raw_tracks = sorted(glob(os.path.join(PATH_TO_RAW_DATA, f"{tracks_pattern}*.csv")))
+    years = np.unique([int(os.path.basename(raw_track).split(tracks_pattern)[1].split(".")[0][:4]) for raw_track in raw_tracks])
 
-for year in years:
-    for month in range(1, 13):
-        print(f"Processing year: {year}, month: {month}")
-        tracks_year = get_tracks(year, month)
-        if tracks_year is None:
-            print(f"No data available for year {year}, month {month}. Skipping...")
-            continue
+    for year in years:
+        for month in range(1, 13):
+            month_str = f"{month:02d}"
+            print(f"Processing year: {year}, month: {month_str}")
+            tracks_year = get_tracks(year, month)
+            if tracks_year is None:
+                print(f"No data available for year {year}, month {month}. Skipping...")
+                continue
 
-        # Create database if it doesn't exist
-        databse_path = f"../processed_tracks_with_periods/"
-        os.makedirs(databse_path, exist_ok=True)
-        duration_database = os.path.join(databse_path, f"ff_cyc_SAt_era5_{year}{month}.csv")
-        try:
-            merged_data_frames = pd.read_csv(duration_database)
-            print(f"{duration_database} already exists.")
-        except FileNotFoundError:
-            print(f"{duration_database} not found, creating it...")
-            tracks = create_database(tracks_year)
-            tracks.to_csv(duration_database)
-            print(f"{duration_database} created.")
+            # Create database if it doesn't exist
+            databse_path = f"../processed_tracks_with_periods/"
+            os.makedirs(databse_path, exist_ok=True)
+            duration_database = os.path.join(databse_path, f"ff_cyc_SAt_era5_{year}{month_str}.csv")
+            try:
+                merged_data_frames = pd.read_csv(duration_database)
+                print(f"{duration_database} already exists.")
+            except FileNotFoundError:
+                print(f"{duration_database} not found, creating it...")
+                tracks = create_database(tracks_year)
+                tracks.to_csv(duration_database)
+                print(f"{duration_database} created.")
+
+if __name__ == "__main__":
+    main()
