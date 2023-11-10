@@ -1,320 +1,174 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    export_periods_database.py                         :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2023/10/27 19:48:00 by Danilo            #+#    #+#              #
-#    Updated: 2023/11/09 21:12:55 by daniloceano      ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
-
 import os
-import glob
+from glob import glob
 import sys
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from export_density_all import get_tracks
-from export_periods import filter_tracks
+from geopy.distance import geodesic
+from export_processed_tracks import compute_distance
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import ProcessPoolExecutor
 
+ANALYSIS_TYPE = 'all'
+PATH_TO_TRACKS = "../processed_tracks_with_periods/"
+TRACKS_PATTERN = "ff_cyc_SAt_era5_"
 SECONDS_IN_AN_HOUR = 3600
 
-def haversine_distance(lon1, lat1, lon2, lat2):
-    """
-    Calculate the Haversine distance between two lat-long points in kilometers.
-    """
-    R = 6371.0  # Earth radius in kilometers
-    lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
-    a = np.sin(dlat/2.0)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2.0)**2
-    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1-a))
-    return R * c
+def get_tracks(year: int, month: int):
+    data_folder = os.path.abspath(PATH_TO_TRACKS)  # Absolute path
+    month_str = f"{month:02d}"  # Format month as two digits
+    fname = f"ff_cyc_SAt_era5_{year}{month_str}.csv"
+    file_path = os.path.join(data_folder, fname)
 
-def process_csv_file(csv_file, tracks):
-    """
-    Process a single CSV file and update the tracks dataframe.
-    Only include systems that have a "mature" phase.
-    """
-    df_phases = pd.read_csv(csv_file, parse_dates=['start', 'end'])
-    df_phases.columns = ['phase', 'start', 'end']
-    if 'mature' not in df_phases['phase'].values:
-        return None  # If there is no mature phase, skip this CSV file
-
-    updates = {}
-    for _, row in df_phases.iterrows():
-        mask = (tracks['date'] >= row['start']) & (tracks['date'] <= row['end'])
-        updates[row['phase']] = mask
-    return updates
-
-def filter_csv_file(f, track_id_set):
-    return any(track_id in f for track_id in track_id_set)
-
-def map_filter_func(args):
-    f, track_id_set = args
-    return f, filter_csv_file(f, track_id_set)
-
-def get_filtered_csv_files_parallel(csv_files, track_ids, year):
-    csv_files = [f for f in csv_files if str(year) in os.path.basename(f)]
-    track_id_set = set(map(str, track_ids))
-    filtered_files = []
-    print("Starting the filtering process...")
-    with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
-        # Using tqdm to display a progress bar
-        for f, included in tqdm(executor.map(map_filter_func, [(f, track_id_set) for f in csv_files]), total=len(csv_files), desc='Filtering CSV Files'):
-            if included:
-                filtered_files.append(f)
-    print(f"Filtering completed. {len(filtered_files)} files matched out of {len(csv_files)} total files.")
-    return filtered_files
-
-
-def process_phase_data_parallel(tracks, data_path):
-    """
-    Process phase data in parallel.
-    """
-    print("Reading periods...")
-    csv_files = glob.glob(os.path.join(data_path, '*.csv'))
-    track_ids = tracks['track_id'].unique()
-    year = tracks['year'].unique()[0]
-    filtered_csv_files = get_filtered_csv_files_parallel(csv_files, track_ids, year)
+    try:
+        tracks = pd.read_csv(file_path, index_col=0)
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
+        return None
+    except pd.errors.ParserError:
+        print(f"Error parsing file: {file_path}")
+        return None
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+    
+    tracks['lon vor'] = np.where(tracks['lon vor'] > 180, tracks['lon vor'] - 360, tracks['lon vor'])
+    tracks.sort_values(by=['track_id', 'date'], inplace=True, kind='mergesort')
     tracks['date'] = pd.to_datetime(tracks['date'])
-
-    valid_ids = [int(os.path.basename(csv_file).split('.')[0].split('_')[1]) for csv_file in filtered_csv_files] + [os.path.basename(csv_file).split('.')[0].split('_')[1] for csv_file in filtered_csv_files]
-    tracks = tracks[tracks['track_id'].isin(valid_ids)]
-
-    # Use a dictionary to collect phase updates for each file
-    phase_updates = {}
-    with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
-        results = list(tqdm(executor.map(lambda csv_file: process_csv_file(csv_file, tracks),
-                                          filtered_csv_files), total=len(filtered_csv_files),
-                                            desc='Processing Files'))
-        # Consolidate results
-        for update in filter(None, results):  # filter out the None results
-            for phase, mask in update.items():
-                phase_updates[phase] = phase_updates.get(phase, []) + [mask]
-
-    # Apply phase updates
-    for phase, masks in phase_updates.items():
-        combined_mask = pd.Series(False, index=tracks.index)
-        for mask in masks:
-            combined_mask = combined_mask | mask  # Combine masks with logical OR
-        tracks.loc[combined_mask, 'phase'] = phase  # Update the phase for the combined mask
-
-    print("Done.")
     return tracks
 
-def compute_distance_chunk(chunk):
-    chunk['previous_lon'] = chunk.groupby('track_id')['lon vor'].shift(1)
-    chunk['previous_lat'] = chunk.groupby('track_id')['lat vor'].shift(1)
-    chunk['Distance'] = haversine_distance(
-        chunk['previous_lat'], 
-        chunk['previous_lon'], 
-        chunk['lat vor'], 
-        chunk['lon vor']
-    )
-    chunk.drop(columns=['previous_lon', 'previous_lat'], inplace=True)
-    return chunk
-
-def compute_distance_parallel(tracks_df, num_workers=None):
-    print("Computing distance..")
-    if num_workers is None:
-        num_workers = os.cpu_count()
-    chunks = np.array_split(tracks_df, num_workers)
-    with ProcessPoolExecutor(max_workers=num_workers) as executor:
-        processed_chunks = list(tqdm(executor.map(compute_distance_chunk, chunks), total=num_workers, desc="Processing Chunks"))
-    print("Done.")
-    return pd.concat(processed_chunks)
-
-def filter_seasons(tracks, seasons):
+def filter_tracks(tracks):
     """
-    Filter the tracks to include only those occurring in the provided seasons.
+    Subset corresponding tracks for analysis type
     """
-    print("Filtering seasons...")
-    tracks.loc[:, 'month'] = pd.to_datetime(tracks['date']).dt.month
-    if seasons == 'DJF':
-        tracks_season =  tracks[tracks['month'].isin([12, 1, 2])]
-    elif seasons == 'JJA':
-        tracks_season = tracks[tracks['month'].isin([6, 7, 8])]
-    else:
-        tracks_season = tracks
-    print("Done.")
-    return tracks_season
+    print("Reading periods...")
+    periods_directory = os.path.join('..', 'periods-energetics', ANALYSIS_TYPE)
+    csv_files = glob(os.path.join(periods_directory, '*.csv'))
+    valid_ids = [int(os.path.basename(csv_file).split('.')[0].split('_')[1]) for csv_file in csv_files] + [os.path.basename(csv_file).split('.')[0].split('_')[1] for csv_file in csv_files]
+    tracks = tracks[tracks['track_id'].isin(valid_ids)]
+    return tracks
 
-def process_data(tracks_distance_periods):
-    """
-    Process data for analysis.
-    """
-    print("Processing data...")
-    # Remove whenever the phase is NaN
-    tracks_distance_periods = tracks_distance_periods[~pd.isna(tracks_distance_periods['phase'])]
+def calculate_distances_per_phase(tracks):
+    # Group by track_id and phase, then extract first and last positions
+    first_positions = tracks.groupby(['track_id', 'phase']).first().reset_index()[['track_id', 'phase', 'lat vor', 'lon vor']]
+    last_positions = tracks.groupby(['track_id', 'phase']).last().reset_index()[['track_id', 'phase', 'lat vor', 'lon vor']]
 
-    # First, sort the dataframe by track_id and date to ensure the order is correct
-    tracks_distance_periods.sort_values(by=['track_id', 'date'], inplace=True)
+    # Calculating straight-line distance for each cyclone and phase
+    straight_line_distances = []
+    for (first, last) in zip(first_positions.iterrows(), last_positions.iterrows()):
+        if first[1]['track_id'] == last[1]['track_id'] and first[1]['phase'] == last[1]['phase']:
+            start_coords = (first[1]['lat vor'], first[1]['lon vor'])
+            end_coords = (last[1]['lat vor'], last[1]['lon vor'])
+            distance = geodesic(start_coords, end_coords).kilometers
+            straight_line_distances.append({
+                'track_id': first[1]['track_id'], 
+                'phase': first[1]['phase'], 
+                'Straight Line Distance (km)': distance
+            })
 
-    # Set Distance to NaN for the first occurrence of each phase for each track_id
-    tracks_distance_periods['is_first_occurrence'] = ~tracks_distance_periods.duplicated(subset=['track_id', 'phase'])
-    tracks_distance_periods.loc[tracks_distance_periods['is_first_occurrence'], 'Distance'] = np.nan
-    tracks_distance_periods.drop(columns=['is_first_occurrence'], inplace=True)  # Clean up the temporary column
+    straight_line_distance_df = pd.DataFrame(straight_line_distances)
 
-    # Time difference in hours for each track
-    tracks_distance_periods['time_diff'] = tracks_distance_periods.groupby('track_id')['date'].diff().dt.total_seconds() / SECONDS_IN_AN_HOUR
-    
-    # Calculate the Maximum Distance (km) for each phase
-    # Define a function to calculate the distance between the first and last point of each phase
-    def calculate_max_distance(group):
-        if len(group) > 1:
-            return haversine_distance(group.iloc[-1]['lon vor'], group.iloc[-1]['lat vor'],
-                                      group.iloc[0]['lon vor'], group.iloc[0]['lat vor'])
-        else:
-            return 0
+    return straight_line_distance_df
 
-    # Apply the function to each group
-    max_distance = tracks_distance_periods.groupby(['track_id', 'phase']).apply(calculate_max_distance).reset_index(name='Maximum Distance (km)')
+def calculate_distances(tracks):
+    # Extracting first and last positions for each cyclone
+    first_positions = tracks.groupby('track_id').first().reset_index()[['track_id', 'lat vor', 'lon vor']]
+    last_positions = tracks.groupby('track_id').last().reset_index()[['track_id', 'lat vor', 'lon vor']]
 
-    # Total distance per phase
-    total_distance = tracks_distance_periods.groupby(['track_id', 'phase'])['Distance'].sum().reset_index(name='Total Distance (km)')
-    
-    # Total time per phase
-    total_time = tracks_distance_periods.groupby(['track_id', 'phase'])['time_diff'].sum().reset_index(name='Total Time (h)')
-    
-    # Mean vorticity per phase
-    mean_vorticity = tracks_distance_periods.groupby(['track_id', 'phase'])['vor42'].mean().reset_index(name='Mean Vorticity (−1 × 10−5 s−1)')
-    
-    # Calculate the difference in vorticity over time to find the growth rate
-    # Assuming 'vor42' column is the vorticity and has units [−1 × 10^−5 s^−1]
-    # Calculate the rolling 3-hour difference (3 previous rows including the current row)
-    tracks_distance_periods['vor42_diff'] = tracks_distance_periods.groupby('track_id')['vor42'].diff()
-    
-    # Here we assume 'date' column is spaced at 1-hour intervals
-    # Use a rolling window to calculate the mean over 3-hour periods
-    tracks_distance_periods['vor42_3h_diff'] = tracks_distance_periods.groupby('track_id')['vor42_diff'].rolling(window=3).sum().reset_index(0,drop=True)
-    
-    # Compute the growth rate as the mean of these 3-hour differences
-    # Dividing by 3 to convert the sum into an average over the 3-hour window
-    growth_rate = (tracks_distance_periods.groupby(['track_id', 'phase'])['vor42_3h_diff'].mean() / 3).reset_index(name='Mean Growth Rate (10^−5 s^−1 3h-1)')
+    # Calculating straight-line distance for each cyclone
+    straight_line_distances = []
+    for (first, last) in zip(first_positions.iterrows(), last_positions.iterrows()):
+        start_coords = (first[1]['lat vor'], first[1]['lon vor'])
+        end_coords = (last[1]['lat vor'], last[1]['lon vor'])
+        distance = geodesic(start_coords, end_coords).kilometers
+        straight_line_distances.append({'track_id': first[1]['track_id'], 'Straight Line Distance (km)': distance})
 
-    # Convert the mean growth rate from per 3-hour to per day
-    growth_rate['Mean Growth Rate (10^−5 s^−1 day-1)'] = growth_rate['Mean Growth Rate (10^−5 s^−1 3h-1)'] * (24 / 3)
+    straight_line_distance_df = pd.DataFrame(straight_line_distances)
 
-    # Merge all the calculated metrics back into a single dataframe
-    merged_df = pd.merge(total_distance, total_time, on=['track_id', 'phase'])
-    merged_df = pd.merge(merged_df, mean_vorticity, on=['track_id', 'phase'])
-    merged_df = pd.merge(merged_df, growth_rate, on=['track_id', 'phase'])
-    merged_df = pd.merge(merged_df, max_distance, on=['track_id', 'phase'])
+    return straight_line_distance_df
 
-    # Calculate the mean speed
-    merged_df['Mean Speed (km/h)'] = merged_df['Total Distance (km)'] / merged_df['Total Time (h)']
-    merged_df['Mean Speed (m/s)'] = merged_df['Mean Speed (km/h)'] * (1000 / 3600)
+def create_database(tracks_year):
+    # Sort by track_id and date
+    tracks_year.sort_values(by=['track_id', 'date'], inplace=True)
 
-    # Drop the temporary column used for calculations
-    merged_df.drop(columns=['Mean Speed (km/h)'], inplace=True)
-    tracks_distance_periods.drop(columns=['vor42_diff', 'vor42_3h_diff'], inplace=True)
+    # Calculate time difference in hours
+    tracks_year['time_diff'] = tracks_year.groupby('track_id')['date'].diff().dt.total_seconds() / SECONDS_IN_AN_HOUR
 
-    print("Done")
-    return merged_df
+    # Handle NaN values in time_diff (for the first entry of each track)
+    tracks_year['time_diff'].fillna(0, inplace=True)
 
-def compute_maximum_distance_for_track(track_group):
-    """
-    Compute the maximum distance for a track group, which is the distance
-    between the first and last positions.
-    """
-    if len(track_group) > 1:
-        first_row = track_group.iloc[0]
-        last_row = track_group.iloc[-1]
-        return haversine_distance(last_row['lon vor'], last_row['lat vor'],
-                                  first_row['lon vor'], first_row['lat vor'])
-    else:
-        return 0
+    # Calculate the Duration for each phase and for the total life cycle
+    total_time_per_phase = tracks_year.groupby(['track_id', 'phase'])['time_diff'].sum().reset_index(name='Total Time (h)')
+    total_time = total_time_per_phase.groupby('track_id')['Total Time (h)'].sum().reset_index()
+    total_time['phase'] = 'Total'
 
-def compute_totals(tracks_df, tracks_season_distance_periods):
-    # Group by track_id and sum up the 'Total Distance (km)' and 'Duration'
-    total_phase = tracks_df.groupby('track_id').agg({
-        'Total Distance (km)': 'sum',
-        'Total Time (h)': 'sum',
-        'Mean Speed (m/s)': 'mean',
-        'Mean Vorticity (−1 × 10−5 s−1)': 'mean',
-        'Mean Growth Rate (10^−5 s^−1 day-1)': 'mean'
-    }).reset_index()
+    # Mean speed per phase and cyclone
+    mean_speed_per_phase = tracks_year.groupby(['track_id', 'phase'])['Speed (m/s)'].mean().reset_index(name='Mean Speed (m/s)')
+    mean_speed = mean_speed_per_phase.groupby('track_id')['Mean Speed (m/s)'].mean().reset_index()
+    mean_speed['phase'] = 'Total'
 
-    # Extract the first and last positions for each track from the original tracks dataframe
-    first_positions = tracks_season_distance_periods.groupby('track_id').first().reset_index()
-    last_positions = tracks_season_distance_periods.groupby('track_id').last().reset_index()
+    # Total distance per phase and cyclone
+    total_distance_per_phase = tracks_year.groupby(['track_id', 'phase'])['Distance (km)'].sum().reset_index(name='Total Distance (km)')
+    total_distance = total_distance_per_phase.groupby('track_id')['Total Distance (km)'].sum().reset_index()
+    total_distance['phase'] = 'Total'
 
-    # Compute the Maximum Distance for the "total" phase for each track
-    max_distances = []
-    for _, first_row in first_positions.iterrows():
-        track_id = first_row['track_id']
-        last_row = last_positions[last_positions['track_id'] == track_id].iloc[0]
-        max_distance = compute_maximum_distance_for_track(pd.DataFrame([first_row, last_row]))
-        max_distances.append(max_distance)
+    # Mean voriticy per phase and cyclone 
+    mean_vorticity_per_phase = tracks_year.groupby(['track_id', 'phase'])['vor42'].mean().reset_index(name='Mean Vorticity (−1 × 10−5 s−1)')
+    mean_vorticity = mean_vorticity_per_phase.groupby('track_id')['Mean Vorticity (−1 × 10−5 s−1)'].mean().reset_index()
+    mean_vorticity['phase'] = 'Total'
 
-    # Add a new column 'Maximum Distance (km)' to total_phase
-    total_phase['Maximum Distance (km)'] = max_distances
+    # Mean growth rate per phase and cyclone
+    mean_growth_rate_per_phase = tracks_year.groupby(['track_id', 'phase'])['Growth Rate (10^−5 s^−1 day^-1)'].mean().reset_index(name='Mean Growth Rate (10^−5 s^−1 day^-1)')
+    mean_growth_rate = mean_growth_rate_per_phase.groupby('track_id')['Mean Growth Rate (10^−5 s^−1 day^-1)'].mean().reset_index()
+    mean_growth_rate['phase'] = 'Total'
 
-    # Add a new column 'phase' with value 'Total'
-    total_phase['phase'] = 'Total'
+    # Calculate straight-line distance
+    straight_line_distance_per_phase = calculate_distances_per_phase(tracks_year)
+    straight_line_distance = calculate_distances(tracks_year)
+    straight_line_distance['phase'] = 'Total'
 
-    # Append the new dataframe to the original dataframe
-    df = pd.concat([tracks_df, total_phase], ignore_index=True, sort=False)
+    # Concatenate the total lifecycle data with the per-phase data
+    total_time_per_phase = pd.concat([total_time_per_phase, total_time], ignore_index=True)
+    mean_speed_per_phase = pd.concat([mean_speed_per_phase, mean_speed], ignore_index=True)
+    total_distance_per_phase = pd.concat([total_distance_per_phase, total_distance], ignore_index=True)
+    mean_vorticity_per_phase = pd.concat([mean_vorticity_per_phase, mean_vorticity], ignore_index=True)
+    mean_growth_rate_per_phase = pd.concat([mean_growth_rate_per_phase, mean_growth_rate], ignore_index=True)
+    straight_line_distance_per_phase = pd.concat([straight_line_distance_per_phase, straight_line_distance], ignore_index=True)
 
-    return df
+    # Merging the dataframes
+    merged_data = pd.merge(total_time_per_phase, mean_speed_per_phase, on=['track_id', 'phase'], how='outer')
+    merged_data = pd.merge(merged_data, mean_speed_per_phase, on=['track_id', 'phase'], how='outer')
+    merged_data = pd.merge(merged_data, total_distance_per_phase, on=['track_id', 'phase'], how='outer')
+    merged_data = pd.merge(merged_data, mean_vorticity_per_phase, on=['track_id', 'phase'], how='outer')
+    merged_data = pd.merge(merged_data, mean_growth_rate_per_phase, on=['track_id', 'phase'], how='outer')
+    merged_data = pd.merge(merged_data, straight_line_distance_per_phase, on=['track_id', 'phase'], how='outer')
 
-def create_database(tracks, regions, analysis_type):
-    data_frames = []
-    for region in regions:
-        for season in ["Total", "DJF", "JJA"]: 
-            print(f"Region: {region}, Season: {season}")
-            region_str = f'_{region}' if region else ''
-            output_directory = os.path.join('..', 'periods_species_statistics', analysis_type, 'duration')
-            periods_directory = os.path.join('..', 'periods-energetics', analysis_type + region_str)
-            os.makedirs(output_directory, exist_ok=True)
-            if season != "Total":
-                tracks_season = filter_seasons(tracks, season)
-            else:
-                tracks_season = tracks.copy()
-            tracks_season_distance = compute_distance_parallel(tracks_season)
-            tracks_season_distance_periods = process_phase_data_parallel(tracks_season_distance, periods_directory)
-            df = process_data(tracks_season_distance_periods)
-            df = compute_totals(df, tracks_season_distance_periods)
-            df['Region'] = 'Total' if not region else region
-            df['Season'] = season
-            data_frames.append(df)
-            print(f'Processed data for region: {region}, season: {season}')
+    return merged_data
 
-    merged_data_frames = pd.concat(data_frames)
-    return merged_data_frames
+raw_tracks = sorted(glob(os.path.join(PATH_TO_TRACKS, f"{TRACKS_PATTERN}*.csv")))
+years = np.unique([int(os.path.basename(raw_track).split(TRACKS_PATTERN)[1].split(".")[0][:4]) for raw_track in raw_tracks])
 
-def main():
-    analysis_type = '70W-no-continental'
-    print(f"Analysis type: {analysis_type}")
-    regions = [False, "ARG", "LA-PLATA", "SE-BR", "SE-SAO", "AT-PEN", "WEDDELL", "SA-NAM"]
-    tracks = get_tracks()
-    tracks['date'] = pd.to_datetime(tracks['date']) 
-    tracks['year'] = tracks['date'].dt.year
-    tracks = tracks[tracks['year'] != 2021]
-    unique_years = tracks['year'].unique()
-    for year in unique_years:
-        print(f"Processing year: {year}")
-        duration_database = os.path.join(
-            "..",
-            "periods_species_statistics",
-            analysis_type,
-            "periods_database",
-            f"periods_database_{year}.csv"
-            )
-        tracks_year = tracks[tracks['year'] == year]
-        # tracks_year = filter_tracks(tracks_year, analysis_type)
+for year in years:
+    for month in range(1, 13):
+        month_str = f"{month:02d}"
+        print(f"Processing year: {year}, month: {month_str}")
+        tracks_year = get_tracks(year, month)
+        if tracks_year is None:
+            print(f"No data available for year {year}, month {month}. Skipping...")
+            continue
+
+        tracks_year = filter_tracks(tracks_year)
+
+        # Create database if it doesn't exist
+        databse_path = f"../periods_species_statistics/{ANALYSIS_TYPE}/periods_database/"
+        os.makedirs(databse_path, exist_ok=True)
+        database = os.path.join(databse_path, f"periods_database_{year}{month_str}.csv")
         try:
-            merged_data_frames = pd.read_csv(duration_database)
+            merged_data_frames = pd.read_csv(database)
+            print(f"{database} already exists.")
         except FileNotFoundError:
-            print(f"{duration_database} not found, creating it...")
-            merged_data_frames = create_database(tracks_year, regions, analysis_type)
-        print(f"Periods and tracks have been obtained for year: {year}.")
-        merged_data_frames.to_csv(duration_database, index=False)
-
-if __name__ == "__main__":
-    main()
+            print(f"{database} not found, creating it...")
+            tracks = create_database(tracks_year)
+            tracks.to_csv(database)
+            print(f"{database} created.")
