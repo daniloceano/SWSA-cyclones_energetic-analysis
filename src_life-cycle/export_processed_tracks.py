@@ -133,7 +133,12 @@ def process_phase_data_parallel(tracks, year):
         print("No CSV files found in the directory.")
         return tracks
     
-    csv_files_filtered = [f for f in csv_files if str(year) in os.path.basename(f)]
+    # Convert track IDs to strings for matching
+    track_ids = tracks['track_id'].unique()
+    track_id_strs = [str(id) for id in track_ids]
+
+    # Filter CSV files based on whether they contain any of the track IDs
+    csv_files_filtered = [f for f in csv_files if any(track_id in os.path.basename(f) for track_id in track_id_strs)]
 
     with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
         future_to_file = {executor.submit(process_csv_file, csv_file, tracks): csv_file for csv_file in csv_files_filtered}
