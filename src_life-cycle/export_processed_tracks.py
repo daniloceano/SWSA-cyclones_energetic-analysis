@@ -191,13 +191,11 @@ for year in years:
         if tracks_year is None:
             print(f"No data available for year {year}, month {month}. Skipping...")
             continue
-        # Get tracks
-        tracks_year = get_tracks(year, month)
 
         # Create database if it doesn't exist
         databse_path = f"../processed_tracks_with_periods/"
         os.makedirs(databse_path, exist_ok=True)
-        duration_database = os.path.join(databse_path, f"ff_cyc_SAt_era5_{year}.csv")
+        duration_database = os.path.join(databse_path, f"ff_cyc_SAt_era5_{year}{month}.csv")
         try:
             merged_data_frames = pd.read_csv(duration_database)
             print(f"{duration_database} already exists.")
@@ -205,3 +203,4 @@ for year in years:
             print(f"{duration_database} not found, creating it...")
             tracks = create_database(tracks_year)
             tracks.to_csv(duration_database)
+            print(f"{duration_database} created.")
