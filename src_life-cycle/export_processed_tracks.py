@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import os
 
-REGIONS = {
+REGIONS = { # lon_min, lat_min, lon_max, lat_max
         "SE-BR": [(-52, -38, -37, -23)],
         "LA-PLATA": [(-69, -38, -52, -23)],
         "ARG": [(-70, -55, -50, -39)],
@@ -56,7 +56,7 @@ def get_season(month):
 def get_region(lon, lat):
     for region_name, bounds in REGIONS.items():
         for bound in bounds:
-            lon_min, lon_max, lat_min, lat_max = bound
+            lon_min, lat_min, lon_max, lat_max = bound
             if lon_min <= lon <= lon_max and lat_min <= lat <= lat_max:
                 return region_name
     return "SAt"  # Return "SAt" if no region matches
@@ -231,7 +231,7 @@ def main():
             os.makedirs(databse_path, exist_ok=True)
             duration_database = os.path.join(databse_path, f"ff_cyc_SAt_era5_{year}{month_str}.csv")
             try:
-                merged_data_frames = pd.read_csv(duration_database)
+                pd.read_csv(duration_database)
                 print(f"{duration_database} already exists.")
             except FileNotFoundError:
                 print(f"{duration_database} not found, creating it...")
