@@ -32,6 +32,7 @@ src_life-cycle/periods_didatic.png
 src_life-cycle/periods.csv
 src_life-cycle/periods.png
 src_life-cycle/error_log.txt
+src_life-cycle/export_periods_database.log
 
 # All systems
 figures/periods/BY_RG-all
@@ -46,9 +47,3 @@ figures/periods/70W*/
 figures/periods_didactic/70W*/
 figures/periods/*48h*/
 figures/periods_didactic/*48h*/
-
-# Testing filters
-figures/tests_filter/test_*
-figures/tests_filter/tests*
-figures/tests_filter/0.99*
-

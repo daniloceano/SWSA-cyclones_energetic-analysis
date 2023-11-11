@@ -9,7 +9,7 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 
-ANALYSIS_TYPE = '70W-no-continental'
+ANALYSIS_TYPE = 'all'
 PATH_TO_TRACKS = "../processed_tracks_with_periods/"
 TRACKS_PATTERN = "ff_cyc_SAt_era5_"
 SECONDS_IN_AN_HOUR = 3600
@@ -140,6 +140,12 @@ def create_database(tracks_year):
     merged_data = pd.merge(merged_data, mean_vorticity_per_phase, on=['track_id', 'phase'], how='outer')
     merged_data = pd.merge(merged_data, mean_growth_rate_per_phase, on=['track_id', 'phase'], how='outer')
     merged_data = pd.merge(merged_data, straight_line_distance_per_phase, on=['track_id', 'phase'], how='outer')
+
+    # Extract unique track_id with Genesis Season and Genesis Region
+    genesis_attributes = tracks_year[['track_id', 'Genesis Season', 'Genesis Region']].drop_duplicates()
+
+    # Merge with merged_data
+    merged_data = pd.merge(merged_data, genesis_attributes, on='track_id', how='left')
 
     return merged_data
 

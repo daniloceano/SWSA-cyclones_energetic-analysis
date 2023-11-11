@@ -6,7 +6,7 @@
 #    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 16:09:48 by Danilo            #+#    #+#              #
-#    Updated: 2023/11/09 15:41:02 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/10 21:24:12 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,8 +27,8 @@ from concurrent.futures import ThreadPoolExecutor
 SECONDS_IN_AN_HOUR = 3600
 ALPHA = 0.05  # Significance level
 ANALYSIS_TYPE = 'all'
-METRICS = ['Total Time (h)', 'Total Distance (km)', 'Mean Speed (m/s)',
-            'Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth Rate (10^−5 s^−1 day-1)']
+METRICS = ['Total Time (h)', 'Straight Line Distance (km)', 'Mean Speed (m/s)',
+            'Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth Rate (10^−5 s^−1 day^-1)']
 PHASES = ['incipient', 'intensification', 'mature', 'decay', 'intensification 2', 'mature 2', 'decay 2', 'residual']
 REGIONS = ['Total', 'ARG', 'LA-PLATA', 'SE-BR', 'SE-SAO', 'AT-PEN', 'WEDDELL', 'SA-NAM']
 PLOT_LABELS = ['(A)', '(B)', '(C)', '(D)', '(E)', '(F)', '(G)', '(H)', '(I)']
@@ -45,10 +45,10 @@ COLOR_PHASES = {
     }
 KDE_PARAMS = {
         'Total Time (h)': [3, 1000, 95],
-        'Total Distance (km)': [2, 1000, 95],
+        'Straight Line Distance (km)': [2, 1000, 95],
         'Mean Speed (m/s)': [2, 100, 97],
         'Mean Vorticity (−1 × 10−5 s−1)': [1, 100, 100],
-        'Mean Growth Rate (10^−5 s^−1 day-1)': [0.5, 1000, 99] 
+        'Mean Growth Rate (10^−5 s^−1 day^-1)': [0.5, 1000, 99] 
     }  # [bandwidth, number of samples, quantile]
 
 def get_database():
@@ -62,25 +62,25 @@ def get_database():
     database = database.dropna(how='all')
     # Remove rows where "Mean Speed (m/s)" is NaN 
     # (so we won't compute statistics for the first time steps)
-    database = database.dropna(subset=['Mean Speed (m/s)', 'Mean Growth Rate (10^−5 s^−1 day-1)'])  
+    database = database.dropna(subset=['Mean Speed (m/s)', 'Mean Growth Rate (10^−5 s^−1 day^-1)'])  
     # Simplify units
-    database['Total Distance (km)'] = database['Total Distance (km)'] / 100    
+    database['Straight Line Distance (km)'] = database['Straight Line Distance (km)'] / 100    
     return database
 
 def metric_to_formatted_string(metric):
     mapping = {
         'Total Time (h)': 'total_time',
-        'Total Distance (km)': 'total_distance',
+        'Straight Line Distance (km)': 'total_distance',
         'Mean Speed (m/s)': 'mean_speed',
         'Mean Vorticity (−1 × 10−5 s−1)': 'mean_intensity',
-        'Mean Growth Rate (10^−5 s^−1 day-1)': 'mean_growth'
+        'Mean Growth Rate (10^−5 s^−1 day^-1)': 'mean_growth'
     }
     return mapping.get(metric, '')
 
 def compare_djf_jja(data_for_region, metric):
     # Extract DJF and JJA data
-    djf_data = data_for_region[data_for_region['Season'] == 'DJF'][metric].dropna().values
-    jja_data = data_for_region[data_for_region['Season'] =='JJA'][metric].dropna().values
+    djf_data = data_for_region[data_for_region['Genesis Season'] == 'DJF'][metric].dropna().values
+    jja_data = data_for_region[data_for_region['Genesis Season'] =='JJA'][metric].dropna().values
 
     # Check if lengths are same, if not, trim to shorter length
     min_len = min(len(djf_data), len(jja_data))
@@ -132,13 +132,13 @@ def plot_single_ridge_season(data, regions, figure_path, phase, metric):
         color_jja = blue_shades[idx]
 
         # Get data for the region
-        data_for_region = data[data['Region'] == rg]
+        data_for_region = data[data['Genesis Region'] == rg]
 
         # Compare DJF and JJA data for the region
         test_used, p_value = compare_djf_jja(data_for_region, metric)
         
         for season, col in zip(['DJF', 'JJA'], [0, 1]):                
-            season_data = data[(data['Region'] == rg) & (data['Season'] == season)]
+            season_data = data[(data['Genesis Region'] == rg) & (data['Genesis Season'] == season)]
             x = np.array(season_data[metric])
             
             kde = KernelDensity(bandwidth=KDE_PARAMS[metric][0], kernel='gaussian')
@@ -245,7 +245,7 @@ def plot_single_ridge(data, figure_path, phase, metric):
     x_d = np.linspace(xmin, xmax,KDE_PARAMS[metric][1])
 
     for idx, rg in enumerate(REGIONS):
-        region_data = data[(data['Region'] == rg)]
+        region_data = data[(data['Genesis Region'] == rg)]
         x = np.array(region_data[metric])
         
         kde = KernelDensity(bandwidth=KDE_PARAMS[metric][0], kernel='gaussian')
@@ -333,7 +333,7 @@ def plot_single_phase(ax, x, x_d, kde, phase, xmin, xmax, metric):
     ax.plot(x_d, np.exp(logprob), color="#f0f0f0", lw=1, linestyle='-')
     ax.fill_between(x_d, np.exp(logprob), alpha=1, color=COLOR_PHASES.get(phase, 'gray'), linestyle='-')
     # setting uniform x and y lims
-    if metric == 'Mean Growth Rate (10^−5 s^−1 day-1)':
+    if metric == 'Mean Growth Rate (10^−5 s^−1 day^-1)':
         ax.set_xlim(xmin, -xmin)
     else:
         ax.set_xlim(xmin, xmax)
@@ -348,7 +348,7 @@ def plot_single_phase(ax, x, x_d, kde, phase, xmin, xmax, metric):
     ax.set_yticklabels([])
     ax.yaxis.set_ticks([])  # Remove y-axis ticks
     # Determine the y-limits for the grid lines, which would be confined to the KDE
-    if metric == 'Total Distance (km)':
+    if metric == 'Straight Line Distance (km)':
         y_limit = np.exp(logprob).max() + 0.2
         ymax_fraction = 0.6
     elif metric == "Total Time (h)":
@@ -360,7 +360,7 @@ def plot_single_phase(ax, x, x_d, kde, phase, xmin, xmax, metric):
     elif metric == "Mean Vorticity (−1 × 10−5 s−1)":
         y_limit = np.exp(logprob).max() + 0.3
         ymax_fraction = 0.6
-    elif metric == "Mean Growth Rate (10^−5 s^−1 day-1)":
+    elif metric == "Mean Growth Rate (10^−5 s^−1 day^-1)":
         y_limit = np.exp(logprob).max() + 1.5
         ymax_fraction = 0.08
     ax.set_ylim(0, y_limit)
@@ -369,7 +369,7 @@ def plot_single_phase(ax, x, x_d, kde, phase, xmin, xmax, metric):
     interval = int(round(xmax, -1)) // num_lines
     interval = max(1, interval) + 1
     # Set x-ticks based on the calculated positions
-    if metric == 'Mean Growth Rate (10^−5 s^−1 day-1)':
+    if metric == 'Mean Growth Rate (10^−5 s^−1 day^-1)':
         x_ticks = list(range(int(round(xmin, -1)), int(round(xmax, -1)), int(interval * 6)))
         x_ticks = np.linspace(xmin, xmax, 5)
     else:
@@ -393,7 +393,7 @@ def plot_single_phase(ax, x, x_d, kde, phase, xmin, xmax, metric):
     spines = ["top", "right", "left", "bottom"]
     for s in spines:
         ax.spines[s].set_visible(False)
-    if metric == 'Mean Growth Rate (10^−5 s^−1 day-1)':
+    if metric == 'Mean Growth Rate (10^−5 s^−1 day^-1)':
         ax.text(1.2, 0.12, f"{mean_value:.3f} ± {std:.3f}", fontweight="bold",
                 fontsize=12, ha="right", transform=ax.transAxes)
     else:
@@ -403,7 +403,7 @@ def plot_single_phase(ax, x, x_d, kde, phase, xmin, xmax, metric):
 
 def plot_ridge_phases(data, figure_path):
     # Only select data for the region "Total"
-    data = data[data['Region'] == 'Total']
+    data = data[data['Genesis Region'] == 'Total']
 
     # Define a grid layout with one row for each phase and one column for each metric
     plt.close("all")
@@ -423,7 +423,7 @@ def plot_ridge_phases(data, figure_path):
         variable = data[metric]
         upper_percentile = np.percentile(variable,KDE_PARAMS[metric][2])
         xmax = upper_percentile
-        if metric == 'Mean Growth Rate (10^−5 s^−1 day-1)':
+        if metric == 'Mean Growth Rate (10^−5 s^−1 day^-1)':
             xmin = - xmax
         else:
             xmin = 0
@@ -470,22 +470,22 @@ def plot_ridge_plots(database, phases):
             os.makedirs(figure_path, exist_ok=True)
             print(f"\n-----------------\nPlotting phase: {phase} for {metric}")
             data = database[database['phase'] == phase]
-            regions = database['Region'].unique()
+            regions = database['Genesis Region'].unique()
             plot_single_ridge_season(data, regions, figure_path, phase, metric) 
             plot_single_ridge(data, figure_path, phase, metric)
     figure_path = os.path.join('..', 'figures', 'periods_statistics', ANALYSIS_TYPE)
     plot_ridge_phases(database, figure_path)
 
 def phases_statistics(database):
-    # Specified order for 'Region'
+    # Specified order for 'Genesis Region'
     region_order = ["Total", "ARG", "LA-PLATA", "SE-BR", "SE-SAO", "AT-PEN", "WEDDELL", "SA-NAM"]
-    database['Region'] = pd.Categorical(database['Region'], categories=region_order, ordered=True)
+    database['Genesis Region'] = pd.Categorical(database['Genesis Region'], categories=region_order, ordered=True)
     # Expanded loop to iterate over each metric
     for metric in METRICS:
-        # Group by 'Region', 'Season' and 'Phase' and compute mean and std for the metric
-        grouped = database.groupby(['Region', 'Season', 'phase'])[metric].agg(['mean', 'std']).reset_index()
+        # Group by 'Genesis Region', 'Genesis Season' and 'Phase' and compute mean and std for the metric
+        grouped = database.groupby(['Genesis Region', 'Genesis Season', 'phase'])[metric].agg(['mean', 'std']).reset_index()
         # Pivot the dataframe to have 'phase' as columns
-        pivot_df = grouped.pivot_table(index=['Region', 'Season'], columns='phase', values=['mean', 'std'], aggfunc='first')
+        pivot_df = grouped.pivot_table(index=['Genesis Region', 'Genesis Season'], columns='phase', values=['mean', 'std'], aggfunc='first')
         # Flatten MultiIndex columns and rename them
         pivot_df.columns = ['_'.join(col).strip() for col in pivot_df.columns.values]
         pivot_df.reset_index(inplace=True)
@@ -499,13 +499,13 @@ def phases_statistics(database):
             ordered_columns.append(f"std_{phase}")
         # Reorder the dataframe columns
         pivot_df = pivot_df[ordered_columns]
-        # Create a custom order for the 'Season' column
+        # Create a custom order for the 'Genesis Season' column
         season_order = ["DJF", "JJA"]
-        pivot_df['Season'] = pd.Categorical(pivot_df['Season'], categories=season_order, ordered=True)
-        # Sort by 'Season' first and then by 'Region'
-        pivot_df.sort_values(by=['Season', 'Region'], inplace=True)
-        # Identify columns that contain numerical data (excluding 'Region' and 'Season' columns)
-        numeric_columns = pivot_df.columns.difference(['Region', 'Season'])
+        pivot_df['Genesis Season'] = pd.Categorical(pivot_df['Genesis Season'], categories=season_order, ordered=True)
+        # Sort by 'Genesis Season' first and then by 'Genesis Region'
+        pivot_df.sort_values(by=['Genesis Season', 'Genesis Region'], inplace=True)
+        # Identify columns that contain numerical data (excluding 'Genesis Region' and 'Genesis Season' columns)
+        numeric_columns = pivot_df.columns.difference(['Genesis Region', 'Genesis Season'])
         # Round the numerical columns to 1 decimal place
         pivot_df[numeric_columns] = pivot_df[numeric_columns].round(1)
         # Export results
