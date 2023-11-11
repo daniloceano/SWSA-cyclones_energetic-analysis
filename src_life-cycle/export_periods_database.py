@@ -1,16 +1,15 @@
 import os
 from glob import glob
-import sys
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from export_density_all import get_tracks
 from geopy.distance import geodesic
-from export_processed_tracks import compute_distance
+import logging
 from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import ProcessPoolExecutor
+from tqdm import tqdm
 
-ANALYSIS_TYPE = 'all'
+ANALYSIS_TYPE = '70W-no-continental'
 PATH_TO_TRACKS = "../processed_tracks_with_periods/"
 TRACKS_PATTERN = "ff_cyc_SAt_era5_"
 SECONDS_IN_AN_HOUR = 3600
@@ -24,13 +23,13 @@ def get_tracks(year: int, month: int):
     try:
         tracks = pd.read_csv(file_path, index_col=0)
     except FileNotFoundError:
-        print(f"File not found: {file_path}")
+        logging.info(f"File not found: {file_path}")
         return None
     except pd.errors.ParserError:
-        print(f"Error parsing file: {file_path}")
+        logging.info(f"Error parsing file: {file_path}")
         return None
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logging.info(f"An error occurred: {e}")
         return None
     
     tracks['lon vor'] = np.where(tracks['lon vor'] > 180, tracks['lon vor'] - 360, tracks['lon vor'])
@@ -42,7 +41,6 @@ def filter_tracks(tracks):
     """
     Subset corresponding tracks for analysis type
     """
-    print("Reading periods...")
     periods_directory = os.path.join('..', 'periods-energetics', ANALYSIS_TYPE)
     csv_files = glob(os.path.join(periods_directory, '*.csv'))
     valid_ids = [int(os.path.basename(csv_file).split('.')[0].split('_')[1]) for csv_file in csv_files] + [os.path.basename(csv_file).split('.')[0].split('_')[1] for csv_file in csv_files]
@@ -138,7 +136,6 @@ def create_database(tracks_year):
 
     # Merging the dataframes
     merged_data = pd.merge(total_time_per_phase, mean_speed_per_phase, on=['track_id', 'phase'], how='outer')
-    merged_data = pd.merge(merged_data, mean_speed_per_phase, on=['track_id', 'phase'], how='outer')
     merged_data = pd.merge(merged_data, total_distance_per_phase, on=['track_id', 'phase'], how='outer')
     merged_data = pd.merge(merged_data, mean_vorticity_per_phase, on=['track_id', 'phase'], how='outer')
     merged_data = pd.merge(merged_data, mean_growth_rate_per_phase, on=['track_id', 'phase'], how='outer')
@@ -146,29 +143,38 @@ def create_database(tracks_year):
 
     return merged_data
 
+def process_year_month(year, month):
+    month_str = f"{month:02d}"
+    logging.info(f"Processing year: {year}, month: {month_str}")
+    tracks_year = get_tracks(year, month)
+    if tracks_year is None:
+        logging.info(f"No data available for year {year}, month {month}. Skipping...")
+        return
+
+    tracks_year = filter_tracks(tracks_year)
+
+    # Create database if it doesn't exist
+    database_path = f"../periods_species_statistics/{ANALYSIS_TYPE}/periods_database/"
+    os.makedirs(database_path, exist_ok=True)
+    database = os.path.join(database_path, f"periods_database_{year}{month_str}.csv")
+    try:
+        pd.read_csv(database + "ff")
+        logging.info(f"{database} already exists.")
+    except FileNotFoundError:
+        logging.info(f"{database} not found, creating it...")
+        merged_data_frames = create_database(tracks_year)
+        merged_data_frames.to_csv(database)
+        logging.info(f"{database} created.")
+
 raw_tracks = sorted(glob(os.path.join(PATH_TO_TRACKS, f"{TRACKS_PATTERN}*.csv")))
 years = np.unique([int(os.path.basename(raw_track).split(TRACKS_PATTERN)[1].split(".")[0][:4]) for raw_track in raw_tracks])
 
-for year in years:
-    for month in range(1, 13):
-        month_str = f"{month:02d}"
-        print(f"Processing year: {year}, month: {month_str}")
-        tracks_year = get_tracks(year, month)
-        if tracks_year is None:
-            print(f"No data available for year {year}, month {month}. Skipping...")
-            continue
+# Prepare list of year-month combinations
+year_month_combinations = [(year, month) for year in years for month in range(1, 13)]
 
-        tracks_year = filter_tracks(tracks_year)
+# Configure logging
+logging.basicConfig(filename='export_periods_database.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-        # Create database if it doesn't exist
-        databse_path = f"../periods_species_statistics/{ANALYSIS_TYPE}/periods_database/"
-        os.makedirs(databse_path, exist_ok=True)
-        database = os.path.join(databse_path, f"periods_database_{year}{month_str}.csv")
-        try:
-            merged_data_frames = pd.read_csv(database)
-            print(f"{database} already exists.")
-        except FileNotFoundError:
-            print(f"{database} not found, creating it...")
-            tracks = create_database(tracks_year)
-            tracks.to_csv(database)
-            print(f"{database} created.")
+# Use ThreadPoolExecutor for parallel processing
+with ThreadPoolExecutor(max_workers=4) as executor:  # Adjust the number of workers as needed
+    list(tqdm(executor.map(lambda x: process_year_month(*x), year_month_combinations), total=len(year_month_combinations)))
