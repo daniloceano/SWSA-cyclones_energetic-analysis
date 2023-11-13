@@ -26,7 +26,7 @@ from concurrent.futures import ThreadPoolExecutor
 # Constants
 SECONDS_IN_AN_HOUR = 3600
 ALPHA = 0.05  # Significance level
-ANALYSIS_TYPE = '70W-no-continental'
+ANALYSIS_TYPE = 'all'
 METRICS = ['Total Time (h)', 'Straight Line Distance (km)', 'Mean Speed (m/s)',
             'Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth Rate (10^−5 s^−1 day^-1)']
 PHASES = ['incipient', 'intensification', 'mature', 'decay', 'intensification 2', 'mature 2', 'decay 2', 'residual']
