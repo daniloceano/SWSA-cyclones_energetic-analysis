@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    periods_statistics.py                              :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
+#    By: danilocoutodsouza <danilocoutodsouza@st    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 16:09:48 by Danilo            #+#    #+#              #
-#    Updated: 2023/11/10 21:24:12 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/11 00:20:58 by danilocouto      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,7 +26,7 @@ from concurrent.futures import ThreadPoolExecutor
 # Constants
 SECONDS_IN_AN_HOUR = 3600
 ALPHA = 0.05  # Significance level
-ANALYSIS_TYPE = 'all'
+ANALYSIS_TYPE = '70W-no-continental'
 METRICS = ['Total Time (h)', 'Straight Line Distance (km)', 'Mean Speed (m/s)',
             'Mean Vorticity (−1 × 10−5 s−1)', 'Mean Growth Rate (10^−5 s^−1 day^-1)']
 PHASES = ['incipient', 'intensification', 'mature', 'decay', 'intensification 2', 'mature 2', 'decay 2', 'residual']
@@ -45,7 +45,7 @@ COLOR_PHASES = {
     }
 KDE_PARAMS = {
         'Total Time (h)': [3, 1000, 95],
-        'Straight Line Distance (km)': [2, 1000, 95],
+        'Straight Line Distance (km)': [3, 50, 90],
         'Mean Speed (m/s)': [2, 100, 97],
         'Mean Vorticity (−1 × 10−5 s−1)': [1, 100, 100],
         'Mean Growth Rate (10^−5 s^−1 day^-1)': [0.5, 1000, 99] 
@@ -62,9 +62,8 @@ def get_database():
     database = database.dropna(how='all')
     # Remove rows where "Mean Speed (m/s)" is NaN 
     # (so we won't compute statistics for the first time steps)
-    database = database.dropna(subset=['Mean Speed (m/s)', 'Mean Growth Rate (10^−5 s^−1 day^-1)'])  
-    # Simplify units
-    database['Straight Line Distance (km)'] = database['Straight Line Distance (km)'] / 100    
+    database = database.dropna(subset=['Mean Speed (m/s)', 'Mean Growth Rate (10^−5 s^−1 day^-1)'])
+    database.sort_values(by='track_id', inplace=True, kind='mergesort')
     return database
 
 def metric_to_formatted_string(metric):
@@ -245,7 +244,10 @@ def plot_single_ridge(data, figure_path, phase, metric):
     x_d = np.linspace(xmin, xmax,KDE_PARAMS[metric][1])
 
     for idx, rg in enumerate(REGIONS):
-        region_data = data[(data['Genesis Region'] == rg)]
+        if rg != 'Total':
+            region_data = data[(data['Genesis Region'] == rg)]
+        else:
+            region_data = data
         x = np.array(region_data[metric])
         
         kde = KernelDensity(bandwidth=KDE_PARAMS[metric][0], kernel='gaussian')
@@ -349,7 +351,7 @@ def plot_single_phase(ax, x, x_d, kde, phase, xmin, xmax, metric):
     ax.yaxis.set_ticks([])  # Remove y-axis ticks
     # Determine the y-limits for the grid lines, which would be confined to the KDE
     if metric == 'Straight Line Distance (km)':
-        y_limit = np.exp(logprob).max() + 0.2
+        y_limit = np.exp(logprob).max() + 0.002
         ymax_fraction = 0.6
     elif metric == "Total Time (h)":
         y_limit = np.exp(logprob).max() + 0.15
@@ -361,7 +363,7 @@ def plot_single_phase(ax, x, x_d, kde, phase, xmin, xmax, metric):
         y_limit = np.exp(logprob).max() + 0.3
         ymax_fraction = 0.6
     elif metric == "Mean Growth Rate (10^−5 s^−1 day^-1)":
-        y_limit = np.exp(logprob).max() + 1.5
+        y_limit = np.exp(logprob).max() + 1
         ymax_fraction = 0.08
     ax.set_ylim(0, y_limit)
     # Calculate grid line positions
@@ -372,6 +374,9 @@ def plot_single_phase(ax, x, x_d, kde, phase, xmin, xmax, metric):
     if metric == 'Mean Growth Rate (10^−5 s^−1 day^-1)':
         x_ticks = list(range(int(round(xmin, -1)), int(round(xmax, -1)), int(interval * 6)))
         x_ticks = np.linspace(xmin, xmax, 5)
+    elif metric == 'Straight Line Distance (km)':
+        x_ticks = list(range(int(round(xmin, -1)), int(round(xmax, -1)), int(interval * 6)))
+        x_ticks = np.linspace(xmin, xmax, 4)
     else:
         x_ticks = list(range(0, int(round(xmax, -1)), interval))
     ax.set_xticks(x_ticks)
@@ -402,8 +407,6 @@ def plot_single_phase(ax, x, x_d, kde, phase, xmin, xmax, metric):
     return ax
 
 def plot_ridge_phases(data, figure_path):
-    # Only select data for the region "Total"
-    data = data[data['Genesis Region'] == 'Total']
 
     # Define a grid layout with one row for each phase and one column for each metric
     plt.close("all")
@@ -463,22 +466,22 @@ def plot_ridge_phases(data, figure_path):
     print(f"{fname} created.")
 
 def plot_ridge_plots(database, phases):
-    for metric in METRICS:
-        for phase in PHASES:   
-            metric_formatted = metric_to_formatted_string(metric)
-            figure_path = os.path.join('..', 'figures', 'periods_statistics', ANALYSIS_TYPE, metric_formatted)
-            os.makedirs(figure_path, exist_ok=True)
-            print(f"\n-----------------\nPlotting phase: {phase} for {metric}")
-            data = database[database['phase'] == phase]
-            regions = database['Genesis Region'].unique()
-            plot_single_ridge_season(data, regions, figure_path, phase, metric) 
-            plot_single_ridge(data, figure_path, phase, metric)
+    # for metric in METRICS:
+    #     for phase in PHASES:   
+    #         metric_formatted = metric_to_formatted_string(metric)
+    #         figure_path = os.path.join('..', 'figures', 'periods_statistics', ANALYSIS_TYPE, metric_formatted)
+    #         os.makedirs(figure_path, exist_ok=True)
+    #         print(f"\n-----------------\nPlotting phase: {phase} for {metric}")
+    #         data = database[database['phase'] == phase]
+    #         regions = database['Genesis Region'].unique()
+    #         plot_single_ridge_season(data, regions, figure_path, phase, metric) 
+    #         plot_single_ridge(data, figure_path, phase, metric)
     figure_path = os.path.join('..', 'figures', 'periods_statistics', ANALYSIS_TYPE)
     plot_ridge_phases(database, figure_path)
 
 def phases_statistics(database):
     # Specified order for 'Genesis Region'
-    region_order = ["Total", "ARG", "LA-PLATA", "SE-BR", "SE-SAO", "AT-PEN", "WEDDELL", "SA-NAM"]
+    region_order = ["SAt", "ARG", "LA-PLATA", "SE-BR", "SE-SAO", "AT-PEN", "WEDDELL", "SA-NAM"]
     database['Genesis Region'] = pd.Categorical(database['Genesis Region'], categories=region_order, ordered=True)
     # Expanded loop to iterate over each metric
     for metric in METRICS:
@@ -493,7 +496,7 @@ def phases_statistics(database):
         phase_order = ["Total", "incipient", "intensification", "mature", "decay", 
                     "intensification 2", "mature 2", "decay 2", "residual"]
         # Create an ordered list of columns based on the desired order with mean followed by std
-        ordered_columns = ["Region", "Season"]
+        ordered_columns = ['Genesis Region', 'Genesis Season']
         for phase in phase_order:
             ordered_columns.append(f"mean_{phase}")
             ordered_columns.append(f"std_{phase}")
@@ -521,7 +524,7 @@ def main():
     # Make plots
     plot_ridge_plots(database, phases)
     # Export statistics
-    phases_statistics(database)
+    # phases_statistics(database)
 
 if __name__ == '__main__':
     main()
