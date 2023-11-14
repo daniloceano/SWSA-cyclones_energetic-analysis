@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    histograms.py                                      :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: danilocoutodsouza <danilocoutodsouza@st    +#+  +:+       +#+         #
+#    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 19:37:18 by daniloceano       #+#    #+#              #
-#    Updated: 2023/11/14 09:32:15 by danilocouto      ###   ########.fr        #
+#    Updated: 2023/11/14 14:15:30 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -83,7 +83,7 @@ QUANTILE_VALUES = {
 
 def get_database():
     """Reads and aggregates data from all database files."""
-    files = f"../periods_species_statistics/{ANALYSIS_TYPE}/periods_database/periods_database_*.csv"
+    files = f"../periods_species_statistics/{ANALYSIS_TYPE}/periods_database_mature/periods_database_*.csv"
     data_frames = []
     for file in glob.glob(files):
         data_frames.append(pd.read_csv(file, index_col=0))
@@ -522,13 +522,13 @@ def create_statistics_table(database):
 def main():
     database = get_database()
     
-    # jja_data = database[database['Genesis Season'] == 'JJA']
-    # djf_data = database[database['Genesis Season'] == 'DJF']
-    # plot_histograms_with_kde(jja_data, djf_data)
+    jja_data = database[database['Genesis Season'] == 'JJA']
+    djf_data = database[database['Genesis Season'] == 'DJF']
+    plot_histograms_with_kde(jja_data, djf_data)
     
-    # compare_phases_by_region(database)
+    compare_phases_by_region(database)
 
-    # compare_phases_for_total_region(database)
+    compare_phases_for_total_region(database)
 
     create_statistics_table(database)
 
