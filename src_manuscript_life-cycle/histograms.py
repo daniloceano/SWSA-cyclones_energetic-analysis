@@ -6,7 +6,7 @@
 #    By: danilocoutodsouza <danilocoutodsouza@st    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 19:37:18 by daniloceano       #+#    #+#              #
-#    Updated: 2023/11/13 21:22:36 by danilocouto      ###   ########.fr        #
+#    Updated: 2023/11/14 09:32:15 by danilocouto      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -480,22 +480,35 @@ def compare_seasonal_phases(data):
     return total_table, djf_table, jja_table
 
 def format_summary_table(grouped_stats, season, comparison_p_values):
-    # Create the metrics table with phases and their corresponding metrics
     metrics_table = pd.DataFrame({'Phase': PHASES[:-1]})
+
     for metric in METRICS:
-        if metric == 'Mean Growth Rate (10^−5 s^−1 day^-1)':
-            metrics_table[metric] = [
-                f"{grouped_stats[phase].loc[season, (metric, 'mean')]:.3f} ± {grouped_stats[phase].loc[season, (metric, 'std')]:.3f}"
-                + ('*' if season != 'Total' and comparison_p_values.get((phase, metric)) < ALPHA else '')
-                for phase in PHASES[:-1]
-            ]
-        else:
-            metrics_table[metric] = [
-                f"{grouped_stats[phase].loc[season, (metric, 'mean')]:.2f} ± {grouped_stats[phase].loc[season, (metric, 'std')]:.2f}"
-                + ('*' if season != 'Total' and comparison_p_values.get((phase, metric)) < ALPHA else '')
-                for phase in PHASES[:-1]
-            ]
+        metric_data = []
+        for phase in PHASES[:-1]:
+            if season is False:
+                # Calculate the mean and standard deviation across all seasons
+                mean_value = grouped_stats[phase][metric]['mean'].mean()
+                std_value = grouped_stats[phase][metric]['std'].mean()
+            else:
+                mean_value = grouped_stats[phase].loc[season, (metric, 'mean')]
+                std_value = grouped_stats[phase].loc[season, (metric, 'std')]
+
+            # Formatting the value
+            if metric == 'Mean Growth Rate (10^−5 s^−1 day^-1)':
+                formatted_value = f"{mean_value:.3f} ± {std_value:.3f}"
+            else:
+                formatted_value = f"{mean_value:.2f} ± {std_value:.2f}"
+            
+            # Add '*' for statistical significance when season is not False
+            if season is not False and comparison_p_values.get((phase, metric)) < ALPHA:
+                formatted_value += '*'
+
+            metric_data.append(formatted_value)
+
+        metrics_table[metric] = metric_data
+
     return metrics_table
+
 
 def create_statistics_table(database):
     total_table, djf_table, jja_table = compare_seasonal_phases(database)
@@ -515,9 +528,9 @@ def main():
     
     # compare_phases_by_region(database)
 
-    compare_phases_for_total_region(database)
+    # compare_phases_for_total_region(database)
 
-    # create_statistics_table(database)
+    create_statistics_table(database)
 
 if __name__ == '__main__':
     main()
