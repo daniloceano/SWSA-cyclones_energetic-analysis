@@ -9,7 +9,7 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 
-ANALYSIS_TYPE = 'all'
+ANALYSIS_TYPE = '70W-no-continental'
 PATH_TO_TRACKS = "../processed_tracks_with_periods/"
 TRACKS_PATTERN = "ff_cyc_SAt_era5_"
 SECONDS_IN_AN_HOUR = 3600
@@ -46,6 +46,16 @@ def filter_tracks(tracks):
     valid_ids = [int(os.path.basename(csv_file).split('.')[0].split('_')[1]) for csv_file in csv_files] + [os.path.basename(csv_file).split('.')[0].split('_')[1] for csv_file in csv_files]
     tracks = tracks[tracks['track_id'].isin(valid_ids)]
     return tracks
+
+def filter_tracks_with_matured_periods(tracks):
+    """
+    Remove all tracks that did not reach the 'mature' phase
+    """
+    mature_track_ids = tracks[tracks['phase'] == 'mature']['track_id'].unique()
+    filtered_tracks_year = tracks[tracks['track_id'].isin(mature_track_ids)]
+    return filtered_tracks_year
+
+
 
 def calculate_distances_per_phase(tracks):
     # Group by track_id and phase, then extract first and last positions
@@ -159,8 +169,10 @@ def process_year_month(year, month):
 
     tracks_year = filter_tracks(tracks_year)
 
+    tracks_year = filter_tracks_with_matured_periods(tracks_year)
+
     # Create database if it doesn't exist
-    database_path = f"../periods_species_statistics/{ANALYSIS_TYPE}/periods_database/"
+    database_path = f"../periods_species_statistics/{ANALYSIS_TYPE}/periods_database_mature/"
     os.makedirs(database_path, exist_ok=True)
     database = os.path.join(database_path, f"periods_database_{year}{month_str}.csv")
     try:
