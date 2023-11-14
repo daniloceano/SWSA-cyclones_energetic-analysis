@@ -6,7 +6,7 @@
 #    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 19:37:18 by daniloceano       #+#    #+#              #
-#    Updated: 2023/11/14 14:15:30 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/14 17:42:07 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,6 +15,7 @@ import glob
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.ticker import LinearLocator
 from scipy import stats
 from scipy.stats import levene, ttest_ind, mannwhitneyu, anderson, ks_2samp
 
@@ -75,11 +76,17 @@ METRICS_LATEX_MAPPING = {
 
 QUANTILE_VALUES = {
         'Straight Line Distance (km)': 0.9,
-        'Total Time (h)': 0.95,
+        'Total Time (h)': 0.97,
         'Mean Speed (m/s)': 0.999,
         'Mean Growth Rate (10^−5 s^−1 day^-1)': 0.99,
         'Mean Vorticity (−1 × 10−5 s−1)': 0.99
     }
+
+X_TICKS = {'Total Time (h)' : [0, 30, 60, 90, 120],
+        'Straight Line Distance (km)': [0, 15, 30, 45, 60],
+        'Mean Speed (m/s)' : [0, 12, 25, 37, 50],
+        'Mean Vorticity (−1 × 10−5 s−1)' : [0, 2, 4, 6, 8, 10],
+        'Mean Growth Rate (10^−5 s^−1 day^-1)': [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5]}
 
 def get_database():
     """Reads and aggregates data from all database files."""
@@ -415,10 +422,13 @@ def compare_phases_for_total_region(data):
         ax.yaxis.labelpad = 10
         ax.set_xlabel(METRICS_LATEX_MAPPING[metric], fontsize=16)
         ax.yaxis.set_tick_params(labelsize=14)
-        ax.xaxis.set_tick_params(labelsize=14)
+        ax.xaxis.set_tick_params(labelsize=14)  
+        ax.set_xticks(X_TICKS[metric])      
 
-        if metric == 'Mean Growth Rate (10^−5 s^−1 day^-1)':
-            ax.axvline(0, color='gray', linestyle='-', linewidth=2, alpha=0.7)
+        ax.grid(color='gray', linestyle='-', linewidth=0.25, alpha=0.7, zorder = 1)
+
+        ax.axvline(data[data['phase'] == "Total"][metric].mean(), linestyle='-',
+                   linewidth=1, alpha=0.4, zorder = 2, color=COLOR_PHASES['Total'])
 
         # Place the legend
         if i == num_metrics - 1:
@@ -522,15 +532,15 @@ def create_statistics_table(database):
 def main():
     database = get_database()
     
-    jja_data = database[database['Genesis Season'] == 'JJA']
-    djf_data = database[database['Genesis Season'] == 'DJF']
-    plot_histograms_with_kde(jja_data, djf_data)
+    # jja_data = database[database['Genesis Season'] == 'JJA']
+    # djf_data = database[database['Genesis Season'] == 'DJF']
+    # plot_histograms_with_kde(jja_data, djf_data)
     
-    compare_phases_by_region(database)
+    # compare_phases_by_region(database)
 
     compare_phases_for_total_region(database)
 
-    create_statistics_table(database)
+    # create_statistics_table(database)
 
 if __name__ == '__main__':
     main()
