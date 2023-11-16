@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    histograms.py                                      :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: daniloceano <daniloceano@student.42.fr>    +#+  +:+       +#+         #
+#    By: danilocoutodsouza <danilocoutodsouza@st    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/10/30 19:37:18 by daniloceano       #+#    #+#              #
-#    Updated: 2023/11/14 17:42:07 by daniloceano      ###   ########.fr        #
+#    Updated: 2023/11/16 08:57:19 by danilocouto      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -82,9 +82,9 @@ QUANTILE_VALUES = {
         'Mean Vorticity (−1 × 10−5 s−1)': 0.99
     }
 
-X_TICKS = {'Total Time (h)' : [0, 30, 60, 90, 120],
-        'Straight Line Distance (km)': [0, 15, 30, 45, 60],
-        'Mean Speed (m/s)' : [0, 12, 25, 37, 50],
+X_TICKS = {'Total Time (h)' : np.arange(0, 121, 15),
+        'Straight Line Distance (km)': np.arange(0, 61, 6),
+        'Mean Speed (m/s)' : np.arange(0, 51, 5),
         'Mean Vorticity (−1 × 10−5 s−1)' : [0, 2, 4, 6, 8, 10],
         'Mean Growth Rate (10^−5 s^−1 day^-1)': [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5]}
 
@@ -369,6 +369,9 @@ def compare_phases_for_total_region(data):
     axes = axes.flatten()
 
     for i, metric in enumerate(METRICS):
+        print(f"{metric} min: {data[metric].min()}")
+        print(f"{metric} max: {data[metric].max()}")
+
         ax = axes[i]
 
         # Variables to help position the text neatly
@@ -426,9 +429,6 @@ def compare_phases_for_total_region(data):
         ax.set_xticks(X_TICKS[metric])      
 
         ax.grid(color='gray', linestyle='-', linewidth=0.25, alpha=0.7, zorder = 1)
-
-        ax.axvline(data[data['phase'] == "Total"][metric].mean(), linestyle='-',
-                   linewidth=1, alpha=0.4, zorder = 2, color=COLOR_PHASES['Total'])
 
         # Place the legend
         if i == num_metrics - 1:
