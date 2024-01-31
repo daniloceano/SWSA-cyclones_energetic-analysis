@@ -6,7 +6,7 @@
 #    By: daniloceano <danilo.oceano@gmail.com>      +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/01/31 08:54:11 by daniloceano       #+#    #+#              #
-#    Updated: 2024/01/31 18:35:43 by daniloceano      ###   ########.fr        #
+#    Updated: 2024/01/31 18:46:16 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -161,7 +161,8 @@ def draw_box_map(ax, u, v, zeta, hgt, lat, lon, norm, levels):
     lon_sub = lon[::n]
 
     cmap = cmo.cm.balance
-    cf1 = ax.contourf(lon, lat, zeta, cmap=custom_cmap, norm=norm, levels=levels, transform=CRS) 
+    cf1 = ax.contourf(lon, lat, zeta, cmap=custom_cmap, norm=norm, levels=levels, transform=CRS,
+                      extend='both') 
     cs = ax.contour(lon, lat, hgt, levels=np.linspace(hgt.min(), hgt.max(), 11),
                     colors='#383838', linestyles='dashed', linewidths=1.5, transform=CRS)
     ax.clabel(cs, cs.levels, inline=True, fontsize=10, fmt='%1.0f')
@@ -304,7 +305,7 @@ def main():
         cf1 = draw_box_map(ax, u_850_time, v_850_time, zeta_850_time, hgt_850_time, lat, lon, norm, levels)
         
         # Manually create an axis for the colorbar
-        cb_ax = fig.add_axes([ax.get_position().x0, ax.get_position().y0 - 0.07, ax.get_position().width, 0.02])
+        cb_ax = fig.add_axes([ax.get_position().x0, ax.get_position().y0 - 0.06, ax.get_position().width, 0.02])
         cbar = plt.colorbar(cf1, cax=cb_ax, orientation='horizontal', extend='both')
         # cbar.set_label('Relative Vorticity [10^-4 s^-1]')
         cbar.ax.tick_params(labelsize=10)
