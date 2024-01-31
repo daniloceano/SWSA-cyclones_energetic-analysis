@@ -1,3 +1,15 @@
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    residual_study_case.py                             :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: daniloceano <danilo.oceano@gmail.com>      +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2024/01/31 08:54:11 by daniloceano       #+#    #+#              #
+#    Updated: 2024/01/31 09:23:07 by daniloceano      ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
 import cdsapi
 import math
 import xarray as xr
@@ -7,14 +19,17 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import matplotlib.colors as mcolors
+import cmocean.cm as cmo
 import numpy as np
 from glob import glob
-
-
+import matplotlib.colors as colors
+from metpy.units import units
+from metpy.calc import vorticity
+from metpy.constants import g
 
 TRACKS_DIRECTORY = "../processed_tracks_with_periods/"
 STUDY_CASE = 19920876
-
+CRS = ccrs.PlateCarree() 
 
 def get_cdsapi_data(track, infile) -> xr.Dataset:
 
@@ -75,6 +90,37 @@ def get_cdsapi_data(track, infile) -> xr.Dataset:
 
     return ds
 
+def map_decorators(ax):
+    ax.coastlines()
+    gl = ax.gridlines(draw_labels=True,zorder=2,linestyle='dashed',alpha=0.7,
+                 linewidth=0.5, color='#383838')
+    gl.xlabel_style = {'size': 14, 'color': '#383838'}
+    gl.ylabel_style = {'size': 14, 'color': '#383838'}
+    gl.top_labels = None
+    gl.right_labels = None
+
+def plot_zeta(ax, zeta, lat, lon, hgt):
+    cmap = cmo.balance
+    # plot contours
+    cf1 = ax.contourf(lon, lat, zeta, cmap=cmap,norm=norm,levels=51,
+                      transform=CRS) 
+    plt.colorbar(cf1, orientation='vertical', shrink=0.5)
+    cs = ax.contour(lon, lat, hgt, levels=11, colors='#344e41', 
+                    linestyles='dashed',linewidths=1.3,
+                    transform=CRS)
+    ax.clabel(cs, cs.levels, inline=True, fontsize=10)
+
+def draw_box_map(u, v, zeta, hgt, lat, lon):
+    plt.close('all')
+    fig = plt.figure(figsize=(10, 8))
+    ax = plt.axes(projection=CRS)
+    fig.add_axes(ax)
+    
+    plot_zeta(ax, zeta, lat, lon, hgt)
+    ax.streamplot(lon.values, lat.values, u.values, v.values, color='#2A1D21',
+              transform=CRS)
+    map_decorators(ax)
+
 track_file = glob(f"{TRACKS_DIRECTORY}/*{str(STUDY_CASE)[:4]}*.csv")
 tracks = pd.concat([pd.read_csv(f) for f in track_file])
 track = tracks[tracks['track_id'] == STUDY_CASE]
@@ -86,4 +132,39 @@ if os.path.exists(infile):
 else:
     ds = get_cdsapi_data(track, infile)
 
-print(ds)
+# Slice the dataset to match the track
+ds = ds.sel(time=slice(track['date'].min(), track['date'].max()))
+
+# Get lat and lon arrays
+lat, lon = ds['latitude'], ds['longitude']
+
+# Slice for 850 hPa
+u_850, v_850 = ds['u'].sel(level=850), ds['v'].sel(level=850)
+zeta_850 = vorticity(u_850, v_850).metpy.dequantify() 
+
+# Set colorbar limits
+norm = colors.TwoSlopeNorm(vmin=-zeta_850.max(), vcenter=0,vmax=zeta_850.max())
+
+for time in ds.time.values[:4]:
+
+    # Get the current time and format it
+    time  = pd.to_datetime(time)
+
+    # Get the data for the current time
+    iu_850, iv_850 = u_850.sel(time=time), v_850.sel(time=time)
+    izeta_850 = zeta_850.sel(time=time)
+    ihgt_850 = ds['z'].sel(level=850).sel(time=time) / g
+
+    # Plot the data
+    draw_box_map(iu_850, iv_850, izeta_850, ihgt_850, lat, lon)
+
+    # Add the system position from the track 
+    itrack = track[track['date'] == str(time)]
+    ax = plt.gca()
+    ax.scatter(itrack['lon vor'], itrack['lat vor'], c='r', marker='o', s=50, zorder=3)
+
+    # Title: Current time
+    timestr = time.strftime("%Y-%m-%d %H:%M")
+    plt.title(timestr)
+
+    print()
