@@ -107,12 +107,11 @@ def plot_specific_peaks_valleys(df, ax, *kwargs):
                    s=marker_size, linewidth=2, zorder=zorder)
 
 # Sample data
-source_dir = '../LEC_results-q0.99/'
-RG = 3
-cyclone_id = '20080518'
-track_file = os.path.join(source_dir, f'RG{RG}-0.99-{cyclone_id}_ERA5_track-15x15/RG{RG}-0.99-{cyclone_id}_ERA5_track-15x15_track')
+track_file = './LEC_20080518_track/20080518_track_trackfile'
 track = pd.read_csv(track_file, parse_dates=[0], delimiter=';', index_col=[0])
-zeta_df = pd.DataFrame(track["min_zeta_850"].rename('zeta'))
+zeta_df = pd.DataFrame(track["min_max_zeta_850"].rename('zeta'))
+zeta_list = zeta_df['zeta'].tolist()
+times = zeta_df.index.tolist()
 
 # Directory for saving figures
 fig_dir = "../figures/manuscript_life-cycle/"
@@ -120,16 +119,16 @@ os.makedirs(fig_dir, exist_ok=True)
 
 # Determine periods
 options = {
-        "vorticity_column": 'min_zeta_850',
         "plot": False,
         "plot_steps": False,
         "export_dict": False,
         "process_vorticity_args": {
-            "use_filter": len(zeta_df) // 10 | 1,
-            "use_smoothing_twice": len(zeta_df) // 4 | 1}
+            "use_filter": "auto",
+            "use_smoothing_twice": "auto"}
     }
 
-df = determine_periods(track_file, **options)
+df = determine_periods(zeta_list, x=zeta_df.index.tolist(), **options)
+
 vorticity = process_vorticity(zeta_df.copy(), **options['process_vorticity_args'])
 
 fig = plt.figure(figsize=(6.5*3, 5*2))
