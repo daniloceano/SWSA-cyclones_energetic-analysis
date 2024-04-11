@@ -1,8 +1,7 @@
 import pandas as pd
 from glob import glob
 
-input = "RG1-19810690"
-desired_id = 19810690
+desired_id = 20001176
 year = str(desired_id)[:4]
 
 results_directories = ['../raw_data/TRACK_BY_RG-20230606T185429Z-001/24h_1000km_add_RG1_csv/',
@@ -44,6 +43,7 @@ for results_dir in results_directories:
             track = desired_cyclone[desired_cyclone['track_id']==desired_id][['date','vor42']]
             track = track.rename(columns={"date":"time"})
             track['vor42'] = - track['vor42'] * 1e-5
-            track = track.rename(columns={'vor42':'min_zeta_850'})
+            track = track.rename(columns={'vor42':'min_max_zeta_850'})
             tmp_file = (f"tmp_{RG}-{desired_id}.csv")
             track.to_csv(tmp_file, index=False, sep=';')
+            print(f"Track {desired_id} saved to {tmp_file}.")
