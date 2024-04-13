@@ -15,7 +15,6 @@ from matplotlib.ticker import MaxNLocator
 import matplotlib.gridspec as gridspec
 
 # Configuration variables
-TRACKS_DIRECTORY = "../processed_tracks_with_periods/"
 OUTPUT_DIRECTORY = '../figures/manuscript_life-cycle/changing_thresholds/'
 LABELS = ["(A)", "(B)", "(C)", "(D)"]
 
@@ -72,7 +71,7 @@ def plot_all_periods(phases_dict, ax, vorticity, label):
 
 # Set initial thresholds and vorticity processing arguments
 initial_periods_args = {
-    'threshold_intensification_length': 0.075,
+    'threshold_intensification_length': 0.125,
     'threshold_intensification_gap': 0.075,
     'threshold_mature_distance': 0.125,
     'threshold_mature_length': 0.03,
@@ -81,17 +80,13 @@ initial_periods_args = {
     'threshold_incipient_length': 0.4
 }
 process_vorticity_args = {
-    "use_filter": 'auto',
-    "replace_endpoints_with_lowpass": 24,
+    "use_filter": False,
     "use_smoothing": 'auto',
     "use_smoothing_twice": 'auto', 
-    "savgol_polynomial": 3,
-    "cutoff_low": 168,
-    "cutoff_high": 48.0
 }
 
 system_ids = [20101172, 20001176, 19840092, 19970580, 20170528]
-adjustments = [-1, -0.5, -0.25, 0, 0.25, 0.5, 1]
+adjustments = [1, 0.25, 0.5, 0.75, 1.25, 1.5]
 
 os.makedirs(OUTPUT_DIRECTORY, exist_ok=True)
 
@@ -100,48 +95,30 @@ for param, base_value in initial_periods_args.items():
     fig, axes = plt.subplots(len(system_ids), len(adjustments), figsize=(20, 10))
     fig.suptitle(f"Variations in {param}")
 
-    i = 0
     for col_index, adj in enumerate(adjustments):
-        adjusted_value = base_value * (1 + adj)
+        adjusted_value = base_value * adj
         adjusted_periods_args = initial_periods_args.copy()
         adjusted_periods_args[param] = adjusted_value
 
         for row_index, system_id in enumerate(system_ids):
-            tracks = glob(TRACKS_DIRECTORY + "*.csv")
+            track_file = f"track_test_thresholds_{system_id}.csv"
+            track = pd.read_csv(track_file, index_col=0)
+            track.index = pd.to_datetime(track.index)
 
-            print(f"Plotting {param} = {adjusted_value} for {system_id}")
-            
-            for track_file in tracks:
-                tracks_df = pd.read_csv(track_file, index_col=0)
-                desired_cyclone = tracks_df[tracks_df['track_id'] == system_id]
+            df_periods = determine_periods(track['zeta'].tolist(), x=track.index, 
+                                        plot=False, plot_steps=False, export_dict=False, 
+                                        process_vorticity_args=process_vorticity_args, 
+                                        periods_args=adjusted_periods_args)
+            vorticity = process_vorticity(track)
+            periods_dict = periods_to_dict(df_periods)
+            ax = axes[row_index, col_index]
 
-                if desired_cyclone.empty:
-                    continue  # Skip if no track files for this system_id
+            if row_index == 0:
+                label = f"{adj}"
+            else:
+                label = ""
 
-                desired_cyclone = tracks_df[tracks_df['track_id'] == int(system_id)]
-
-                desired_cyclone.loc[:, 'date'] = pd.to_datetime(desired_cyclone['date'])
-                desired_cyclone.loc[:, 'vor42'] = desired_cyclone['vor42'] * -1e-5
-
-                df_periods = determine_periods(desired_cyclone['vor42'].tolist(), x=desired_cyclone['date'].tolist(), 
-                                            plot=False, plot_steps=False, export_dict=False, 
-                                            process_vorticity_args=process_vorticity_args, 
-                                            periods_args=adjusted_periods_args)
-                periods_dict = periods_to_dict(df_periods)
-                ax = axes[row_index, col_index]
-
-                zeta_df = desired_cyclone[['date', 'vor42']].rename(columns={'vor42': 'zeta'})
-                zeta_df.set_index('date', inplace=True)
-                zeta_df.index.name = 'time'
-                vorticity = process_vorticity(zeta_df)
-
-                if row_index_index == 0:
-                    label = f"{adj}"
-                else:
-                    label = ""
-
-                plot_all_periods(periods_dict, ax, vorticity, label)
-                i += 1
+            plot_all_periods(periods_dict, ax, vorticity, label)
 
     # Finalizing the figure
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
