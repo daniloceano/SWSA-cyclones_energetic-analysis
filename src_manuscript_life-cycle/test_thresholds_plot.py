@@ -52,7 +52,7 @@ def plot_all_periods(phases_dict, ax, vorticity, label):
     # if i == 34:
     #     ax.legend(loc='upper right', bbox_to_anchor=(4.1, 0.25), fontsize=14)
 
-    ax.text(0.85, 0.84, label, fontsize=16, fontweight='bold', ha='left', va='bottom', transform=ax.transAxes)
+    ax.text(0, 1.02, label, fontsize=16, fontweight='bold', ha='left', va='bottom', transform=ax.transAxes)
 
     ax.ticklabel_format(axis='y', style='sci', scilimits=(-3, 3))
     date_format = mdates.DateFormatter("%Y-%m-%d")
@@ -86,7 +86,7 @@ process_vorticity_args = {
 }
 
 system_ids = [20101172, 20001176, 19840092, 19970580, 20170528]
-adjustments = [1, 0.25, 0.5, 0.75, 1.25, 1.5]
+adjustments = [1, 0.25, 0.5, 0.75, 1.25, 1.5, 1.75]
 
 os.makedirs(OUTPUT_DIRECTORY, exist_ok=True)
 
