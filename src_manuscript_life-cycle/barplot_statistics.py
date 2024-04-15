@@ -72,12 +72,14 @@ def plot_barplot(df, label, ax, suffix):
     for index, value in enumerate(df['Total Count']):
         percentage = df.loc[df.index[index], 'Percentage']
         if orient == 'h':
-            ax.text(value + 100, index, f"{value} ({percentage:.2f}%)", va='center', color='black')
+            ax.text(value + 100, index, f"{value} ({percentage:.2f}%)", va='center', color='black',
+                    fontsize=14)
         else:
             ax.text(index, value + 100, f"{value} ({percentage:.2f}%)", ha='center', color='black')
 
     ax.set_xlabel(None)
     ax.set_ylabel(None)
+    ax.tick_params(axis='both', labelsize=14)
 
     # Add text annotations for total count and percentage
     total_count = df['Total Count'].sum()
