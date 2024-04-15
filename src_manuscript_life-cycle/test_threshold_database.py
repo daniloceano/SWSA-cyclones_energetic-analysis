@@ -5,7 +5,7 @@ import pandas as pd
 # Configuration variables
 TRACKS_DIRECTORY = "../processed_tracks_with_periods/"
 
-system_ids = [20101172, 20001176, 19840092, 19970580, 20170528]
+system_ids = [20101172, 20190644, 20001176, 19840092, 19970580, 20170528]
 
 for system_id in system_ids:
     tracks = glob(TRACKS_DIRECTORY + "*.csv")

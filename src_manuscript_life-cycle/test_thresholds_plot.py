@@ -16,9 +16,10 @@ import matplotlib.gridspec as gridspec
 
 # Configuration variables
 OUTPUT_DIRECTORY = '../figures/manuscript_life-cycle/changing_thresholds/'
-LABELS = ["(A)", "(B)", "(C)", "(D)"]
+LABELS = ["(A)", "(B)", "(C)", "(D)", "(E)", "(F)"]
+SUBLABELS = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x']
 
-def plot_all_periods(phases_dict, ax, vorticity, label):
+def plot_all_periods(phases_dict, ax, vorticity, label, sublabel):
     colors_phases = {'incipient': '#65a1e6',
                       'intensification': '#f7b538',
                         'mature': '#d62828',
@@ -54,6 +55,8 @@ def plot_all_periods(phases_dict, ax, vorticity, label):
 
     ax.text(0, 1.02, label, fontsize=16, fontweight='bold', ha='left', va='bottom', transform=ax.transAxes)
 
+    ax.text(0.99, 0.08, sublabel, fontsize=14, ha='right', va='center', transform=ax.transAxes)
+
     ax.ticklabel_format(axis='y', style='sci', scilimits=(-3, 3))
     date_format = mdates.DateFormatter("%Y-%m-%d")
     ax.xaxis.set_major_formatter(date_format)
@@ -71,21 +74,22 @@ def plot_all_periods(phases_dict, ax, vorticity, label):
 
 # Set initial thresholds and vorticity processing arguments
 initial_periods_args = {
-    'threshold_intensification_length': 0.125,
-    'threshold_intensification_gap': 0.075,
-    'threshold_mature_distance': 0.125,
-    'threshold_mature_length': 0.03,
-    'threshold_decay_length': 0.075,
-    'threshold_decay_gap': 0.075,
-    'threshold_incipient_length': 0.4
-}
+        'threshold_intensification_length': 0.075,
+        'threshold_intensification_gap': 0.075,
+        'threshold_mature_distance': 0.125,
+        'threshold_mature_length': 0.03,
+        'threshold_decay_length': 0.075,
+        'threshold_decay_gap': 0.075,
+        'threshold_incipient_length': 0.4
+    }
+    
 process_vorticity_args = {
     "use_filter": False,
     "use_smoothing": 'auto',
     "use_smoothing_twice": 'auto', 
 }
 
-system_ids = [20101172, 20001176, 19840092, 19970580, 20170528]
+system_ids = [20101172, 20190644, 20001176, 19840092, 19970580, 20170528]
 adjustments = [1, 0.25, 0.5, 0.75, 1.25, 1.5, 1.75]
 
 os.makedirs(OUTPUT_DIRECTORY, exist_ok=True)
@@ -93,7 +97,6 @@ os.makedirs(OUTPUT_DIRECTORY, exist_ok=True)
 # Iterate through each parameter in initial_periods_args
 for param, base_value in initial_periods_args.items():
     fig, axes = plt.subplots(len(system_ids), len(adjustments), figsize=(20, 10))
-    fig.suptitle(f"Variations in {param}")
 
     for col_index, adj in enumerate(adjustments):
         adjusted_value = base_value * adj
@@ -118,7 +121,9 @@ for param, base_value in initial_periods_args.items():
             else:
                 label = ""
 
-            plot_all_periods(periods_dict, ax, vorticity, label)
+            sublabel = f"{LABELS[row_index]}{SUBLABELS[col_index]}"
+
+            plot_all_periods(periods_dict, ax, vorticity, label, sublabel)
 
     # Finalizing the figure
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
