@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    export_density_all.py                              :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: Danilo <danilo.oceano@gmail.com>           +#+  +:+       +#+         #
+#    By: daniloceano <danilo.oceano@gmail.com>      +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/09 12:48:17 by Danilo            #+#    #+#              #
-#    Updated: 2023/10/25 20:36:14 by Danilo           ###   ########.fr        #
+#    Updated: 2024/04/15 12:12:14 by daniloceano      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -51,8 +51,8 @@ def get_tracks():
 def check_first_position_inside_area(cyclone_id, tracks, area_bounds):
     cyclone_track = tracks[tracks['track_id'] == cyclone_id]
     first_position = cyclone_track.head(1)  # Get the first row
-    first_lat = first_position['lat vor'].values[0]
-    first_lon = first_position['lon vor'].values[0]
+    first_lat = first_position['lat vor'].iloc[0]
+    first_lon = first_position['lon vor'].iloc[0]
 
     min_lon, min_lat, max_lon, max_lat = area_bounds
 
@@ -119,15 +119,16 @@ def process_period_file(args):
 
     tracks_id = int(period_file.split('_')[-1].split('.csv')[0])
     track = tracks[tracks['track_id'] == tracks_id].copy()
-    track['date'] = pd.to_datetime(track['date'])
+    track['date'] = pd.to_datetime(track['date'], format='%Y-%m-%d %H:%M:%S')
 
     dt = timedelta(hours=1)
     track_periods = track[['track_id', 'date']].copy()
     track_periods['period'] = np.nan
+    track_periods['period'] = track_periods['period'].astype('string')  # Ensure it's of type 'string'
 
     for phase in list(periods.index):
-        periods.loc[phase] = pd.to_datetime(periods.loc[phase])
-        period_dates = pd.date_range(start=periods.loc[phase][0], end=periods.loc[phase][1], freq=dt)
+        periods.loc[phase] = pd.to_datetime(periods.loc[phase], format='%Y-%m-%d %H:%M:%S')
+        period_dates = pd.date_range(start=periods.loc[phase].iloc[0], end=periods.loc[phase].iloc[1], freq=dt)
         track_periods.loc[track_periods['date'].isin(period_dates), 'period'] = phase
 
     return track_periods
@@ -211,6 +212,21 @@ def export_density(season_tracks, num_time):
             
             # Add the DataArray to the dictionary with the name as the key
             data_dict[name] = data
+    
+    # Also export positions for peak intensity because reviewer asked for it
+    # Step 1: Group by 'track_id' and find the maximum 'vor42' for each group
+    max_vor42 = season_tracks.groupby('track_id')['vor42'].transform("max")
+    # Step 2: Compare the maximum 'vor42' with the DataFrame 'vor42' column
+    max_vor42_mask = season_tracks['vor42'] == max_vor42
+    # Step 3: Filter the DataFrame using the mask
+    season_tracks_max_vor42 = season_tracks[max_vor42_mask]
+    # Now, we can compute the density
+    density, lon, lat = compute_density(season_tracks_max_vor42, num_time)
+    name = 'peak_intensity'
+    # Create DataArray with the appropriate name
+    data = xr.DataArray(density, coords={'lon': lon, 'lat': lat}, dims=['lat', 'lon'], name=name)
+    # Add the DataArray to the dictionary with the name as the key
+    data_dict[name] = data
 
     return data_dict
 
